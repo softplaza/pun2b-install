@@ -1,0 +1,12 @@
+h1 {font-size: 2.2em;}
+h2 {font-size: 2em;}
+h3 {font-size: 1.8em;}
+h4 {font-size: 1.6em;}
+h5 {font-size: 1.4em;}
+h6 {font-size: 1.2em;}
+.postimg img {max-width: 100%;}
+.post-header, .post-footer, .sub-header {background: aliceblue;}
+.card .card-header {background: lightsteelblue !important}
+.post-body {font-size: 14px;}
+.post-user-info {text-align: center;}
+

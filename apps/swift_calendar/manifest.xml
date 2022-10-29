@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE extension SYSTEM "ext-1.0.dtd">
+
+<extension engine="1.0">
+	<id>sm_calendar</id>
+	<title>SM Calendar</title>
+	<version>0.53</version>
+	<description>Export events from your Projects to Google Calendar and Outlook Calendar. Also you may create project events.</description>
+	<author>SwiftManager.Org</author>
+	<minversion>1.4.4</minversion>
+	<maxtestedon>1.4.5</maxtestedon>
+
+		
+		
+		<hook id="sm_special_projects_events_pre_header_load"><![CDATA[
+require $ext_info['path'].'/hooks/sm_special_projects_events_pre_header_load.php';
+		]]></hook>
+		
+		<hook id="sm_special_projects_events_list_btn_action"><![CDATA[
+require $ext_info['path'].'/hooks/sm_special_projects_events_list_btn_action.php';
+		]]></hook>
+		
+		<hook id="sm_special_projects_events_fetch_events_db"><![CDATA[
+$query['SELECT'] .= ', e.sent_to_outlook, e.sent_to_google';
+		]]></hook>
+		
+		<hook id="sm_special_projects_events_list_start"><![CDATA[
+require $ext_info['path'].'/hooks/sm_special_projects_events_list_start.php';
+		]]></hook>
+		
+		<hook id="hca_5840_new_project_form_sent_pre_redirect"><![CDATA[
+require $ext_info['path'].'/hooks/hca_5840_new_project_form_sent_pre_redirect.php';
+		]]></hook>
+		
+		<hook id="hca_5840_manage_project_form_sent_pre_redirect"><![CDATA[
+require $ext_info['path'].'/hooks/hca_5840_manage_project_form_sent_pre_redirect.php';
+		]]></hook>
+		
+	</hooks>
+</extension>

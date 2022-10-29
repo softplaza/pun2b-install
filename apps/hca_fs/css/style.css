@@ -1,0 +1,223 @@
+/* new_request.php */
+.main-subhead .hn span{color: darkblue;font-weight: bold;}
+.new-geo-code{padding-right: 10px;font-weight:bold;}
+.new-geo-code span{color:red;font-size: 14px;cursor: pointer;}
+.add_from_select{font-size:18px;cursor:pointer;color:green;margin-left:3px;}
+.sf-box img{width: 16px;margin-left: 10px;cursor: pointer;vertical-align: middle;}
+
+/* requests.php */
+#hca_fs_requests table{table-layout: auto;}
+#hca_fs_requests thead th{padding: 5px;text-align: center;padding: 5px !important;}
+#hca_fs_requests thead th span{text-transform: uppercase;font-weight: bold !important;}
+#hca_fs_requests tbody td {padding: 5px;vertical-align:top;}
+#hca_fs_requests .date{width:110px}
+#hca_fs_requests .worker{width:400px}
+#hca_fs_requests .remarks textarea::placeholder{color:red;opacity:0.7;}
+#hca_fs_requests .remarks textarea:-ms-input-placeholder{color:red;}
+#hca_fs_requests .remarks textarea::-ms-input-placeholder{color:red;}
+#hca_fs_requests .remarks textarea{width: 97%;min-width: 200px;}
+#hca_fs_requests .datetime, #hca_fs_requests .btn-action, #hca_fs_requests .requested-by, #hca_fs_requests .property, #hca_fs_requests .btn-action p{text-align: center;}
+#hca_fs_requests .datetime p{padding: .05em;margin-bottom: 5px;}
+#hca_fs_requests .btn-action select, .time-slot select{margin-bottom: 5px;}
+#hca_fs_requests .th-workers-list{width: 235px;min-width: 235px;}
+#hca_fs_requests .assigned-user{background-color: #7bdf72;padding: .1em .5em;margin-bottom: .5em;border-radius: .3em;}
+#hca_fs_requests .assigned-user input{width: 15px;vertical-align: middle;float: right;}
+#hca_fs_requests .head-text{text-align: left;position: relative;bottom: 7px;left: 5px;}
+#hca_fs_requests .alert-text{color:red;}
+#hca_fs_requests td .group_id{text-align: center;}
+#hca_fs_requests .legends{padding: .1em .7em;margin-right: .5em;margin-left: 1em;border: 1px solid #adafc7;}
+#hca_fs_requests .maint{background: #ffede5;}
+#hca_fs_requests .paint{background: #ffffd4;}
+#hca_fs_requests .new-start-date td{background:pink;}
+#hca_fs_requests .date{min-width:100px;}
+#hca_fs_requests .assign-info {padding: .1em .5em;margin-bottom: .5em;border-radius: .3em;border: 1px dashed #bca77d;}
+#hca_fs_requests .assign-info img{vertical-align: middle;float: right;width: 20px;cursor: pointer;}
+#hca_fs_requests .pop-up-edit-window {width: 250px;position: absolute;margin-left: -205px;background: #F5E9DC;padding: 5px;line-height: 23px;border-radius: 10px;border: 1px solid #A5A5A5;z-index: 300;opacity: 0.9;}
+#hca_fs_requests .close-window{cursor: pointer;float: right;position: relative;z-index: 300;}
+#hca_fs_requests .pop-up-edit-window textarea{width:97%;}
+
+/* emergency_shedule.php */
+#emergency_schedule .ct-group select{background: bisque;}
+#emergency_schedule .ct-group th{text-transform: uppercase;text-align:left;}
+#emergency_schedule .td1{width:200px;font-weight:bold;}
+#emergency_schedule .assign-info {padding: 1em;border-radius: .3em;width: 200px;}
+#emergency_schedule .assign-info input{width: 15px;vertical-align: middle;float: right;cursor:pointer;}
+#emergency_schedule .scheduled{background: #eed190;}
+#emergency_schedule .prob{background: #fff0b8;display: inline-block;}
+#emergency_schedule .setup-user img{float: right;width: 20px;cursor: pointer;}
+#emergency_schedule .pop-up-window {width: 300px;position: absolute;background: #f5dcdc;padding: 5px;line-height: 23px;border-radius: 10px;border: 1px solid #A5A5A5;z-index: 300;opacity: 0.9;right: 200px;}
+#emergency_schedule .close-window{cursor: pointer;float: right;position: relative;z-index: 300;}
+#emergency_schedule .close-window img{padding: .5em;}
+#emergency_schedule .pop-up-window textarea{width:97%;}
+#emergency_schedule .mailing-fields{columns: 2;padding-left: 5px;}
+#emergency_schedule .pop-up-window .btn-action{text-align: center;}
+#emergency_schedule .send-email img{width:40px;cursor:pointer;}
+#emergency_schedule .pop-up-window .title{background: #e3eff4;border-style: groove;border-width: 2px;border-color: #f3f8fc;}
+#emergency_schedule .pop-up-window .title p{font-weight: bold;padding-left: .3em;}
+#emergency_users{text-align: center;}
+#emergency_schedule .head1 th{text-align: center;}
+#emergency_schedule .p-zone td, .months{background: #e3d2ce;color: #4c4c58;;font-weight: bold;text-transform: uppercase;}
+#emergency_schedule .h-zone {width:30%;}
+#emergency_schedule .ct-group .th1, .ct-group .td1{max-width: 170px;}
+#emergency_schedule .search-box input{font-weight: bold}
+#emergency_schedule .search-box input[name="weeks"]{width:50px;}
+#emergency_schedule #demo_iframe {width:100%; height:400px; zoom: 2;}
+#emergency_schedule .day-on{background:lightgreen;}
+#emergency_schedule .day-off{background: #e6e6e6;}
+
+/* emergency_zones.php */
+#emergency_zones .td1{width:200px;font-weight:bold;}
+#emergency_zones .td2, #emergency_zones  .td3{text-align:center;font-weight:bold;}
+#emergency_zones .ct-group .selected select{background:lightgreen;}
+#emergency_zones .ct-group .empty select{background:pink;}
+#emergency_zones .zone1 td{background:antiquewhite;}
+#emergency_zones .zone2 td{background: burlywood;}
+#emergency_zones .zone3 td{background: #b2dfdf;}
+
+/* permanently_assignments.php */
+#permanently_assignments table{table-layout: initial;}
+#permanently_assignments thead th{padding: 5px;text-align: center;padding: 5px !important;}
+#permanently_assignments td{vertical-align:top;}
+#permanently_assignments .days-of-week th, #permanently_assignments .tc1, #permanently_assignments .tc2 {text-align:center;}
+#permanently_assignments .user-info{width:100px;max-width:100px;}
+#permanently_assignments .user-info a{font-weight:bold;}
+#permanently_assignments .property{width:160px;min-width:160px;}
+#permanently_assignments .legends{padding: .1em .7em;margin-right: .5em;margin-left: 1em;border: 1px solid #adafc7;}
+#permanently_assignments .peach{background: #ffdcca}
+#permanently_assignments .beige{background: beige}
+#permanently_assignments .peach td{background: #ffdcca}
+#permanently_assignments .beige td{background: beige}
+#permanently_assignments .ps-prop {background-color: #72d1df;}
+#permanently_assignments .ps-prop select{background: #c0ffc5;}
+#permanently_assignments .th-weekend, #permanently_assignments .td-weekend{display:none;}
+#permanently_assignments .weekend-toggle{position: relative;float: right;margin-right: 1.6em;margin-top: .5em;}
+#permanently_assignments .assign-info {padding: .1em .5em;margin-bottom: .5em;border-radius: .3em;}
+#permanently_assignments .assign-info input{width: 15px;vertical-align: middle;float: right;}
+
+/* property_assignments.php */
+#property_assignments table{table-layout: initial;}
+#property_assignments thead th{padding: 5px;text-align: center;padding: 5px !important;}
+#property_assignments tbody td{border-color: #729ec9;vertical-align: top;}
+#property_assignments .days-of-week th, #property_assignments .tc1, #property_assignments .tc2 {text-align:center;}
+#property_assignments .user-info{width:100px;}
+#property_assignments .user-info a{font-weight:bold;}
+#property_assignments .property{padding:0;width:160px;min-width:160px;}
+#property_assignments .th-weekend, .td-weekend{display:none;}
+#property_assignments .weekend-toggle{position: relative;float: right;margin-right: 1.6em;margin-top: .5em;}
+#property_assignments .assign-info {padding: .1em .5em;margin-bottom: .5em;border-radius: .3em;margin: 2px;border: 1px dashed #bca77d;}
+#property_assignments .legends{padding: .1em .7em;margin-right: .5em;margin-left: 1em;border: 1px solid #adafc7;}
+#property_assignments .maint{background: #ffccb3}
+#property_assignments .paint{background: #ffff8a;}
+#property_assignments .search-box input[type="date"]{font-weight:bold;}
+
+/* property_shedule */
+#property_shedule .days{width:100px;}
+#property_shedule .weekend p{color:red}
+#property_shedule .info{display:flex;}
+#property_shedule .assign-info {padding: .1em .5em;margin-bottom: .5em;border-radius: .3em;margin: 2px;width: fit-content;border: 1px dashed #bca77d;}
+#property_shedule .legends{padding: .1em .7em;margin-right: .5em;margin-left: 1em;border: 1px solid #adafc7;}
+#property_shedule .maint{background: #ffccb3}
+#property_shedule .paint{background: #ffff8a;}
+#property_shedule .search-box input[type="date"]{font-weight:bold;}
+
+/* vacations.php */
+#vacations table{table-layout:initial;}
+#vacations thead th {width:8%;font-weight:bold;}
+#vacations tbody td {padding: .5em .417em !important;}
+#vacations .days-numbers{vertical-align: top;}
+#vacations .time-slot span{padding: 3px;display: block;margin: 3px;width: fit-content;float: left;border-radius: 3px;border: 1px solid #71cdc5;}
+#vacations .day-off{background:#baedff;}
+#vacations .sick-day{background:#c2caff;}
+#vacations .vacation{background:#ffaff9;}
+#vacations .legends{padding: .1em .7em;margin-right: .5em;margin-left: 1em;border: 1px solid #adafc7;}
+#vacations .ct-set span{vertical-align: sub;}
+
+/* weekly_shedule_print.php */
+#weekly_shedule_print table{table-layout:initial;}
+#weekly_shedule_print thead th {border: 1px solid #0d0d0e;text-align: center;text-transform: uppercase;}
+#weekly_shedule_print tbody td {text-align: center;border: 1px solid #242629;}
+#weekly_shedule_print td, #weekly_shedule_print td p{padding: 0;}
+#weekly_shedule_print .th-day{min-width:150px;font-size: 18px;}
+#weekly_shedule_print .th-date{font-size: 20px;}
+#weekly_shedule_print .tc1{width:120px;}
+#weekly_shedule_print .user-info{width: 6%;min-width:140px;text-transform: uppercase;font-weight: bold;font-size: 16px;vertical-align: middle;text-align: center;height: 50px;}
+#weekly_shedule_print .assign-info {padding: .1em .5em;margin-bottom: .5em;border-radius: .3em;}
+#weekly_shedule_print .assign-info input{width: 15px;vertical-align: middle;float: right;}
+#weekly_shedule_print .add-job {text-align: center;}
+#weekly_shedule_print .add-job a {background: green;color: white;border-radius: 7px;padding: 1px 10px;cursor: pointer;font-weight: bold;}
+#weekly_shedule_print .work-orders-list{vertical-align: top;width: 10%;}
+#weekly_shedule_print .work-orders-empty{vertical-align: middle;width: 10%;}
+#weekly_shedule_print .wo-time{font-size:12px;}
+#weekly_shedule_print .th-weekend, #weekly_shedule_print .td-weekend{display:none;}
+
+/* weekly_shedule.php */
+#weekly_schedule .day-off{display: block;text-align: center;padding: 0.6em 0;font-size: 14px;}
+#weekly_schedule table{table-layout:initial;}
+#weekly_schedule thead th {padding: 4px !important;border: 1px solid #adafc7;background: #c0e6fc;text-align: center;text-transform: uppercase;}
+#weekly_schedule tbody td {padding: 2px;}
+#weekly_schedule td p {padding: 0;}
+#weekly_schedule .th-tr1 th{position: -webkit-sticky;position: sticky;top: 0;z-index: 200;height: 25px;}
+#weekly_schedule .th-tr2 th{position: -webkit-sticky;position: sticky;top: 33px;z-index: 200;height: 25px;}
+#weekly_schedule .th-day{min-width:150px;}
+#weekly_schedule .tc1{width:120px;}
+/*#weekly_schedule .pending{background:#fff5e7}*/
+#weekly_schedule .miled{background:pink;}
+#weekly_schedule .viewed{background:#ffc864;}
+#weekly_schedule .submitted{background:#c1fcc1;}
+#weekly_schedule .completed{background: #bcdbe1}
+#weekly_schedule .btn-group p, .btn-action, .btn-actions p{text-align: center;}
+#weekly_schedule .work-status{font-size: xx-small;}
+#weekly_schedule .ass-daily{text-align: center;}
+#weekly_schedule .head-text{text-align: left;position: relative;bottom: 7px;left: 5px;}
+#weekly_schedule .th-weekend, .td-weekend{display:none;}
+#weekly_schedule .weekend-toggle{position: relative;float: right}
+#weekly_schedule .legends{padding: .1em .7em;margin-right: .5em;margin-left: 1em;border: 1px solid #adafc7;}
+#weekly_schedule .yellow{background: #fff5e7;}
+#weekly_schedule .pink{background: pink;}
+#weekly_schedule .green{background: #c1fcc1}
+#weekly_schedule .new-geo-code{padding:0;font-weight:bold;}
+#weekly_schedule .new-geo-code span{color:red;font-size: 14px;cursor: pointer;}
+#weekly_schedule .add_from_select, .add_from_input{font-size:16px;cursor:pointer;color:green;margin-left:3px;}
+#weekly_schedule .ct-set span{vertical-align: sub;}
+#weekly_schedule .add-job {text-align: center;}
+#weekly_schedule .add-job a {background: green;color: white;border-radius: 7px;padding: 1px 10px;cursor: pointer;font-weight: bold;}
+#weekly_schedule .work-orders-list{vertical-align: top;width: 200px;}
+#weekly_schedule .work-orders-empty{vertical-align: middle;width: 200px;}
+#weekly_schedule .wo-time{font-size:12px;}
+#weekly_schedule .search-box input[type="date"]{font-weight:bold;}
+#weekly_schedule #edit_unit_number input{width: 97%;}
+#weekly_schedule .dropdown{float:right}
+#weekly_schedule .user-info{width: 140px;font-weight: bold;vertical-align: middle;text-align: center;height: 50px;}
+#weekly_schedule .user-info .username{text-transform: uppercase}
+#weekly_schedule .user-info p{padding: 0.3em; display: flex;align-items: center;}
+#weekly_schedule .user-info p input, .user-info p img{width: 26px;}
+#weekly_schedule .user-info button{margin-right: .2em;}
+#weekly_schedule .user-info .btn {font-size: 1em !important;}
+
+/* worker_shedule */
+#worker_schedule table{table-layout: initial;}
+#worker_schedule table td{padding: 0 .417em;}
+#worker_schedule .thead1 .tc2{font-weight: bold;}
+#worker_schedule thead th{height:20px;}
+#worker_schedule thead .tc1{width:100px;}
+#worker_schedule thead .tc2{min-width:200px;}
+#worker_schedule thead .tc3{width:150px;}
+#worker_schedule tbody .tc3 p{text-align:center;}
+#worker_schedule .confirmed td{background: #c0ffd6;}
+#worker_schedule .pending td{background: pink;}
+#worker_schedule .today td{color: red;}
+#worker_schedule .weekend{color:red;}
+#worker_schedule .assign-info {padding: .1em .5em;margin-bottom: .5em;border-radius: .3em;}
+#worker_schedule .pending{background:#fff5e7}
+#worker_schedule .miled{background:pink;}
+#worker_schedule .viewed{background:#ffc864;}
+#worker_schedule .submitted{background:#c1fcc1;}
+#worker_schedule .completed{background: #bcdbe1}
+#worker_schedule .message{float:right;width:65%}
+#worker_schedule .message textarea{width: 99%;}
+#worker_schedule .even td {background: aliceblue;}
+#worker_schedule .search-box input[type="date"]{font-weight:bold;}
+
+
+/* settings.php */
+.user-perms{margin-bottom: 1.5em;border-style: dashed;border-width: 1px;border-color: #d4e5f2;background: aliceblue;}

@@ -1,0 +1,62 @@
+<?php
+
+$db_type = 'mysqli';
+$db_host = 'localhost';
+$db_name = 'install_test';
+$db_username = 'root';
+$db_password = '';
+$db_prefix = '';
+$p_connect = false;
+
+$base_url = 'https://swiftmanager.localhost/dev';
+
+$cookie_name = 'site_cookie_9b934b';
+$cookie_domain = '';
+$cookie_path = '/';
+$cookie_secure = 0;
+
+define('DB_CONFIG', 1);
+
+define('DB_TYPE', 'mysqli');
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'install_test');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_PREFIX', '');
+define('P_CONNECT', 'false');
+
+define('BASE_URL', 'https://swiftmanager.localhost/dev');
+define('COOKIE_NAME', 'site_cookie_9b934b');
+define('COOKIE_DOMAIN', '');
+define('COOKIE_PATH', '/');
+define('COOKIE_SECURE', '0');
+
+// Enable DEBUG mode by removing // from the following line
+define('SPM_DEBUG', 1);
+
+// Enable show DB Queries mode by removing // from the following line
+//define('SPM_SHOW_QUERIES', 1);
+
+// Enable IDNA support by removing // from the following line
+//define('SPM_ENABLE_IDNA', 1);
+
+// DisableCSRF checking by removing // from the following line
+//define('SPM_DISABLE_CSRF_CONFIRM', 1);
+
+// Disable hooks (extensions) by removing // from the following line
+//define('SPM_DISABLE_HOOKS', 1);
+
+// Disable output buffering by removing // from the following line
+//define('SPM_DISABLE_BUFFERING', 1);
+
+// Disable async JS loader by removing // from the following line
+//define('SPM_DISABLE_ASYNC_JS_LOADER', 1);
+
+// Disable extensions version check by removing // from the following line
+//define('SPM_DISABLE_EXTENSIONS_VERSION_CHECK', 1);
+
+// SQLite3 busy timeout -> after waiting for that time we get 'db is locked' error (in msec)
+//define('SPM_SQLITE3_BUSY_TIMEOUT', 10000);
+
+// SQLite3 WAL mode has better control over concurrency. Source: https://www.sqlite.org/wal.html
+//define('SPM_SQLITE3_WAL_ON', 1);

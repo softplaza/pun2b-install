@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE extension SYSTEM "ext-1.0.dtd">
+
+<extension engine="1.0">
+	<id>hca_5840</id>
+	<title>HCA Moisture Inspections</title>
+	<version>1.64</version>
+	<description>5840 Moisture Inspection</description>
+	<author>SwiftManager.Org</author>
+	<minversion>1.4.4</minversion>
+	<maxtestedon>1.4.5</maxtestedon>
+	
+	<install><![CDATA[
+define('SM_INSTALL', 1);
+require $ext_info['path'].'/install.php';
+	]]></install>
+	
+	<uninstall><![CDATA[
+define('SM_UNINSTALL', 1);
+require $ext_info['path'].'/uninstall.php';
+	]]></uninstall>
+		
+	<hooks>
+		<hook id="co_modify_url_scheme"><![CDATA[
+require $ext_info['path'].'/url/Default.php';
+		]]></hook>
+		
+		<hook id="hd_head, es_essentials"><![CDATA[
+$ext_info['name'] = 'Moisture Inspections';
+$Core->add_ext_info($ext_info);
+$Core->set_ext_info($ext_info['id'], $ext_info);
+		]]></hook>
+		
+		<hook id="hd_menu_elements"><![CDATA[
+if ($User->is_admmod() || $User->get('hca_5840_access') > 0)
+	require $ext_info['path'].'/hooks/hd_menu_elements.php';
+		]]></hook>
+		
+		<hook id="sm_notify_ajax_pre_json_encode"><![CDATA[
+require $ext_info['path'].'/hooks/sm_notify_ajax_pre_json_encode.php';
+		]]></hook>
+		
+		<hook id="sm_vendors_departments_theader"><![CDATA[
+$page_param['th']['hca_5840'] = '<th class="dept"><strong>Moisture Inspections</strong></th>';
+		]]></hook>
+		
+		<hook id="sm_vendors_departments_tbody"><![CDATA[
+$page_param['td']['hca_5840'] = '<td class="checkbox"><input type="hidden" name="form['.$cur_info['id'].'][hca_5840]" value="0"><input type="checkbox" name="form['.$cur_info['id'].'][hca_5840]" value="1" '.($cur_info['hca_5840'] == 1 ? 'checked="checked"' : '').'></td>';
+		]]></hook>
+	</hooks>
+</extension>

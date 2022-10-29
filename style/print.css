@@ -1,0 +1,82 @@
+/* Pre-print page */
+.table>thead {position: unset !important;}
+
+/* This is css for printing pages */
+@page {margin:.25in;padding:0;
+}
+@media all {
+
+}
+@media print {
+	html, body {
+		width:100%;
+		height:auto;
+		margin:auto;
+		padding:0;
+		font-size:12px;
+	}
+	.card-header h5{font-size:32px;padding-bottom:1em}
+	.card-header h6{font-size:26px}
+	table {
+		border-spacing:0;
+		zoom:.7;
+		table-layout:auto;
+		width:100%;
+	}
+	table .ta-center{text-align:center;}
+	th{
+		padding:0;
+		margin:0;
+		text-align: center;
+		border-width: 1px !important;
+		border-style:groove !important;
+		border-color: #8f8f8f !important;
+	}
+	td{
+		padding:0;
+		margin:0;
+		border-width: 1px !important;
+		border-style:groove !important;
+		border-color: #8f8f8f !important;
+		vertical-align:top;
+	} 
+	div,p,strong,span,td{
+		padding:0 !important;margin:0 !important;
+	}
+	a:link, a:visited, .js_link {
+		color: #011627;
+		text-decoration: none;
+	}
+
+	.invoice .desc{
+		text-align:left;
+	}
+	.invoice tbody td{
+		text-align:center;
+	}
+	/*Hide blocks*/
+	nav,
+	.navbar,
+	.search-bar,
+	.menu-bar,
+	.main-menu,
+	.admin-submenu,
+	#brd-debug,
+	.search-box, 
+	.main-subhead a, 
+	.print, 
+	.frm-buttons,
+	.page-actions,
+	.sidebar,
+	.navbar
+	{
+		display:none !important;
+	}
+	.crumbs-top {
+		/*padding: .462em 1.417em;*/
+		font-size: 22px;
+		text-align: center;
+		text-transform: uppercase;
+	}
+	
+}

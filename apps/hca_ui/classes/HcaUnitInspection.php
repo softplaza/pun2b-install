@@ -1,0 +1,199 @@
+<?php
+
+class HcaUnitInspection
+{
+	public $locations = [
+		1 => 'Kitchen',
+		2 => 'Guest Bathroom',
+		3 => 'Master Bathroom',
+		4 => 'Half Bathroom'
+	];
+
+	public $equipments = [
+		0 => 'No equipment',
+		8 => 'ANGLE STOPS',//remove
+		9 => 'ASSEMBLY POP-UP',
+		10 => 'CEILING',
+		11 => 'COUNTERTOP',
+		2 => 'DISHWASHER',
+		6 => 'DRAIN PIPE',
+		1 => 'FAUCET',
+		12 => 'FAN',
+		3 => 'GARBAGE DISPOSAL',
+		4 => 'SHOWER/TUB',
+		5 => 'SINK',
+		7 => 'TOILET',
+		13 => 'WALLS',
+
+		// Last # 13
+	];
+
+	public $elements = [
+		
+		//55 => 'Angle Stops',// remove
+		2 => 'CEILING',
+		3 => 'COUNTERTOP',
+		4 => 'DISHWASHER',
+		1 => 'DISHWASHER - Air-Gap',
+		5 => 'DISHWASHER - Supply Lines',
+		//50 => 'Drain Pipe', //remove
+		49 => 'FAN',
+		61 => 'SWITCH FAN',
+		6 => 'GARBAGE DISPOSAL',
+		7 => 'GARBAGE DISPOSAL - Hose',
+		51 => 'GARBAGE DISPOSAL - Strainer',
+		8 => 'FAUCET',
+		9 => 'FAUCET - Aerator',
+		10 => 'FAUCET - Handle',
+		11 => 'FAUCET - Spout',
+		12 => 'FAUCET - Cabinet Deck',
+		13 => 'FAUCET - Cartridge',
+		14 => 'FAUCET - Handles',
+		15 => 'FAUCET - Angle Stops',
+		16 => 'FAUCET - Supply Lines',
+		60 => 'FAUCET - Slip Joint Nut',
+		17 => 'SINK',
+		18 => 'SINK - Assembly Pop-Up',
+		19 => 'SINK - Caulking',
+		20 => 'SINK - Drain Pipe',
+		21 => 'SINK - Rod Ball',
+		22 => 'SINK - Slip Joint Nut',
+		54 => 'SINK - Strainer',
+		59 => 'SINK - Stopper',
+		58 => 'SHOWER/TUB',
+		23 => 'SHOWER/TUB- Shower Head',
+		24 => 'SHOWER/TUB - Shower Head Neck',
+		25 => 'SHOWER/TUB - Handles',
+		26 => 'SHOWER/TUB - Escutcheon Plate',
+		27 => 'SHOWER/TUB - Cartridge',
+		28 => 'SHOWER/TUB - Tub',
+		56 => 'SHOWER/TUB - Pan',
+		53 => 'SHOWER/TUB - Slip Joint Nut',
+		//52 => 'Supply Lines', //remove
+		29 => 'SHOWER/TUB - Diverter Spout',
+		30 => 'SHOWER/TUB - Overflow Plate',
+		31 => 'SHOWER/TUB - Drain',
+		32 => 'SHOWER/TUB - Caulking',
+		33 => 'SHOWER/TUB - Splash Guards',
+		34 => 'TOILET',
+		35 => 'TOILET - Angle Stops',
+		36 => 'TOILET - Wax Seal',
+		37 => 'TOILET - Tank to Bowl Gasket',
+		38 => 'TOILET - Tank to Bowl Bolts',
+		39 => 'TOILET - Water Level in Tank',
+		40 => 'TOILET - Flapper 2 inches',
+		57 => 'TOILET - Flapper 3 inches',
+		41 => 'TOILET - Fill Valve',
+		42 => 'TOILET - Pressure Tank',
+		43 => 'TOILET - Lid',
+		44 => 'TOILET - Handle',
+		45 => 'TOILET - Flush Valve',
+		46 => 'TOILET - Caulking',
+		47 => 'TOILET - Supply Lines',
+		48 => 'WALLS',
+
+		// Last ID = 61
+	];
+
+	var $job_types = [
+		0 => 'Pending',
+		1 => 'Replaced',
+		2 => 'Repaired',
+		3 => 'Reset',
+		4 => 'Tied',
+	];
+
+	function getElement($id) 
+	{
+		return isset($this->elements[$id]) ? $this->elements[$id] : '';
+	}
+
+	function getEquipment($id) 
+	{
+		return (isset($this->equipments[$id]) && $id > 0) ? $this->equipments[$id] : '';
+	}
+
+	function getLocations() 
+	{
+		return [
+			1 => 'Kitchen',
+			2 => 'Guest Bathroom',
+			3 => 'Master Bathroom',
+			4 => 'Half Bathroom'
+		];
+	}
+
+	function getProblems() 
+	{
+		return [
+			22 => 'Broken',
+			1 => 'Clogged',
+			2 => 'Corroded',
+			3 => 'Cracked',
+			4 => 'Dirty',
+			5 => 'Discolored',
+			6 => 'Dripping',
+			7 => 'Failing',
+			15 => 'High',
+			8 => 'Leaking',
+			9 => 'Loose',
+			12 => 'Low',
+			10 => 'Missing',
+			11 => 'Not Working',
+			21 => 'Paint peeling',
+			//19 => 'Replace',
+			14 => 'Rusted',
+			13 => 'Wet',
+			23 => 'Need to be tied into single switch',
+			0 => 'Other',
+
+			// Last id 22
+		];
+	}
+
+	function get_never_inspected($property_id)
+	{
+		$i = 0;
+		if (!empty($this->properties_info)) 
+		{
+			foreach($this->properties_info as $cur_info)
+			{
+				if ($cur_info['property_id'] == $property_id && format_date($cur_info['date_inspected']) == '')
+					++$i;
+			}
+		}
+
+		return $i;
+	}
+
+	function get_not_inspected($property_id)
+	{
+		$i = 0;
+		if (!empty($this->properties_info)) 
+		{
+			foreach($this->properties_info as $cur_info)
+			{
+				// 1 is >
+				$date_inspected = strtotime($cur_info['date_inspected']) + 31536000;
+				if ($cur_info['property_id'] == $property_id && format_date($cur_info['date_inspected']) != '' && compare_dates(date('Y-m-d'), date('Y-m-d', $date_inspected), 1))
+					++$i;
+			}
+		}
+
+		return $i;
+	}
+
+	function getItemProblems($problem_ids)
+	{
+		$output = [];
+		$problems = explode(',', $problem_ids);
+
+		foreach($this->getProblems() as $key => $value)
+		{
+			if (in_array($key, $problems))
+				$output[] = $value;
+		}
+
+		return implode(', ', $output);
+	}
+}

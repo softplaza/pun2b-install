@@ -1,0 +1,13 @@
+/* Notification Settings */
+
+.sidebar .swift-notice {font-size: .9em;}
+.close .swift-notice {position: absolute;}
+
+.sidebar .bg-red {background:#dc3545;border: 1px solid #ff8383;color:#fff;}
+.sidebar .bg-pink {background:#ff9ba5;border: 1px solid #ffcaca;color:rgb(77, 0, 0);}
+.sidebar .bg-orange {background:#ff8f04;border: 1px solid #ffe0ce;color:#fff;}
+.sidebar .bg-darkblue{background: #0067a3;border: 1px solid #48b3ff;color:rgb(228, 245, 255);}
+.sidebar .bg-blue{background: #2bb0fe;border: 1px solid #d8efff;color:#fff;}
+.sidebar .bg-green{background:#09d847;border: 1px solid #b0fdb4;color:#fff;}
+.sidebar .bg-gray {background: #978f8f;border: 1px solid #d3eaff;color: #fff;}
+
