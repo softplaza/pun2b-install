@@ -51,10 +51,9 @@ if ($section == 'alarms' && $search_by_property_id > 0)
 	
 	if (!empty($sm_property_units))
 	{
-		
+		// Header
 		$HcaHVACPDF->addPreTableRow('<p style="text-align:center;font-weight:bold;">OWNER/MANAGER MULTI-FAMILY SMOKE ALARM AND CARBON MONOXIDE TEST LOG</p>');
 		$HcaHVACPDF->addPreTableRow('<p style="text-align:center;font-weight:bold;">Calendar Year 2022</p>');
-		// text-decoration: underline;
 		$HcaHVACPDF->addPreTableRow('<p style="padding-top:0;margin:3px;">Property: <span style="">'.html_encode($sm_property_db['pro_name']).'</span></p>');
 		$HcaHVACPDF->addPreTableRow('<p style="padding-top:0;margin:3px;">Address: <span style="">'.html_encode($sm_property_db['office_address']).'</span></p>');
 		$HcaHVACPDF->addPreTableRow('<p style="padding-top:0;margin:3px;">Phone: <span style="">'.html_encode($sm_property_db['office_phone']).'</span></p>');
