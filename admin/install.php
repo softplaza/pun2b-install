@@ -168,7 +168,7 @@ if (!isset($_POST['form_sent']))
 	if (count($languages) > 1)
 	{
 ?>
-	<form class="frm-form" method="get" accept-charset="utf-8" action="install.php">
+	<form method="get" accept-charset="utf-8" action="install.php" class="was-validated">
 		<div class="card mb-3">
 			<div class="card-header">
 				<h6 class="card-title mb-0"><?php echo $lang_install['Choose language'] ?></h6>
@@ -191,7 +191,7 @@ if (!isset($_POST['form_sent']))
 <?php
 	}
 ?>
-	<form method="post" accept-charset="utf-8" action="install.php">
+	<form method="post" accept-charset="utf-8" action="install.php" class="was-validated">
 		<input type="hidden" name="form_sent" value="1" />
 
 		<div class="card mb-3">
@@ -318,33 +318,22 @@ if (!isset($_POST['form_sent']))
 			</div>
 		</div>
 	</form>
-	<script src="<?php echo SITE_ROOT ?>include/js/min/punbb.common.min.js"></script>
-	<script src="<?php echo SITE_ROOT ?>include/js/min/punbb.install.min.js"></script>
 </body>
 </html>
 <?php
 }
 else
 {
-	//
-	// Strip slashes only if magic_quotes_gpc is on.
-	//
-	function unescape($str)
-	{
-		return (version_compare(PHP_VERSION, '7.4.0', '<') && get_magic_quotes_gpc() == 1) ? stripslashes($str) : $str;
-	}
-
-
 	$db_type = $_POST['req_db_type'];
 	$db_host = swift_trim($_POST['req_db_host']);
 	$db_name = swift_trim($_POST['req_db_name']);
-	$db_username = unescape(swift_trim($_POST['db_username']));
-	$db_password = unescape(swift_trim($_POST['db_password']));
+	$db_username = swift_trim($_POST['db_username']);
+	$db_password = swift_trim($_POST['db_password']);
 	$db_prefix = swift_trim($_POST['db_prefix']);
-	$username = unescape(swift_trim($_POST['req_username']));
-	$email = unescape(strtolower(swift_trim($_POST['req_email'])));
-	$password1 = unescape(swift_trim($_POST['req_password1']));
-	$default_lang = preg_replace('#[\.\\\/]#', '', unescape(swift_trim($_POST['req_language'])));
+	$username = swift_trim($_POST['req_username']);
+	$email = strtolower(swift_trim($_POST['req_email']));
+	$password1 = swift_trim($_POST['req_password1']);
+	$default_lang = preg_replace('#[\.\\\/]#', '', swift_trim($_POST['req_language']));
 	$install_pun_repository = !empty($_POST['install_pun_repository']);
 
 	// Make sure base_url doesn't end with a slash
@@ -514,17 +503,7 @@ else
 		'PRIMARY KEY'	=> array('conf_name')
 	);
 	$DBLayer->create_table('config', $schema);
-/*
-	$schema = array(
-		'FIELDS'		=> array(
-			'id'			=> $DBLayer->dt_serial(),
-			'dept_name'		=> $DBLayer->dt_varchar(),
-			'dept_desc'		=> $DBLayer->dt_varchar(),
-		),
-		'PRIMARY KEY'	=> array('id')
-	);
-	$DBLayer->create_table('departments', $schema);
-*/
+
 	$schema = array(
 		'FIELDS'		=> array(
 			'id'				=> $DBLayer->dt_varchar(),
@@ -1078,59 +1057,8 @@ else
 		}
 	}
 	
-	$extensions_for_install = array(
-		'pan_framework',
-		//'pun_jquery',
-		//'fancybox',
-		//'php_mailer',
-		//'sm_backup_tables',
-		//'sm_errors_report',
-		//'sm_messenger',
-		//'sm_mpdf',
-		//'sm_sent_emails',
-		//'sm_uploader',
-		//'sm_users_actions'
-	);
 	define('SM_INSTALL', 1);
 	require SITE_ROOT.'include/xml.php';
-	
-	foreach($extensions_for_install as $extension_id)
-	{
-		if (is_readable(SITE_ROOT.'extensions/'.$extension_id.'/manifest.xml'))
-		{
-			$ext_data = xml_to_array(file_get_contents(SITE_ROOT.'extensions/'.$extension_id.'/manifest.xml'));
-	
-			if (!empty($ext_data))
-			{
-				$query = array(
-					'INSERT'	=> 'id, title, version, description, author, uninstall, uninstall_note, dependencies',
-					'INTO'		=> 'extensions',
-					'VALUES'	=> '\''.$DBLayer->escape($extension_id).'\', \''.$DBLayer->escape($ext_data['extension']['title']).'\', \''.$DBLayer->escape($ext_data['extension']['version']).'\', \''.$DBLayer->escape($ext_data['extension']['description']).'\', \''.$DBLayer->escape($ext_data['extension']['author']).'\', NULL, NULL, \'||\'',
-				);
-				$DBLayer->query_build($query) or error(__FILE__, __LINE__);
-	
-				if (isset($ext_data['extension']['hooks']['hook']))
-				{
-					foreach ($ext_data['extension']['hooks']['hook'] as $ext_hook)
-					{
-						$cur_hooks = explode(',', $ext_hook['attributes']['id']);
-						foreach ($cur_hooks as $cur_hook)
-						{
-							$query = array(
-								'INSERT'	=> 'id, extension_id, code, installed, priority',
-								'INTO'		=> 'extension_hooks',
-								'VALUES'	=> '\''.$DBLayer->escape(swift_trim($cur_hook)).'\', \''.$DBLayer->escape($extension_id).'\', \''.$DBLayer->escape(swift_trim($ext_hook['content'])).'\', '.time().', '.(isset($ext_hook['attributes']['priority']) ? $ext_hook['attributes']['priority'] : 5)
-							);
-							$DBLayer->query_build($query) or error(__FILE__, __LINE__);
-						}
-					}
-				}
-			}
-			
-			if (file_exists(SITE_ROOT.'extensions/'.$extension_id.'/install.php'))
-				include(SITE_ROOT.'extensions/'.$extension_id.'/install.php');
-		}
-	}
 
 ?>
 <!DOCTYPE html>
