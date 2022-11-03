@@ -33,13 +33,10 @@ function swift_events_IncludeCommon()
     
         $SwiftMenu->addItem(['title' => date('F'), 'link' => $URL->genLink('swift_events_calendar', ['type' => 'month', 'date' => date('Y-m-d')]), 'id' => 'swift_events_calendar', 'parent_id' => 'swift_events', 'level' => 1]);
 
-        if ($User->checkAccess('swift_events', 20))
-        {
-            $SwiftMenu->addItem(['title' => 'Report', 'link' => $URL->link('swift_events_report'), 'id' => 'swift_events_report', 'parent_id' => 'swift_events', 'level' => 25]);
+        $SwiftMenu->addItem(['title' => 'Report', 'link' => $URL->link('swift_events_report'), 'id' => 'swift_events_report', 'parent_id' => 'swift_events', 'level' => 25]);
 
+        if ($User->checkAccess('swift_events', 20))
             $SwiftMenu->addItem(['title' => 'Settings', 'link' => $URL->link('swift_events_settings'), 'id' => 'swift_events_settings', 'parent_id' => 'swift_events', 'level' => 25]);
-        }
-            
     }
 }
 

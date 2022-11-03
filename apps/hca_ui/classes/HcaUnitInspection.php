@@ -6,11 +6,13 @@ class HcaUnitInspection
 		1 => 'Kitchen',
 		2 => 'Guest Bathroom',
 		3 => 'Master Bathroom',
-		4 => 'Half Bathroom'
+		4 => 'Half Bathroom',
+		//5 => 'Floor'
 	];
 
 	public $equipments = [
 		0 => 'No equipment',
+		15 => 'APPLIANCES',//Appliances
 		8 => 'ANGLE STOPS',//remove
 		9 => 'ASSEMBLY POP-UP',
 		10 => 'CEILING',
@@ -18,6 +20,7 @@ class HcaUnitInspection
 		2 => 'DISHWASHER',
 		6 => 'DRAIN PIPE',
 		1 => 'FAUCET',
+		14 => 'FLOOR',
 		12 => 'FAN',
 		3 => 'GARBAGE DISPOSAL',
 		4 => 'SHOWER/TUB',
@@ -25,11 +28,10 @@ class HcaUnitInspection
 		7 => 'TOILET',
 		13 => 'WALLS',
 
-		// Last # 13
+		// Last # 15
 	];
 
 	public $elements = [
-		
 		//55 => 'Angle Stops',// remove
 		2 => 'CEILING',
 		3 => 'COUNTERTOP',
@@ -90,9 +92,12 @@ class HcaUnitInspection
 		45 => 'TOILET - Flush Valve',
 		46 => 'TOILET - Caulking',
 		47 => 'TOILET - Supply Lines',
+		62 => 'VINYL',
 		48 => 'WALLS',
+		63 => 'Washer',
+		64 => 'Water Heater',
 
-		// Last ID = 61
+		// Last ID = 64
 	];
 
 	var $job_types = [
@@ -102,6 +107,11 @@ class HcaUnitInspection
 		3 => 'Reset',
 		4 => 'Tied',
 	];
+
+	function getJobType($id) 
+	{
+		return isset($this->job_types[$id]) ? $this->job_types[$id] : '';
+	}
 
 	function getElement($id) 
 	{

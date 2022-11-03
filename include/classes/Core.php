@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Core is basic functions of SwiftManager
+ * Basic functions of SwiftManager
  * @author SwiftManager.Org
  * @copyright (C) 2021 SwiftManager license GPL
  * @package Core

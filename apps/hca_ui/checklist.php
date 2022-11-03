@@ -11,6 +11,7 @@ if (!$access)
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $lid = isset($_GET['lid']) ? intval($_GET['lid']) : 0;
 $property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
+$unit_id = isset($_GET['unit_id']) ? intval($_GET['unit_id']) : 0;
 
 $HcaUnitInspection = new HcaUnitInspection;
 $problems_info = $HcaUnitInspection->getProblems();
@@ -37,14 +38,16 @@ if (isset($_POST['create']))
 		'time_inspection_start' => date('H:i:s'),
 		'updated_by'			=> $User->get('id'),
 		'updated_time'			=> time(),
-		'inspection_type'		=> isset($_POST['inspection_type']) ? intval($_POST['inspection_type']) : 0,
+		//'inspection_type'		=> isset($_POST['inspection_type']) ? intval($_POST['inspection_type']) : 0,//to remove
+		'type_audit'			=> isset($_POST['type_audit']) ? intval($_POST['type_audit']) : 0,
+		'type_flapper'			=> isset($_POST['type_flapper']) ? intval($_POST['type_flapper']) : 0,
 	];
 
 	if ($form_data['property_id'] == 0)
 		$Core->add_error('Select property.');
 	if ($form_data['unit_id'] == 0)
 		$Core->add_error('Select unit number.');
-	if (!isset($_POST['inspection_type']))
+	if ($form_data['type_audit'] == 0 && $form_data['type_flapper'] == 0)
 		$Core->add_error('Select type of inspection.');
 
 	if (empty($Core->errors))
@@ -111,6 +114,10 @@ else if (isset($_POST['complete']))
 			}
 		}
 */
+		// If checklist is closed, copy 'num_problem' to "num_pending"
+		if ($form_data['inspection_completed'] == 2)
+			$form_data['num_pending'] = $num_problem;
+
 		$DBLayer->update('hca_ui_checklist', $form_data, $id);
 
 		// Add flash message
@@ -337,7 +344,7 @@ if ($id == 0)
 {
 ?>
 
-<form method="post" accept-charset="utf-8" action="">
+<form method="post" accept-charset="utf-8" action="" class="was-validated">
 	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
 	<div class="card">
 		<div class="card-header">
@@ -346,7 +353,7 @@ if ($id == 0)
 		<div class="card-body">
 
 			<div class="col-md-3 mb-3">
-				<label class="form-label text-danger" for="property_id">Property name</label>
+				<label class="form-label" for="property_id">Property name</label>
 				<select id="property_id" class="form-select" name="property_id" onchange="getUnits()" required>
 <?php
 echo '<option value="" selected disabled>Select Property</option>'."\n";
@@ -360,15 +367,18 @@ foreach ($property_info as $cur_info)
 ?>
 				</select>
 			</div>
+
 			<div class="col-md-3 mb-3">
-				<label class="form-label text-danger" for="fld_unit_number">Unit number</label>
+				<label class="form-label" for="fld_unit_number">Unit number</label>
 				<div id="unit_number">
 					<input type="text" value="" class="form-control" id="fld_unit_number" disabled>
 				</div>
 			</div>
 
-			<div class="mb-3 hidden">
-				<label class="form-label text-danger">Type of inspection</label>
+			<div id="unit_key_number"></div>
+
+			<div class="mb-3">
+				<label class="form-label text-danger">Type of inspection (at least one required)</label>
 				<div class="form-check">
 					<input type="hidden" name="type_audit" value="0">
 					<input class="form-check-input" type="checkbox" name="type_audit" value="1" id="fld_type_audit">
@@ -381,48 +391,28 @@ foreach ($property_info as $cur_info)
 				</div>
 			</div>
 
-			<div class="mb-3">
-				<label class="form-label text-danger">Type of inspection</label>
-				<div class="form-check">
-					<input class="form-check-input" type="radio" name="inspection_type" value="0" id="fld_type_audit" required>
-					<label class="form-check-label" for="fld_type_audit">Water Audit</label>
-				</div>
-				<div class="form-check">
-					<input class="form-check-input" type="radio" name="inspection_type" value="1" id="fld_type_flapper">
-					<label class="form-check-label" for="fld_type_flapper">Flapper Replacement</label>
-				</div>
-			</div>
+			<div id="btn_actions"></div>
 
-			<div class="col-md-3 mb-3 hidden">
-				<label class="form-label" for="fld_key_number">Key number</label>
-				<span><i id="key_number_eye" class="fas fa-eye-slash" onclick="showKey()"></i></span>
-				<div id="key_number">
-					<input type="text" value="" class="form-control" id="fld_key_number" disabled>
-				</div>
-			</div>
-
-			<div class="mb-3">
-				<button type="submit" name="create" class="btn btn-primary">Start inspection</button>
-			</div>
 		</div>
 	</div>
 </form>
 
 <script>
-function getUnits(id){
+function getUnits(pid,uid){
 	var csrf_token = "<?php echo generate_form_token($URL->link('hca_ui_ajax_get_units')) ?>";
-	var id = $("#property_id").val();
+	var pid = $("#property_id").val();
 	jQuery.ajax({
 		url:	"<?php echo $URL->link('hca_ui_ajax_get_units') ?>",
 		type:	"POST",
 		dataType: "json",
 		cache: false,
-		data: ({id:id,csrf_token:csrf_token}),
+		data: ({property_id:pid,unit_id:uid,csrf_token:csrf_token}),
 		success: function(re){
 			$("#unit_number").empty().html(re.unit_number);
-			$("#key_number").empty().html(re.key_number);
+			$('#unit_key_number').empty().html(re.unit_key_number);
 			$("#key_number_eye").removeClass("fa-eye");
 			$("#key_number_eye").addClass("fa-eye-slash");
+			$("#btn_actions").empty().html(re.btn_actions);
 		},
 		error: function(re){
 			document.getElementById("unit_number").innerHTML = re;
@@ -431,17 +421,17 @@ function getUnits(id){
 }
 function getUnitKey(){
 	var csrf_token = "<?php echo generate_form_token($URL->link('hca_ui_ajax_get_units')) ?>";
-	var unit_id = $("#unit_numbers").val();
+	var uid = $("#unit_numbers").val();
 	jQuery.ajax({
 		url:	"<?php echo $URL->link('hca_ui_ajax_get_units') ?>",
 		type:	"POST",
 		dataType: "json",
 		cache: false,
-		data: ({unit_id:unit_id,csrf_token:csrf_token}),
+		data: ({unit_id:uid,csrf_token:csrf_token}),
 		success: function(re){
 			$("#key_number").empty().html(re.key_number);
-			$("#key_number_eye").removeClass("fa-eye");
-			$("#key_number_eye").addClass("fa-eye-slash");
+			$('#unit_key_number').empty().html(re.unit_key_number);
+			$("#btn_actions").empty().html(re.btn_actions);
 		},
 		error: function(re){
 			document.getElementById("key_number").innerHTML = re;
@@ -452,17 +442,17 @@ function showKey()
 {
     if ($("#key_number_eye").hasClass('fa-eye-slash'))
 	{
-		$("#fld_key_number").attr("type", "text");
 		$("#key_number_eye").removeClass("fa-eye-slash");
 		$("#key_number_eye").addClass("fa-eye");
+		$("#key_number").removeClass("hidden");
     } else {
-		$("#fld_key_number").attr("type", "password");
 		$("#key_number_eye").removeClass("fa-eye");
 		$("#key_number_eye").addClass("fa-eye-slash");
+		$("#key_number").addClass("hidden");
     }
 }
 document.addEventListener("DOMContentLoaded", function() {
-	getUnits();
+	getUnits(<?=$property_id?>,<?=$unit_id?>);
 });
 </script>
 
@@ -662,18 +652,18 @@ foreach($HcaUnitInspection->getLocations() as $location_id => $location_name)
 			<label class="form-label mb-1">Has the checklist been completed?</label>
 			<div class="mb-3">
 				<div class="form-check form-check-inline">
-					<input class="form-check-input" type="radio" name="inspection_completed" id="fld_inspection_completed1" value="1" <?php echo ($main_info['inspection_completed'] == 1) ? 'checked' : '' ?>>
+					<input class="form-check-input" type="radio" name="inspection_completed" id="fld_inspection_completed1" value="1" <?php echo ($main_info['inspection_completed'] == 1) ? 'checked' : '' ?> required onclick="checkRadioBox(1)">
 					<label class="form-check-label" for="fld_inspection_completed1">NO</label>
 				</div>
 				<div class="form-check form-check-inline">
-					<input class="form-check-input" type="radio" name="inspection_completed" id="fld_inspection_completed2" value="2" <?php echo ($main_info['inspection_completed'] == 2) ? 'checked' : '' ?>>
+					<input class="form-check-input" type="radio" name="inspection_completed" id="fld_inspection_completed2" value="2" <?php echo ($main_info['inspection_completed'] == 2) ? 'checked' : '' ?> onclick="checkRadioBox(2)">
 					<label class="form-check-label" for="fld_inspection_completed2">YES</label>
 				</div>
 			</div>
 
 			<div class="mb-3">
 				<label class="form-label text-danger" for="fld_work_order_comment">Provide a reason if you close the checklist without issues or Checklist is not completed.</label>
-				<textarea class="form-control" id="fld_work_order_comment" name="work_order_comment" placeholder="Leave your comments"><?php echo isset($_POST['work_order_comment']) ? html_encode($_POST['work_order_comment']) : html_encode($main_info['work_order_comment']) ?></textarea>
+				<textarea class="form-control" id="fld_work_order_comment" name="work_order_comment" placeholder="Leave your comments" required><?php echo isset($_POST['work_order_comment']) ? html_encode($_POST['work_order_comment']) : html_encode($main_info['work_order_comment']) ?></textarea>
 			</div>
 
 			<div class="mb-3">
@@ -691,6 +681,46 @@ foreach($HcaUnitInspection->getLocations() as $location_id => $location_name)
 
 	</div>
 </form>
+
+<?php
+
+$hca_ui_checklist = $unispected_units = [];
+	
+$query = array(
+	'SELECT'	=> 'ch.unit_id',
+	'FROM'		=> 'hca_ui_checklist AS ch',
+	'WHERE'		=> 'ch.property_id='.$main_info['property_id'],
+);
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+while ($row = $DBLayer->fetch_assoc($result))
+{
+	$hca_ui_checklist[$row['unit_id']] = $row['unit_id'];
+}
+
+$query = array(
+	'SELECT'	=> 'un.id, un.unit_number',
+	'FROM'		=> 'sm_property_units AS un',
+	'WHERE'		=> 'un.property_id='.$main_info['property_id'],
+	'ORDER BY'	=> 'LENGTH(un.unit_number), un.unit_number',
+);
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+while ($row = $DBLayer->fetch_assoc($result))
+{
+	if (!in_array($row['id'], $hca_ui_checklist))
+		$unispected_units[] = '<a href="'.$URL->link('hca_ui_checklist', 0).'&property_id='.$main_info['property_id'].'&unit_id='.$row['id'].'" class="badge bg-primary text-white me-2 mb-2">'.$row['unit_number'].'</a>';
+}
+?>
+<div class="card-header">
+	<h6 class="card-title mb-0">List of never inspected units (<?php echo count($unispected_units) ?>)</h6>
+</div>
+<div class="mb-3">
+	<div class="alert alert-info mb-0 py-2" role="alert">
+		<p class="text-muted">This unit list displays never inspected units of <?=html_encode($main_info['pro_name'])?> property. Click on the link below to start a new inspection.</p>
+	</div>
+	<div class="alert alert-warning" role="alert">
+		<p class="fw-bold"><?php echo implode(' ', $unispected_units) ?></p>
+	</div>
+</div>
 
 <?php
 if ($User->checkAccess('hca_ui', 17)) 
@@ -717,7 +747,6 @@ if ($User->checkAccess('hca_ui', 17))
 	if (!empty($actions_info)) 
 	{
 ?>
-
 <div class="card-header">
 	<h6 class="card-title mb-0">Project's actions</h6>
 </div>
@@ -826,7 +855,6 @@ function checkCheckBoxes()
 			$('#btn_add_item').prop('disabled', true);
 	});
 }
-
 function editChecklistItem(id)
 {
 	var csrf_token = "<?php echo generate_form_token($URL->link('hca_ui_ajax_edit_checklist_item')) ?>";
@@ -850,6 +878,13 @@ function closeModalWindow(){
 	$('.modal .modal-title').empty().html('');
 	$('.modal .modal-body').empty().html('');
 	$('.modal .modal-footer').empty().html('');
+}
+function checkRadioBox(key){
+	if (key === 1){
+		$('#fld_work_order_comment').prop('required', true);
+	}else{
+		$('#fld_work_order_comment').prop('required', false);
+	}
 }
 </script>
 

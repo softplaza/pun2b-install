@@ -1,4 +1,9 @@
 <?php
+/**
+ * @copyright (C) 2020 SwiftManager.Org, partially based on PunBB
+ * @license http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ * @package SwiftManager
+ */
 
 if (!$User->is_admin() && ($User->get('g_moderator') != '1' || $User->get('g_mod_ban_users') == '0' || $User->get('id') == $id))
 	message($lang_common['Bad request']);

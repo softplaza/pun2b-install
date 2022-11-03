@@ -18,7 +18,7 @@ class HcaUISummaryReport
 	{
 		global $DBLayer;
 
-		$search_by_inspection_type = isset($_GET['inspection_type']) ? intval($_GET['inspection_type']) : -1;
+		$search_by_inspection_type = isset($_GET['inspection_type']) ? intval($_GET['inspection_type']) : 0;
 		$search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
 		$search_by_item_id  = isset($_GET['item_id']) ? intval($_GET['item_id']) : 0;
 		$search_by_date_inspected  = isset($_GET['date_inspected']) ? swift_trim($_GET['date_inspected']) : '';
@@ -33,10 +33,12 @@ class HcaUISummaryReport
 
 		if ($search_by_property_id > 0)
 			$this->search_query[] = 'ch.property_id='.$search_by_property_id;
-		if ($search_by_inspection_type > -1)
-			$this->search_query[] = 'ch.inspection_type='.$search_by_inspection_type;
-		if ($search_by_job_type > 0)
-			$this->search_query[] = 'ci.job_type='.$search_by_job_type;
+		if ($search_by_inspection_type == 1)
+			$search_query[] = 'ch.type_audit=1';
+		if ($search_by_inspection_type == 2)
+			$search_query[] = 'ch.type_flapper=1';
+		//if ($search_by_job_type > 0)
+		//	$this->search_query[] = 'ci.job_type='.$search_by_job_type;
 		if ($search_by_item_id > 0)
 			$this->search_query[] = 'ci.item_id='.$search_by_item_id;
 		if ($search_by_date_inspected != '')
@@ -45,7 +47,7 @@ class HcaUISummaryReport
 			$this->search_query[] = 'YEAR(ch.date_inspected)=\''.$DBLayer->escape($search_by_year).'\'';
 
 		if ($search_by_job_type == 0)
-			$this->search_query[] = '(ci.job_type=0 OR ci.job_type=4)';
+			$this->search_query[] = 'ci.job_type=0';
 		else if ($search_by_job_type == 1)
 			$this->search_query[] = 'ci.job_type=1';
 

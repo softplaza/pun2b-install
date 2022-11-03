@@ -636,48 +636,48 @@ foreach($checked_items as $cur_info)
 </form>
 
 <?php
-if ($User->checkAccess('hca_hvac_inspections', 17)) 
+
+$hca_hvac_inspections_checklist = $unispected_units = [];
+	
+$query = array(
+	'SELECT'	=> 'ch.unit_id',
+	'FROM'		=> 'hca_hvac_inspections_checklist AS ch',
+	'WHERE'		=> 'ch.property_id='.$main_info['property_id'],
+);
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+while ($row = $DBLayer->fetch_assoc($result))
 {
-	$hca_hvac_inspections_checklist = $unispected_units = [];
-	
-	$query = array(
-		'SELECT'	=> 'ch.unit_id',
-		'FROM'		=> 'hca_hvac_inspections_checklist AS ch',
-		'WHERE'		=> 'ch.property_id='.$main_info['property_id'],
-	);
-	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-	while ($row = $DBLayer->fetch_assoc($result))
-	{
-		$hca_hvac_inspections_checklist[$row['unit_id']] = $row['unit_id'];
-	}
-	
-	$query = array(
-		'SELECT'	=> 'un.id, un.unit_number',
-		'FROM'		=> 'sm_property_units AS un',
-		'WHERE'		=> 'un.property_id='.$main_info['property_id'],
-		'ORDER BY'	=> 'LENGTH(un.unit_number), un.unit_number',
-	);
-	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-	while ($row = $DBLayer->fetch_assoc($result))
-	{
-		if (!in_array($row['id'], $hca_hvac_inspections_checklist))
-			$unispected_units[] = '<a href="'.$URL->link('hca_hvac_inspections_checklist', 0).'&property_id='.$main_info['property_id'].'&unit_id='.$row['id'].'" class="badge bg-primary text-white me-2 mb-2">'.$row['unit_number'].'</a>';
-	}
-	
-	?>
-	<div class="card-header">
-		<h6 class="card-title mb-0">List of never inspected units (<?php echo count($unispected_units) ?>)</h6>
+	$hca_hvac_inspections_checklist[$row['unit_id']] = $row['unit_id'];
+}
+
+$query = array(
+	'SELECT'	=> 'un.id, un.unit_number',
+	'FROM'		=> 'sm_property_units AS un',
+	'WHERE'		=> 'un.property_id='.$main_info['property_id'],
+	'ORDER BY'	=> 'LENGTH(un.unit_number), un.unit_number',
+);
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+while ($row = $DBLayer->fetch_assoc($result))
+{
+	if (!in_array($row['id'], $hca_hvac_inspections_checklist))
+		$unispected_units[] = '<a href="'.$URL->link('hca_hvac_inspections_checklist', 0).'&property_id='.$main_info['property_id'].'&unit_id='.$row['id'].'" class="badge bg-primary text-white me-2 mb-2">'.$row['unit_number'].'</a>';
+}
+?>
+<div class="card-header">
+	<h6 class="card-title mb-0">List of never inspected units (<?php echo count($unispected_units) ?>)</h6>
+</div>
+<div class="mb-3">
+	<div class="alert alert-info mb-0 py-2" role="alert">
+		<p class="text-muted">This unit list displays never inspected units of <?=html_encode($main_info['pro_name'])?> property. Click on the link below to start a new inspection.</p>
 	</div>
-	<div class="mb-3">
-		<div class="alert alert-info mb-0 py-2" role="alert">
-			<p class="text-muted">This unit list displays never inspected units of <?=html_encode($main_info['pro_name'])?> property. Click on the link below to start a new inspection.</p>
-		</div>
-		<div class="alert alert-warning" role="alert">
-			<p class="fw-bold"><?php echo implode(' ', $unispected_units) ?></p>
-		</div>
+	<div class="alert alert-warning" role="alert">
+		<p class="fw-bold"><?php echo implode(' ', $unispected_units) ?></p>
 	</div>
+</div>
 
 <?php
+if ($User->checkAccess('hca_hvac_inspections', 17)) 
+{
 	$query = [
 		'SELECT'	=> 'a.*, u.realname',
 		'FROM'		=> 'hca_hvac_inspections_actions AS a',

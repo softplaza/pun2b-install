@@ -52,7 +52,10 @@ class Config
     }
 
 	// Get the forum config from the DB
-	function setFromDB() {
+	function setFromDB()
+	{
+		global $DBLayer;
+
 		$query = array(
 			'SELECT'	=> 'c.*',
 			'FROM'		=> 'config AS c'
@@ -68,7 +71,7 @@ class Config
 
 	// Update option using $_POST['form'] as key => val
 	// as form use name="form[custom_option_key]"
-	function update($form = '', $prefix = 'o_')
+	function update($form = [], $prefix = 'o_')
 	{
 		global $DBLayer, $Cachinger;
 		

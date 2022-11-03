@@ -1,6 +1,12 @@
 <?php
-	$Core->set_page_id('admin_settings_features', 'settings');
-	require SITE_ROOT.'header.php';
+/**
+ * @copyright (C) 2020 SwiftManager.Org, partially based on PunBB
+ * @license http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ * @package SwiftManager
+ */
+
+$Core->set_page_id('admin_settings_features', 'settings');
+require SITE_ROOT.'header.php';
 ?>
 
 <form method="post" accept-charset="utf-8" action="">
@@ -54,7 +60,7 @@
 				<label class="form-check-label" for="fld_gzip"><?php echo $lang_admin_settings['Enable gzip label'] ?></label>
 			</div>
 
-<?php $Hooks->get_hook('aop_features_gzip_fieldset_end'); ?>
+			<?php $Hooks->get_hook('aop_features_gzip_fieldset_end'); ?>
 
 			<hr>
 			<button type="submit" name="save" class="btn btn-primary">Save changes</button>

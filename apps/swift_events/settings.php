@@ -12,6 +12,7 @@ $access_options = [
 	1 => 'View Calendar',
 	2 => 'Add events',
 	3 => 'Edit events',
+	4 => 'Report',
 
 	20 => 'Settings'
 ];

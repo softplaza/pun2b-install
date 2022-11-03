@@ -4,7 +4,7 @@ define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
 //$access = ($User->checkAccess('swift_events', 1)) ? true : false;
-$access2 = ($User->checkAccess('swift_events', 2)) ? true : false;//add
+$access4 = ($User->checkAccess('swift_events', 4)) ? true : false;//add
 //if (!$access)
 //	message($lang_common['No permission']);
 

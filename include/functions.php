@@ -1,4 +1,9 @@
 <?php
+/**
+ * @copyright (C) 2020 SwiftManager.Org, partially based on PunBB
+ * @license http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ * @package SwiftManager
+ */
 
 // Generate a hyperlink with parameters and anchor and a subsection such as a subpage
 // $args = is array of args
@@ -1006,10 +1011,6 @@ function validate_username($username, $exclude_id = null)
 	else if (preg_match('/(?:\[\/?(?:b|u|i|h|colou?r|quote|code|img|url|email|list)\]|\[(?:code|quote|list)=)/i', $username))
 		$errors[] = $lang_profile['Username BBCode'];
 
-	// Check username for any censored words
-	if ($Config->get('o_censoring') == '1' && censor_words($username) != $username)
-		$errors[] = $lang_profile['Username censor'];
-
 	// Check for username dupe
 	$dupe = check_username_dupe($username, $exclude_id);
 	if ($dupe !== false)
@@ -1037,9 +1038,6 @@ function get_title($user)
 	// If the user is banned
 	if (in_array(utf8_strtolower($user['username']), $ban_list))
 		$user_title = $lang_common['Banned'];
-	// If the user has a custom title
-	else if ($user['title'] != '')
-		$user_title = html_encode($Config->get('o_censoring') == '1' ? censor_words($user['title']) : $user['title']);
 	// If the user group has a default user title
 	else if ($user['g_user_title'] != '')
 		$user_title = html_encode($user['g_user_title']);

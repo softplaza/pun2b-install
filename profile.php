@@ -1,4 +1,9 @@
 <?php
+/**
+ * @copyright (C) 2020 SwiftManager.Org, partially based on PunBB
+ * @license http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ * @package SwiftManager
+ */
 
 define('SITE_ROOT', './');
 require SITE_ROOT.'include/common.php';
@@ -711,7 +716,7 @@ if (!$page_param['own_profile'] && $page_param['mod_profile'])
 
 // User's contacts
 if ($user['email_setting'] == '0' && $User->get('g_send_email') == '1' && $user['email'] != '')
-	$page_param['contacts'][] = '<p>Email: <strong><a href="mailto:'.html_encode($user['email']).'" class="email">'.html_encode(($Config->get('o_censoring') == '1' ? censor_words($user['email']) : $user['email'])).'</a></strong></p>';
+	$page_param['contacts'][] = '<p>Email: <strong><a href="mailto:'.html_encode($user['email']).'" class="email">'.html_encode($user['email']).'</a></strong></p>';
 if ($user['work_phone'] != '')
 	$page_param['contacts'][] = '<p>Work Phone: <strong><a href="tel:'.html_encode($user['work_phone']).'" class="email">'.html_encode($user['work_phone']).'</a></strong></p>';
 if ($user['cell_phone'] != '')

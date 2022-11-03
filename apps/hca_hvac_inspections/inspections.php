@@ -120,7 +120,7 @@ if ($search_by_unit_number != '')
 	$search_query[] = 'un.unit_number=\''.$DBLayer->escape($search_by_unit_number).'\'';
 
 if ($search_by_date != '')
-	$search_query[] = '(c.date_inspected=\''.$DBLayer->escape($search_by_date).'\' OR DATE(c.datetime_completion_start)=\''.$DBLayer->escape($search_by_date).'\' OR DATE(c.datetime_completion_end)=\''.$DBLayer->escape($search_by_date).'\')';
+	$search_query[] = '(DATE(c.datetime_inspection_start)=\''.$DBLayer->escape($search_by_date).'\' OR DATE(c.datetime_completion_end)=\''.$DBLayer->escape($search_by_date).'\')';
 
 // owned_by, inspected_by, completed_by, updated_by
 if ($search_by_user_id > 0)
@@ -225,8 +225,8 @@ while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
 $query = array(
 	'SELECT'	=> 'u.id, u.realname',
 	'FROM'		=> 'users AS u',
-	//'WHERE'		=> 'u.id > 2',
-	'WHERE'		=> 'u.group_id='.$Config->get('o_hca_fs_maintenance'),
+	'WHERE'		=> 'u.group_id=3 OR u.group_id=9',
+	//'WHERE'		=> 'u.group_id='.$Config->get('o_hca_fs_maintenance'),
 	'ORDER BY'	=> 'u.realname'
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -260,6 +260,23 @@ foreach ($property_info as $val)
 				</div>
 				<div class="col-md-auto pe-0 mb-1">
 					<input name="unit_number" type="text" value="<?php echo isset($_GET['unit_number']) ? $_GET['unit_number'] : '' ?>" placeholder="Unit #" class="form-control-sm" size="5">
+				</div>
+				<div class="col-md-auto pe-0 mb-1">
+					<select name="user_id" class="form-select-sm">
+						<option value="0">All technicians</option>
+<?php
+foreach ($users_info as $user_info)
+{
+	if ($search_by_user_id == $user_info['id'] || $User->get('id') == $user_info['id'])
+		echo '<option value="'.$user_info['id'].'" selected>'.$user_info['realname'].'</option>';
+	else
+		echo '<option value="'.$user_info['id'].'">'.$user_info['realname'].'</option>';
+}
+?>
+					</select>
+				</div>
+				<div class="col-md-auto pe-0 mb-1">
+					<input name="date" type="date" value="<?php echo $search_by_date ?>" class="form-control-sm">
 				</div>
 				<div class="col-md-auto pe-0 mb-1">
 					<div class="mb-0">

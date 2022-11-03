@@ -1,6 +1,12 @@
 <?php
-	$Core->set_page_id('admin_settings_email', 'settings');
-	require SITE_ROOT.'header.php';
+/**
+ * @copyright (C) 2020 SwiftManager.Org, partially based on PunBB
+ * @license http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ * @package SwiftManager
+ */
+
+$Core->set_page_id('admin_settings_email', 'settings');
+require SITE_ROOT.'header.php';
 ?>
 
 <form method="post" accept-charset="utf-8" action="">

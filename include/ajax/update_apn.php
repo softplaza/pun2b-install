@@ -1,8 +1,11 @@
 <?php
+/**
+ * @copyright (C) 2020 SwiftManager.Org, partially based on PunBB
+ * @license http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ * @package SwiftManager
+ */
 
-if (!defined('SITE_ROOT') )
-	define('SITE_ROOT', '../../');
-
+define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
 $access = ($User->is_admmod()) ? true : false;

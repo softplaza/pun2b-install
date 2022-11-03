@@ -369,13 +369,13 @@ foreach($HcaUnitInspection->getLocations() as $location_id => $location_name)
 
 				$cur_item[] = '</div>';
 
-				$css_job_type = ($cur_info['job_type'] == 0 || $cur_info['job_type'] == 4) ? 'alert-warning' : 'alert-success';
+				$css_job_type = ($cur_info['job_type'] == 0) ? 'alert-warning' : 'alert-success';
 				$cur_item[] = '<div class="col-md-3 px-0">';
 				$cur_item[] = '<label class="form-label">Choose an action</label>';
 				$cur_item[] = '<select name="job_type['.$cur_info['id'].']" class="form-select form-select-sm '.$css_job_type.'">';
 				foreach($HcaUnitInspection->job_types as $key => $val)
 				{
-					if ($cur_info['job_type'] == $key)
+					if ($cur_info['job_type'] == $key || (isset($_POST['job_type'][$cur_info['id']]) && $_POST['job_type'][$cur_info['id']] == $key))
 						$cur_item[] = '<option value="'.$key.'" selected>'.$val.'</option>';
 					else
 						$cur_item[] = '<option value="'.$key.'">'.$val.'</option>';

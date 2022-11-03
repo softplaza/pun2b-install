@@ -760,4 +760,85 @@ function updateRules(type,id){
 </script>
 
 <?php
+
+
+
+
+/**
+ * ONE TIME UPDATE
+ * 
+ */
+/*
+$num_pending = $num_replaced = $num_repaired = $num_reset = $num_tied = [];
+$hca_ui_checklist_items = $DBLayer->select_all('hca_ui_checklist_items');
+if (!empty($hca_ui_checklist_items))
+{
+	foreach($hca_ui_checklist_items as $checklist_items)
+	{
+		if ($checklist_items['job_type'] == 0)
+		{
+			if (isset($num_pending[$checklist_items['checklist_id']]))
+				++$num_pending[$checklist_items['checklist_id']];
+			else
+				$num_pending[$checklist_items['checklist_id']] = 1;
+		}
+		else if ($checklist_items['job_type'] == 1)
+		{
+			if (isset($num_replaced[$checklist_items['checklist_id']]))
+				++$num_replaced[$checklist_items['checklist_id']];
+			else
+				$num_replaced[$checklist_items['checklist_id']] = 1;
+		}
+		else if ($checklist_items['job_type'] == 2)
+		{
+			if (isset($num_repaired[$checklist_items['checklist_id']]))
+				++$num_repaired[$checklist_items['checklist_id']];
+			else
+				$num_repaired[$checklist_items['checklist_id']] = 1;
+		}
+		else if ($checklist_items['job_type'] == 3)
+		{
+			if (isset($num_reset[$checklist_items['checklist_id']]))
+				++$num_reset[$checklist_items['checklist_id']];
+			else
+				$num_reset[$checklist_items['checklist_id']] = 1;
+		}
+		else if ($checklist_items['job_type'] == 4)
+		{
+			if (isset($num_tied[$checklist_items['checklist_id']]))
+				++$num_tied[$checklist_items['checklist_id']];
+			else
+				$num_tied[$checklist_items['checklist_id']] = 1;
+		}
+	}
+}
+
+$hca_ui_checklist = $DBLayer->select_all('hca_ui_checklist');
+if (!empty($hca_ui_checklist))
+{
+	foreach($hca_ui_checklist as $checklist)
+	{
+		$db_data = [
+			'num_pending'		=> isset($num_pending[$checklist['id']]) ? $num_pending[$checklist['id']] : 0,
+			'num_replaced'		=> isset($num_replaced[$checklist['id']]) ? $num_replaced[$checklist['id']] : 0,
+			'num_repaired'		=> isset($num_repaired[$checklist['id']]) ? $num_repaired[$checklist['id']] : 0,
+			'num_reset'			=> isset($num_reset[$checklist['id']]) ? $num_reset[$checklist['id']] : 0,
+			'num_tied'			=> isset($num_tied[$checklist['id']]) ? $num_tied[$checklist['id']] : 0,
+		];
+
+		if ($checklist['inspection_type'] == 1)
+		{
+			$db_data['type_flapper'] = 1;
+			$DBLayer->update('hca_ui_checklist', $db_data, $checklist['id']);
+		}
+		else
+		{
+			$db_data['type_audit'] = 1;
+			$DBLayer->update('hca_ui_checklist', $db_data, $checklist['id']);
+		}
+	}
+}
+*/
+
+
 require SITE_ROOT.'footer.php';

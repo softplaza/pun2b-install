@@ -1,4 +1,10 @@
 <?php
+/**
+ * @copyright (C) 2020 SwiftManager.Org, partially based on PunBB
+ * @license http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ * @package SwiftManager
+ */
+
 $page_param['message'] = [];
 $page_param['message'][] = 'Hello, '.html_encode($user['realname'])."\n\n";
 $page_param['message'][] = 'You are invited to '.$Config->get('o_board_title')."\n\n";

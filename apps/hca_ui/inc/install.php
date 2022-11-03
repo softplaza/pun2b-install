@@ -43,7 +43,7 @@ $schema = array(
 		//'date_completed'			=> $DBLayer->dt_date(),// remove and use time start and End as date
 
 		'started_by'				=> $DBLayer->dt_int(),
-		'datetime_completion_start'	=> $DBLayer->dt_datetime(),
+		'datetime_completion_start'	=> $DBLayer->dt_datetime(),//?
 		'datetime_completion_end'	=> $DBLayer->dt_datetime(),
 
 		'completed_by'				=> $DBLayer->dt_int(),
@@ -59,6 +59,7 @@ $schema = array(
 		'num_repaired'				=> $DBLayer->dt_int(),
 		'num_replaced'				=> $DBLayer->dt_int(),
 		'num_reset'					=> $DBLayer->dt_int(),
+		'num_tied'					=> $DBLayer->dt_int(),
 
 		'appendixb'					=> $DBLayer->dt_int('TINYINT(1)'),
 
@@ -77,8 +78,7 @@ $schema = array(
 $DBLayer->create_table('hca_ui_checklist', $schema);
 $DBLayer->add_field('hca_ui_checklist', 'type_audit', 'TINYINT(1)', false, '0');
 $DBLayer->add_field('hca_ui_checklist', 'type_flapper', 'TINYINT(1)', false, '0');
-
-
+$DBLayer->add_field('hca_ui_checklist', 'num_tied', 'INT(10) UNSIGNED', false, '0');
 
 $schema = array(
 	'FIELDS'		=> array(

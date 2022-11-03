@@ -1,4 +1,0 @@
-id,project_manager,project_scale,property_name,project_desc,action_date,action_owner,follow_up,start_date,end_date,mgmt_fee,cost,work_status,remarks
-1,JOSH ANDERSON,1,SOMMERSET,Replace upper laundry room windows,2020-10-05,Josh,"",2020-10-12,2020-10-16,0,1440,2,Upgrade upper laundry windows to dual pane
-2,JOSH ANDERSON,1,WINTERGREEN,Asphalt repair backside of property,2020-10-09,Josh,"",2020-10-08,2020-10-15,0,55262,1,Repair drive lane only on backside of property
-3,JOSH ANDERSON,1,ALDERWOOD,Re-roof apt. and storage bldgs.,2020-10-07,Josh,"",2020-10-08,2021-08-30,0,1500000,1,Re-roof all bldgs. per Parra scope of work

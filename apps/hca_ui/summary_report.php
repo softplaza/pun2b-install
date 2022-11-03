@@ -8,13 +8,13 @@ $access6 = ($User->checkAccess('hca_ui', 6)) ? true : false;
 if (!$access6)
 	message($lang_common['No permission']);
 
-$search_by_inspection_type = isset($_GET['inspection_type']) ? intval($_GET['inspection_type']) : -1;
+$search_by_inspection_type = isset($_GET['inspection_type']) ? intval($_GET['inspection_type']) : 0; // 0 all, 1 audit, 2 flapper
+
 $search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
 $search_by_item_id  = isset($_GET['item_id']) ? intval($_GET['item_id']) : 0;
 $search_by_job_type  = isset($_GET['job_type']) ? intval($_GET['job_type']) : 0;
 $search_by_year = isset($_GET['year']) ? intval($_GET['year']) : 0;
 $search_by_date_inspected = isset($_GET['date_inspected']) ? swift_trim($_GET['date_inspected']) : '';
-
 
 $HcaUISummaryReport = new HcaUISummaryReport;
 $HcaUISummaryReport->getCheckedItems();
@@ -39,6 +39,7 @@ while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
 	$sm_property_db[] = $fetch_assoc;
 }
 
+/*
 $query = array(
 	'SELECT'	=> 'i.*',
 	'FROM'		=> 'hca_ui_items AS i',
@@ -50,18 +51,107 @@ $hca_ui_items = [];
 while ($row = $DBLayer->fetch_assoc($result)) {
 	$hca_ui_items[] = $row;
 }
-
+*/
 $summary_pending = $summary_repaired = $summary_replaced = 0;
+$num_pending = $num_repaired = $num_replaced = [];
+
+$search_query = [];
+$search_query[] = 'i.summary_report=1'; // display only preselected in setting of List of items
+$search_query[] = 'ch.inspection_completed=2'; // Display only completed Checklists
+if ($search_by_property_id > 0)
+	$search_query[] = 'ch.property_id='.$search_by_property_id;
+
+if ($search_by_inspection_type == 1)
+	$search_query[] = 'ch.type_audit=1';
+if ($search_by_inspection_type == 2)
+	$search_query[] = 'ch.type_flapper=1';
+
+if ($search_by_item_id > 0)
+	$search_query[] = 'ci.item_id='.$search_by_item_id;
+if ($search_by_date_inspected != '')
+	$search_query[] = 'DATE(ch.date_inspected)=\''.$DBLayer->escape($search_by_date_inspected).'\'';
+if ($search_by_year > 0)
+	$search_query[] = 'YEAR(ch.date_inspected)=\''.$DBLayer->escape($search_by_year).'\'';
+
+$query = [
+	'SELECT'	=> 'ci.item_id, ci.job_type, ci.checklist_id, ch.property_id, ch.num_problem, ch.num_pending, ch.num_replaced, ch.num_repaired, ch.num_reset, ch.inspection_completed, ch.work_order_completed, ch.work_order_comment, p.pro_name, un.unit_number, un.mbath, un.hbath',
+	'FROM'		=> 'hca_ui_checklist_items AS ci',
+	'JOINS'		=> [
+		[
+			'INNER JOIN'	=> 'hca_ui_checklist AS ch',
+			'ON'			=> 'ch.id=ci.checklist_id'
+		],
+		[
+			'INNER JOIN'	=> 'hca_ui_items AS i',
+			'ON'			=> 'i.id=ci.item_id'
+		],
+		[
+			'INNER JOIN'	=> 'sm_property_db AS p',
+			'ON'			=> 'p.id=ch.property_id'
+		],
+		[
+			'INNER JOIN'	=> 'sm_property_units AS un',
+			'ON'			=> 'un.id=ch.unit_id'
+		],
+	],
+	'ORDER BY'	=> 'i.display_position'
+];
+$query['WHERE'] = implode(' AND ', $search_query);
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+
+while($row = $DBLayer->fetch_assoc($result))
+{
+	if ($row['job_type'] == 0)
+	{
+		++$summary_pending;
+
+		if (isset($num_pending[$row['property_id']]))
+			++$num_pending[$row['property_id']];
+		else
+			$num_pending[$row['property_id']] = 1;
+	}
+	else if ($row['job_type'] == 1)
+	{
+		++$summary_replaced;
+
+		if (isset($num_replaced[$row['property_id']]))
+			++$num_replaced[$row['property_id']];
+		else
+			$num_replaced[$row['property_id']] = 1;	
+	}
+		
+	else if ($row['job_type'] == 2)
+	{
+		++$summary_repaired;
+
+		if (isset($num_repaired[$row['property_id']]))
+			++$num_repaired[$row['property_id']];
+		else
+			$num_repaired[$row['property_id']] = 1;	
+	}
+}
+
+
+
+/**
+ * This is start page contants all inspected properties.
+ * Not inspected properties are not included.
+ * SEARCH AREA: 
+ * YEAR - need to be add search by "last year"
+ */
+
 if ($search_by_property_id == 0)
 {
 	$Core->set_page_id('hca_ui_summary_report', 'hca_ui');
 	require SITE_ROOT.'header.php';
 
-	$num_work_orders = $num_pending = $num_repaired = $num_replaced = [];
+	$num_work_orders = [];
 
 	$search_query = [];
-	if ($search_by_inspection_type > -1)
-		$search_query[] = 'ch.inspection_type='.$search_by_inspection_type;
+	if ($search_by_inspection_type == 1)
+		$search_query[] = 'ch.type_audit=1';
+	if ($search_by_inspection_type == 2)
+		$search_query[] = 'ch.type_flapper=1';
 	if ($search_by_year > 0)
 		$search_query[] = 'YEAR(ch.date_inspected)=\''.$DBLayer->escape($search_by_year).'\'';
 
@@ -80,6 +170,7 @@ if ($search_by_property_id == 0)
 		else
 			$num_work_orders[$row['property_id']] = 1;
 
+/*
 		if (isset($num_pending[$row['property_id']]))
 			$num_pending[$row['property_id']] = $num_pending[$row['property_id']] + $row['num_pending'];
 		else
@@ -93,7 +184,9 @@ if ($search_by_property_id == 0)
 		if (isset($num_replaced[$row['property_id']]))
 			$num_replaced[$row['property_id']] = $num_replaced[$row['property_id']] + $row['num_replaced'];
 		else
-			$num_replaced[$row['property_id']] = $row['num_replaced'];	
+			$num_replaced[$row['property_id']] = $row['num_replaced'];
+
+*/
 	}
 ?>
 
@@ -120,9 +213,9 @@ for ($year = 2021; $year <= date('Y'); $year++)
 					<select name="inspection_type" class="form-select-sm">
 <?php
 $inspection_types = [
-	-1 => 'All inspections',
-	0 => 'Water Audit',
-	1 => 'Flapper Replacement',
+	0 => 'All inspections',
+	1 => 'Water Audit',
+	2 => 'Flapper Replacement',
 ];
 foreach ($inspection_types as $key => $val)
 {
@@ -184,7 +277,7 @@ foreach ($inspection_types as $key => $val)
 		{
 			$sub_link_args = ['property_id' => $cur_info['id']];
 
-			if ($search_by_inspection_type > -1)
+			if ($search_by_inspection_type > 0)
 				$sub_link_args['inspection_type'] = $search_by_inspection_type;
 ?>
 		<tr>
@@ -192,16 +285,16 @@ foreach ($inspection_types as $key => $val)
 				<span class="fw-bold"><?php echo html_encode($cur_info['pro_name']) ?></span>
 				<a href="<?php echo $URL->genLink('hca_ui_summary_report', $sub_link_args) ?>" class="badge bg-primary float-end text-white">View</a>
 			</td>
-			<td class="ta-center fw-bold"><?php echo $num_pending[$cur_info['id']] ?></td>
-			<td class="ta-center fw-bold"><?php echo $num_repaired[$cur_info['id']] ?></td>
-			<td class="ta-center fw-bold"><?php echo $num_replaced[$cur_info['id']] ?></td>
+			<td class="ta-center fw-bold"><?php echo (isset($num_pending[$cur_info['id']]) ? $num_pending[$cur_info['id']] : 0) ?></td>
+			<td class="ta-center fw-bold"><?php echo (isset($num_repaired[$cur_info['id']]) ? $num_repaired[$cur_info['id']] : 0) ?></td>
+			<td class="ta-center fw-bold"><?php echo (isset($num_replaced[$cur_info['id']]) ? $num_replaced[$cur_info['id']] : 0) ?></td>
 		</tr>
 <?php
 
 			++$i;
-			$summary_pending = $summary_pending + $num_pending[$cur_info['id']];
-			$summary_repaired = $summary_repaired + $num_repaired[$cur_info['id']];
-			$summary_replaced = $summary_replaced + $num_replaced[$cur_info['id']];
+			//$summary_pending = $summary_pending + $num_pending[$cur_info['id']];
+			//$summary_repaired = $summary_repaired + $num_repaired[$cur_info['id']];
+			//$summary_replaced = $summary_replaced + $num_replaced[$cur_info['id']];
 		}
 	}
 ?>
@@ -235,13 +328,13 @@ else
 					<select name="year" class="form-select form-select-sm">
 						<option value="0">All Years</option>
 <?php
-for ($year = 2021; $year <= date('Y'); $year++)
-{
-			if ($search_by_year == $year)
-				echo '<option value="'.$year.'" selected="selected">'.$year.'</option>';
-			else
-				echo '<option value="'.$year.'">'.$year.'</option>';
-}
+	for ($year = 2021; $year <= date('Y'); $year++)
+	{
+				if ($search_by_year == $year)
+					echo '<option value="'.$year.'" selected="selected">'.$year.'</option>';
+				else
+					echo '<option value="'.$year.'">'.$year.'</option>';
+	}
 ?>
 					</select>
 					<p class="text-muted" for="fld_date_inspected">Period</p>
@@ -249,31 +342,31 @@ for ($year = 2021; $year <= date('Y'); $year++)
 				<div class="col-md-auto pe-0 mb-1">
 					<select name="inspection_type" class="form-select-sm">
 <?php
-$inspection_types = [
-	-1 => 'All inspections',
-	0 => 'Water Audit',
-	1 => 'Flapper Replacement',
-];
-foreach ($inspection_types as $key => $val)
-{
-	if ($search_by_inspection_type == $key)
-		echo '<option value="'.$key.'" selected>'.$val.'</option>';
-	else
-		echo '<option value="'.$key.'">'.$val.'</option>';
-}
+	$inspection_types = [
+		0 => 'All inspections',
+		1 => 'Water Audit',
+		2 => 'Flapper Replacement',
+	];
+	foreach ($inspection_types as $key => $val)
+	{
+		if ($search_by_inspection_type == $key)
+			echo '<option value="'.$key.'" selected>'.$val.'</option>';
+		else
+			echo '<option value="'.$key.'">'.$val.'</option>';
+	}
 ?>
 					</select>
 				</div>
 				<div class="col-md-auto pe-0 mb-1">
 					<select name="property_id" class="form-select-sm" id="fld_property_id">
 <?php
-foreach ($sm_property_db as $val)
-{
-	if ($search_by_property_id == $val['id'])
-		echo '<option value="'.$val['id'].'" selected>'.$val['pro_name'].'</option>';
-	else
-		echo '<option value="'.$val['id'].'">'.$val['pro_name'].'</option>';
-}
+	foreach ($sm_property_db as $val)
+	{
+		if ($search_by_property_id == $val['id'])
+			echo '<option value="'.$val['id'].'" selected>'.$val['pro_name'].'</option>';
+		else
+			echo '<option value="'.$val['id'].'">'.$val['pro_name'].'</option>';
+	}
 ?>
 					</select>
 					<p class="text-muted" for="fld_property_id">List of properties</p>
@@ -323,8 +416,12 @@ foreach ($sm_property_db as $val)
 	$search_query[] = 'ch.num_problem > 0';
 	if ($search_by_property_id > 0)
 		$search_query[] = 'ch.property_id='.$search_by_property_id;
-	if ($search_by_inspection_type > -1)
-		$search_query[] = 'ch.inspection_type='.$search_by_inspection_type;
+
+	if ($search_by_inspection_type == 1)
+		$search_query[] = 'ch.type_audit=1';
+	if ($search_by_inspection_type == 2)
+		$search_query[] = 'ch.type_flapper=1';
+
 	if ($search_by_item_id > 0)
 		$search_query[] = 'ci.item_id='.$search_by_item_id;
 	if ($search_by_date_inspected != '')
@@ -333,7 +430,7 @@ foreach ($sm_property_db as $val)
 		$search_query[] = 'YEAR(ch.date_inspected)=\''.$DBLayer->escape($search_by_year).'\'';
 
 	if ($search_by_job_type == 0)
-		$search_query[] = '(ci.job_type=0 OR ci.job_type=4)';
+		$search_query[] = 'ci.job_type=0';
 	else if ($search_by_job_type == 1)
 		$search_query[] = 'ci.job_type=1';
 
@@ -482,45 +579,28 @@ foreach ($sm_property_db as $val)
 
 <?php
 
-/*
-	$hca_ui_checklist = [];
-	$query = [
-		'SELECT'	=> 'ch.*, p.pro_name, un.unit_number, u1.realname AS owner_name',
-		'FROM'		=> 'hca_ui_checklist AS ch',
-		'JOINS'		=> [
-			[
-				'INNER JOIN'	=> 'sm_property_db AS p',
-				'ON'			=> 'p.id=ch.property_id'
-			],
-			[
-				'INNER JOIN'	=> 'sm_property_units AS un',
-				'ON'			=> 'un.id=ch.unit_id'
-			],
-			[
-				'LEFT JOIN'		=> 'users AS u1',
-				'ON'			=> 'u1.id=ch.owned_by'
-			],
-		],
-		//'ORDER BY'	=> 'ch.inspection_completed, ch.work_order_completed, p.pro_name, LENGTH(un.unit_number), un.unit_number',
-		'ORDER BY'	=> 'LENGTH(un.unit_number), un.unit_number',
-	];
-
-	if (!empty($hca_ui_checklist_ids))
-	{
-		// Filtered by ids
-		$query['WHERE'] = 'ch.id IN('.implode(',', $hca_ui_checklist_ids).')';
-
-		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-		while($row = $DBLayer->fetch_assoc($result))
-		{
-			$hca_ui_checklist[] = $row;
-		}
-	}
-*/
-
 	$hca_ui_checklist = $HcaUISummaryReport->genWorkOrderReport();
+
 	if (!empty($hca_ui_checklist))
 	{
+		foreach($hca_ui_checklist as $checklist)
+			$projects_ids[] = $checklist['checklist_id'];
+
+		$query = array(
+			'SELECT'	=> 'ci.*, i.item_name, i.req_appendixb',
+			'FROM'		=> 'hca_ui_checklist_items AS ci',
+			'JOINS'		=> [
+				[
+					'INNER JOIN'	=> 'hca_ui_items AS i',
+					'ON'			=> 'i.id=ci.item_id'
+				],
+			],
+			'WHERE'		=> 'i.summary_report=1 AND ci.checklist_id IN ('.implode(',', $projects_ids).')'
+		);
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		while ($row = $DBLayer->fetch_assoc($result)) {
+			$hca_ui_checklist_items[] = $row;
+		}
 ?>
 
 <div class="card-header">
@@ -531,6 +611,7 @@ foreach ($sm_property_db as $val)
 		<tr>
 			<th>Property name</th>
 			<th>Unit#</th>
+			<th>Identified Problems</th>
 			<th>Current Owner</th>
 			<th>Comment</th>
 <?php if ($search_by_job_type == 0): ?>
@@ -544,10 +625,11 @@ foreach ($sm_property_db as $val)
 	<tbody>
 
 <?php
-		$wo_total_pending = $wo_total_repaired = $wo_total_replaced = 0;
+		$wo_total_pending = $wo_total_replaced = 0;
 		foreach($hca_ui_checklist as $cur_info)
 		{
-			$num_pending = ($cur_info['num_pending'] > 0) ? $cur_info['num_pending'] : $cur_info['num_problem'];
+			//$num_pending = ($cur_info['num_pending'] > 0) ? $cur_info['num_pending'] : $cur_info['num_problem'];
+			$num_pending = $num_replaced = 0;
 
 			if ($cur_info['num_problem'] > 0 && $cur_info['work_order_completed'] == 2)
 				$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['checklist_id']).'" class="badge bg-success text-white">Completed</a>';
@@ -557,6 +639,25 @@ foreach ($sm_property_db as $val)
 				$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['checklist_id']).'" class="badge bg-primary text-white">Pending</a>';
 			else
 				$status = '<a href="'.$URL->link('hca_ui_checklist', $cur_info['checklist_id']).'" class="badge bg-primary text-white">Pending</a>';
+
+			$list_of_problems = [];
+			if (!empty($hca_ui_checklist_items))
+			{
+				foreach($hca_ui_checklist_items as $checklist_items)
+				{
+					if ($cur_info['checklist_id'] == $checklist_items['checklist_id'])
+					{
+						$status_OR_problems = ($checklist_items['job_type'] > 0) ? ' (<span class="text-success">'.$HcaUnitInspection->getJobType($checklist_items['job_type']).'</span>)' : ' (<span class="text-danger">'.$HcaUnitInspection->getItemProblems($checklist_items['problem_ids']).'</span>)';
+	
+						$list_of_problems[] = '<p class="text-primary">'.$checklist_items['item_name'].$status_OR_problems.'</p>';
+
+						if ($checklist_items['job_type'] == 0)
+							++$num_pending;
+						else if ($checklist_items['job_type'] == 1)
+							++$num_replaced;
+					}
+				}
+			}
 ?>
 		<tr>
 			<td class="fw-bold">
@@ -564,6 +665,7 @@ foreach ($sm_property_db as $val)
 				<span class="float-end"><?php echo $status ?></span>
 			</td>
 			<td class="ta-center fw-bold"><?php echo html_encode($cur_info['unit_number']) ?></td>
+			<td><?php echo implode("\n", $list_of_problems) ?></td>
 			<td class="ta-center fw-bold"><?php echo html_encode($cur_info['owner_name']) ?></td>
 			<td class=""><?php echo html_encode($cur_info['work_order_comment']) ?></td>
 <?php if ($search_by_job_type == 0): ?>
@@ -571,13 +673,12 @@ foreach ($sm_property_db as $val)
 <?php endif; ?>
 
 <?php if ($search_by_job_type == 1): ?>
-			<td class="ta-center fw-bold"><?php echo $cur_info['num_replaced'] ?></td>
+			<td class="ta-center fw-bold"><?php echo $num_replaced ?></td>
 <?php endif; ?>
 		</tr>
 <?php
 			$wo_total_pending = $wo_total_pending + $num_pending;
-			$wo_total_repaired = $wo_total_repaired + $cur_info['num_repaired'];
-			$wo_total_replaced = $wo_total_replaced + $cur_info['num_replaced'];
+			$wo_total_replaced = $wo_total_replaced + $num_replaced;
 		}
 ?>
 	</tbody>
@@ -585,7 +686,7 @@ foreach ($sm_property_db as $val)
 <?php if ($access_admin): ?>
 	<tfoot>
 		<tr>
-			<td class="ta-right fw-bold" colspan="4">Total: </td>
+			<td class="ta-right fw-bold" colspan="5">Total: </td>
 <?php if ($search_by_job_type == 0): ?>
 			<td class="ta-center fw-bold"><?php echo $wo_total_pending ?></td>
 <?php endif; ?>
@@ -604,12 +705,17 @@ foreach ($sm_property_db as $val)
 		$hca_ui_checklist = $unispected_units = $search_query = [];
 		if ($search_by_property_id > 0)
 			$search_query[] = 'ch.property_id='.$search_by_property_id;
-		if ($search_by_inspection_type > -1)
-			$search_query[] = 'ch.inspection_type='.$search_by_inspection_type;
+
+		if ($search_by_inspection_type == 1)
+			$search_query[] = 'ch.type_audit=1';
+		if ($search_by_inspection_type == 2)
+			$search_query[] = 'ch.type_flapper=1';
+
 		if ($search_by_year > 0)
 			$search_query[] = 'YEAR(ch.date_inspected)=\''.$DBLayer->escape($search_by_year).'\'';
 
 		// Get never inspected units
+		// Add limit by last period
 		$query = array(
 			'SELECT'	=> 'ch.unit_id',
 			'FROM'		=> 'hca_ui_checklist AS ch',
@@ -663,63 +769,12 @@ foreach ($sm_property_db as $val)
 
 <?php
 	}
-
-	$search_query = [];
-	$search_query[] = 'i.summary_report=1';
-	if ($search_by_property_id > 0)
-		$search_query[] = 'ch.property_id='.$search_by_property_id;
-	if ($search_by_inspection_type > -1)
-		$search_query[] = 'ch.inspection_type='.$search_by_inspection_type;
-	if ($search_by_item_id > 0)
-		$search_query[] = 'ci.item_id='.$search_by_item_id;
-	if ($search_by_date_inspected != '')
-		$search_query[] = 'DATE(ch.date_inspected)=\''.$DBLayer->escape($search_by_date_inspected).'\'';
-	if ($search_by_year > 0)
-		$search_query[] = 'YEAR(ch.date_inspected)=\''.$DBLayer->escape($search_by_year).'\'';
-
-	$query = [
-		'SELECT'	=> 'ci.item_id, ci.job_type, ci.checklist_id, ch.property_id, ch.num_problem, ch.num_pending, ch.num_replaced, ch.num_repaired, ch.num_reset, ch.inspection_completed, ch.work_order_completed, ch.work_order_comment, p.pro_name, un.unit_number, un.mbath, un.hbath',
-		'FROM'		=> 'hca_ui_checklist_items AS ci',
-		'JOINS'		=> [
-			[
-				'INNER JOIN'	=> 'hca_ui_checklist AS ch',
-				'ON'			=> 'ch.id=ci.checklist_id'
-			],
-			[
-				'INNER JOIN'	=> 'hca_ui_items AS i',
-				'ON'			=> 'i.id=ci.item_id'
-			],
-			[
-				'INNER JOIN'	=> 'sm_property_db AS p',
-				'ON'			=> 'p.id=ch.property_id'
-			],
-			[
-				'INNER JOIN'	=> 'sm_property_units AS un',
-				'ON'			=> 'un.id=ch.unit_id'
-			],
-		],
-		'ORDER BY'	=> 'i.display_position'
-	];
-	$query['WHERE'] = implode(' AND ', $search_query);
-	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-
-	$summary_replaced = $summary_repaired = $summary_pending = 0;
-	while($row = $DBLayer->fetch_assoc($result))
-	{
-		if ($row['job_type'] == 1)
-			++$summary_replaced;
-		else if ($row['job_type'] == 2)
-			++$summary_repaired;
-		else if ($row['job_type'] == 0 || $row['job_type'] == 4)
-			++$summary_pending;
-	}
-
-?>
-
-<?php
 }
 ?>
 
+<!--
+	Following code works for both sections.
+-->
 <script src="<?=BASE_URL?>/vendor/chartjs/dist/chart.js"></script>
 <script src="<?=BASE_URL?>/vendor/app.js"></script>
 

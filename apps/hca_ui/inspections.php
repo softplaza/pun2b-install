@@ -400,8 +400,9 @@ if (!empty($main_info))
 			{
 				if ($cur_info['id'] == $checklist_items['checklist_id'])
 				{
-					$problem_names = $HcaUnitInspection->getItemProblems($checklist_items['problem_ids']);
-					$list_of_problems[] = '<p class="text-primary">'.$checklist_items['item_name'].($problem_names != '' ? ' (<span class="text-danger">'.$problem_names.'</span>)' : '').'</p>';
+					$status_OR_problems = ($checklist_items['job_type'] > 0) ? ' (<span class="text-success">'.$HcaUnitInspection->getJobType($checklist_items['job_type']).'</span>)' : ' (<span class="text-danger">'.$HcaUnitInspection->getItemProblems($checklist_items['problem_ids']).'</span>)';
+
+					$list_of_problems[] = '<p class="text-primary">'.$checklist_items['item_name'].$status_OR_problems.'</p>';
 
 					if ($checklist_items['req_appendixb'] == 1)
 						$req_appendixb = true;
