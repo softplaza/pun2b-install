@@ -380,16 +380,14 @@ p{font-size:1.2em;}
 						<tr>
 							<td>Location - which room / room(s) etc.</td>
 <?php
-$locations = $HcaUnitInspection->getLocations();
-
-foreach($locations as $location_id => $location_name)
+foreach($HcaUnitInspection->locations as $location_id => $location_name)
 {
 	$ident = false;
 	if (!empty($checked_items))
 	{
 		foreach($checked_items as $cur_info)
 		{
-			if ($cur_info['location_id'] == $location_id)
+			if ($cur_info['location_id'] == $location_id && $location_id < 100)
 			{
 				$problem_ids = explode(',', $cur_info['problem_ids']);
 				// 5 - discolored, 13 - wet
@@ -407,14 +405,14 @@ foreach($locations as $location_id => $location_name)
 						<tr>
 							<td>Square Footages</td>
 <?php
-foreach($locations as $location_id => $location_name)
+foreach($HcaUnitInspection->locations as $location_id => $location_name)
 {
 	$ident = false;
 	if (!empty($checked_items))
 	{
 		foreach($checked_items as $cur_info)
 		{
-			if ($cur_info['location_id'] == $location_id)
+			if ($cur_info['location_id'] == $location_id && $location_id < 100)
 			{
 				$problem_ids = explode(',', $cur_info['problem_ids']);
 				// 5 - discolored, 13 - wet
@@ -432,14 +430,14 @@ foreach($locations as $location_id => $location_name)
 						<tr>
 							<td>Wood moisture meter results</td>
 <?php
-foreach($locations as $location_id => $location_name)
+foreach($HcaUnitInspection->locations as $location_id => $location_name)
 {
 	$ident = false;
 	if (!empty($checked_items))
 	{
 		foreach($checked_items as $cur_info)
 		{
-			if ($cur_info['location_id'] == $location_id)
+			if ($cur_info['location_id'] == $location_id && $location_id < 100)
 			{
 				$problem_ids = explode(',', $cur_info['problem_ids']);
 				// 5 - discolored, 13 - wet
@@ -457,14 +455,14 @@ foreach($locations as $location_id => $location_name)
 						<tr>
 							<td>Concrete moisture meter results</td>
 <?php
-foreach($locations as $location_id => $location_name)
+foreach($HcaUnitInspection->locations as $location_id => $location_name)
 {
 	$ident = false;
 	if (!empty($checked_items))
 	{
 		foreach($checked_items as $cur_info)
 		{
-			if ($cur_info['location_id'] == $location_id)
+			if ($cur_info['location_id'] == $location_id && $location_id < 100)
 			{
 				$problem_ids = explode(',', $cur_info['problem_ids']);
 				// 5 - discolored, 13 - wet

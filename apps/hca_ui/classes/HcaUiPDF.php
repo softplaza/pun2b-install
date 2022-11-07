@@ -2,55 +2,65 @@
 
 class HcaUiPDF
 {
-	var $thead_td = [];
-	var $tbody_tr = [];
-	var $tbody_td = [];
+	// Pre table rows
+	var $pre_table_rows = [];
+	
+	var $tr = [];
+	var $td = [];
+	var $td_param = [];
 
-	var $tbody_tr_id = 0;
+	var $tr_id = 0;
+	var $td_id = 0;
 
-	function addHeadTD($name){
-		$this->thead_td[] = $name;
+	var $css_table = 'border-spacing:0;overflow:wrap;font-size:13px'; //border:1px solid black;
+
+	function addPreTableRow($row){
+		$this->pre_table_rows[] = $row;
 	}
 
-	function addBodyTR(){
-		++$this->tbody_tr_id;
-		$this->tbody_tr[$this->tbody_tr_id] = $this->tbody_tr_id;
+	function addTR(){
+		++$this->tr_id;
+		$this->tr[$this->tr_id] = $this->tr_id;
 	}
 
-	function addBodyTD($name){
-		$this->tbody_td[$this->tbody_tr_id][] = $name;
+	function addTD($name, $param = []){
+		++$this->td_id;
+		$this->td[$this->tr_id][$this->td_id] = $name;
+
+		if (!empty($param))
+			$this->td_param[$this->td_id] = $param;
 	}
 
-	function print()
+	function print($file_path = '')
 	{
-		global $User;
-
 		$mPDF = new \Mpdf\Mpdf();
 		$mPDF->AddPage();
 
-		$css_td = 'border:1px solid black;';
-
 		$content = [];
 
-		$content[] = '<table cellpadding="5" autosize="1" width="100%" style="border-spacing:0;border:1px solid black;font-size:14px">';
-
-		$content[] = '<tr>';
-		foreach($this->thead_td as $key => $value)
+		// Gen pre table rows
+		if (!empty($this->pre_table_rows))
 		{
-			$content[] = '<td style="'.$css_td.'"><strong>'.$value.'</strong></td>';
-		}
-		$content[] = '</tr>';
-
-		if (!empty($this->tbody_tr) && !empty($this->tbody_td))
-		{
-			foreach($this->tbody_tr as $tr_key)
+			foreach($this->pre_table_rows as $table_row)
 			{
-				if (isset($this->tbody_td[$tr_key]))
+				$content[] = $table_row;
+			}
+		}
+
+		$content[] = '<table cellpadding="5" autosize="1" width="100%" style="'.$this->css_table.'">';
+
+		// Gen table rows
+		if (!empty($this->tr) && !empty($this->td))
+		{
+			foreach($this->tr as $tr_id)
+			{
+				if (isset($this->td[$tr_id]))
 				{
 					$content[] = '<tr>';
-					foreach($this->tbody_td[$tr_key] as $td_key => $td_val)
+					foreach($this->td[$tr_id] as $key => $value)
 					{
-						$content[] = '<td style="">'.$td_val.'</td>';
+						$td_param = isset($this->td_param[$key]) ? implode($this->td_param[$key]) : '';
+						$content[] = '<td '.$td_param.'>'.$value.'</td>';
 					}
 					$content[] = '</tr>';
 				}
@@ -60,12 +70,14 @@ class HcaUiPDF
 		$content[] = '</table>';
 
 		$mPDF->WriteHTML(implode('', $content));
-		$mPDF->Output('files/pending_items_'.$User->get('id').'.pdf', 'F');
+
+		if ($file_path != '')
+			$mPDF->Output($file_path, 'F');
 	}
 
 	function genWorkOrder()
 	{
-		global $main_info, $checked_items, $HcaUnitInspection;
+		global $User, $main_info, $checked_items, $HcaUnitInspection;
 
 		$mPDF = new \Mpdf\Mpdf();
 		$mPDF->AddPage();
@@ -87,22 +99,17 @@ class HcaUiPDF
 		$content[] = '<tr>';
 		$content[] = '<td style="'.$css_td.'">Started: <strong>'.format_date($main_info['datetime_completion_start'], 'n/j/y g:i a').'</strong></td>';
 		$content[] = '<td style="'.$css_td.'">Completed: <strong>'.format_date($main_info['datetime_completion_end'], 'n/j/y g:i a').'</strong></td>';
-		$content[] = '<td style="'.$css_td.'">Completed by: <strong>'.html_encode($main_info['completed_name']).'</strong></td>';
+
+		$completed_name = ($main_info['work_order_completed'] == 2) ? html_encode($main_info['completed_name']) : html_encode($main_info['updated_name']);
+
+		$content[] = '<td style="'.$css_td.'">Completed by: <strong>'.$completed_name.'</strong></td>';
 		$content[] = '<td style="'.$css_td.'"></td>';
 		$content[] = '</tr>';
 
 		$content[] = '</table>';
-
-		$job_types = [
-			0 => 'Select one',
-			1 => 'Replaced',
-			2 => 'Repaired',
-			3 => 'Reset',
-			4 => 'Pending',
-		];
 		
 		$location_id1 = 0;
-		foreach($HcaUnitInspection->getLocations() as $location_id => $location_name)
+		foreach($HcaUnitInspection->locations as $location_id => $location_name)
 		{
 			if (!empty($checked_items))
 			{
@@ -118,7 +125,7 @@ class HcaUiPDF
 		
 						$cur_item[] = '<p>';
 						$cur_item[] = '<span>'.html_encode($cur_info['item_name']).'</span>: ';
-						$cur_item[] = '<span>'.$job_types[$cur_info['job_type']].'</span>';
+						$cur_item[] = '<span>'.$HcaUnitInspection->getJobType($cur_info['job_type']).'</span>';
 						$cur_item[] = '</p>';
 
 						if ($cur_info['comment'] != '')
@@ -145,6 +152,6 @@ class HcaUiPDF
 		}
 
 		$mPDF->WriteHTML(implode('', $content));
-		$mPDF->Output('files/work_order_'.$main_info['id'].'.pdf', 'F');
+		$mPDF->Output('files/work_order_'.$User->get('id').'.pdf', 'F');
 	}
 }

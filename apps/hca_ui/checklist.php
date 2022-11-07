@@ -573,9 +573,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
 <?php
 $num_problem = 0;
-foreach($HcaUnitInspection->getLocations() as $location_id => $location_name)
+foreach($HcaUnitInspection->locations as $location_id => $location_name)
 {
-	if ($location_id == 1 || $location_id == 2 || ($location_id == 3 && $main_info['mbath'] == 1) || ($location_id == 4 && $main_info['hbath'] == 1))
+	if ($location_id == 100 || $location_id == 1 || $location_id == 2 || ($location_id == 3 && $main_info['mbath'] == 1) || ($location_id == 4 && $main_info['hbath'] == 1))
 	{
 		$class_show = [];
 		$class_show[] = ($main_info['num_problem'] > 0 && $lid == 0 || $lid == $location_id) ? 'show' : '';

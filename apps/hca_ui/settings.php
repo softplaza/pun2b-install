@@ -18,7 +18,7 @@ $access_options = [
 	7 => 'Edit Water Pressure',
 	8 => 'Edit items in Checklist',
 	9 => 'Edit items in Itemslist',
-
+	10 => 'Change item\'s Location',
 	11 => 'Edit CheckList',
 	12 => 'Edit Work Order',
 	13 => 'Delete CheckList',

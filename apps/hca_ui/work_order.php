@@ -224,6 +224,7 @@ else
 $Core->set_page_id('hca_ui_work_order', 'hca_ui');
 require SITE_ROOT.'header.php';
 
+
 if ($action == 'pdf')
 {
 	$HcaUiPDF = new HcaUiPDF;
@@ -237,8 +238,8 @@ if ($action == 'pdf')
 <?php
 	require SITE_ROOT.'footer.php';
 }
-
 ?>
+
 
 <div class="card mb-1">
 	<div class="card-header">
@@ -336,7 +337,7 @@ $datetime_completion_end = isset($_POST['datetime_completion_end']) ? $_POST['da
 
 $location_id1 = 0;
 $appendixb = false;
-foreach($HcaUnitInspection->getLocations() as $location_id => $location_name)
+foreach($HcaUnitInspection->locations as $location_id => $location_name)
 {
 	if (!empty($checked_items))
 	{

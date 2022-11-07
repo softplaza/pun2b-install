@@ -2,15 +2,16 @@
 
 class HcaUnitInspection
 {
-	public $locations = [
+	var $locations = [
+		//0 => '',
 		1 => 'Kitchen',
 		2 => 'Guest Bathroom',
 		3 => 'Master Bathroom',
 		4 => 'Half Bathroom',
-		//5 => 'Floor'
+		100 => 'Appliances',
 	];
 
-	public $equipments = [
+	var $equipments = [
 		0 => 'No equipment',
 		15 => 'APPLIANCES',//Appliances
 		8 => 'ANGLE STOPS',//remove
@@ -31,7 +32,7 @@ class HcaUnitInspection
 		// Last # 15
 	];
 
-	public $elements = [
+	var $elements = [
 		//55 => 'Angle Stops',// remove
 		2 => 'CEILING',
 		3 => 'COUNTERTOP',
@@ -113,24 +114,16 @@ class HcaUnitInspection
 		return isset($this->job_types[$id]) ? $this->job_types[$id] : '';
 	}
 
-	function getElement($id) 
-	{
-		return isset($this->elements[$id]) ? $this->elements[$id] : '';
+	function getLocation($id) {
+		return (isset($this->locations[$id]) && $id > 0) ? $this->locations[$id] : '';
 	}
 
-	function getEquipment($id) 
-	{
+	function getEquipment($id) {
 		return (isset($this->equipments[$id]) && $id > 0) ? $this->equipments[$id] : '';
 	}
 
-	function getLocations() 
-	{
-		return [
-			1 => 'Kitchen',
-			2 => 'Guest Bathroom',
-			3 => 'Master Bathroom',
-			4 => 'Half Bathroom'
-		];
+	function getElement($id) {
+		return isset($this->elements[$id]) ? $this->elements[$id] : '';
 	}
 
 	function getProblems() 

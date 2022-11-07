@@ -7,30 +7,30 @@ $access_admin = $User->is_admin() ? true : false;
 $access9 = ($User->checkAccess('hca_ui', 9)) ? true : false;
 $access20 = ($User->checkAccess('hca_ui', 20)) ? true : false;
 
-if (!$access20)
+if (!$access9)
 	message($lang_common['No permission']);
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 $HcaUnitInspection = new HcaUnitInspection;
-$locations = $HcaUnitInspection->getLocations();
 
 if (isset($_POST['add']))
 {
 	$form_data = [
 		'item_name'		=> isset($_POST['item_name']) ? swift_trim($_POST['item_name']) : '',
-		'location_id'	=> isset($_POST['location_id']) ? intval($_POST['location_id']) : 0,
-		'equipment_id'	=> isset($_POST['equipment_id']) ? intval($_POST['equipment_id']) : 0,
-		'element_id'	=> isset($_POST['element_id']) ? intval($_POST['element_id']) : 0,
 		'display_position' => isset($_POST['display_position']) ? intval($_POST['display_position']) : 0,
 		'part_number' => isset($_POST['part_number']) ? swift_trim($_POST['part_number']) : '',
 	];
 
+	if (isset($_POST['location_id'])) $form_data['location_id'] = intval($_POST['location_id']);
+	if (isset($_POST['equipment_id'])) $form_data['equipment_id'] = intval($_POST['equipment_id']);
+	if (isset($_POST['element_id'])) $form_data['element_id'] = intval($_POST['element_id']);
+
 	//if ($form_data['item_name'] == '')
 	//	$Core->add_error('item name cannot be empty.');
 
-	if ($form_data['location_id'] == 0)
-		$Core->add_error('Select a location.');
+	//if ($form_data['location_id'] == 0)
+	//	$Core->add_error('Select a location.');
 
 	if (empty($Core->errors))
 	{
@@ -48,9 +48,9 @@ else if (isset($_POST['update']))
 {
 	$form_data = [
 		'item_name'		=> isset($_POST['item_name']) ? swift_trim($_POST['item_name']) : '',
-		'location_id'	=> isset($_POST['location_id']) ? intval($_POST['location_id']) : 0,
-		'equipment_id'	=> isset($_POST['equipment_id']) ? intval($_POST['equipment_id']) : 0,
-		'element_id'	=> isset($_POST['element_id']) ? intval($_POST['element_id']) : 0,
+		//'location_id'	=> isset($_POST['location_id']) ? intval($_POST['location_id']) : 0,
+		//'equipment_id'	=> isset($_POST['equipment_id']) ? intval($_POST['equipment_id']) : 0,
+		//'element_id'	=> isset($_POST['element_id']) ? intval($_POST['element_id']) : 0,
 		'display_position' => isset($_POST['display_position']) ? intval($_POST['display_position']) : 0,
 		'display_in_checklist' => isset($_POST['display_in_checklist']) ? intval($_POST['display_in_checklist']) : 0,
 		'req_appendixb' => isset($_POST['req_appendixb']) ? intval($_POST['req_appendixb']) : 0,
@@ -58,11 +58,15 @@ else if (isset($_POST['update']))
 		'part_number' => isset($_POST['part_number']) ? swift_trim($_POST['part_number']) : '',
 	];
 
+	if (isset($_POST['location_id'])) $form_data['location_id'] = intval($_POST['location_id']);
+	if (isset($_POST['equipment_id'])) $form_data['equipment_id'] = intval($_POST['equipment_id']);
+	if (isset($_POST['element_id'])) $form_data['element_id'] = intval($_POST['element_id']);
+
 	//if ($form_data['item_name'] == '')
 	//	$Core->add_error('item name cannot be empty.');
 
-	if ($form_data['location_id'] == 0)
-		$Core->add_error('Select a location.');
+	//if ($form_data['location_id'] == 0)
+	//	$Core->add_error('Select a location.');
 
 	$problems = [];
 	if (isset($_POST['problem']) && !empty($_POST['problem']))
@@ -105,7 +109,6 @@ else if (isset($_POST['delete']))
 
 if ($id > 0)
 {
-	$Core->set_page_title('item management');
 	$Core->set_page_id('hca_ui_items', 'hca_ui');
 	require SITE_ROOT.'header.php';
 
@@ -126,13 +129,16 @@ if ($id > 0)
 		</div>
 		<div class="card-body">
 
+			<?php if ($User->checkAccess('hca_ui', 9)): ?>
 			<div class="row">
 				<div class="col-md-4">
 					<div class="mb-3">
 						<label class="form-label" for="select_locations">Locations</label>
 						<select name="location_id" class="form-select form-select-sm" required>
+
 <?php
-	foreach($locations as $location_id => $location_name)
+
+	foreach($HcaUnitInspection->locations as $location_id => $location_name)
 	{
 		if ($location_id == $item_info['location_id'])
 			echo '<option value="'.$location_id.'" selected>'.html_encode($location_name).'</option>';
@@ -176,6 +182,7 @@ if ($id > 0)
 					</div>
 				</div>
 			</div>
+			<?php endif; ?>
 
 			<div class="row">
 				<div class="col-md-4">
@@ -267,7 +274,6 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	$main_info[] = $row;
 }
 
-$Core->set_page_title('List of items');
 $Core->set_page_id('hca_ui_items', 'hca_ui');
 require SITE_ROOT.'header.php';
 ?>
@@ -288,7 +294,7 @@ require SITE_ROOT.'header.php';
 							<label class="form-label" for="select_locations">Locations</label>
 							<select name="location_id" class="form-select form-select-sm" required>
 <?php
-	foreach($locations as $location_id => $location_name)
+	foreach($HcaUnitInspection->locations as $location_id => $location_name)
 	{
 		echo '<option value="'.$location_id.'">'.html_encode($location_name).'</option>';
 	}
@@ -370,7 +376,7 @@ require SITE_ROOT.'header.php';
 if (!empty($main_info))
 {
 	$i = 1;
-	foreach($locations as $location_id => $location_name)
+	foreach($HcaUnitInspection->locations as $location_id => $location_name)
 	{
 		foreach($main_info as $cur_info)
 		{

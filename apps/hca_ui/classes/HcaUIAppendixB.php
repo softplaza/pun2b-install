@@ -8,20 +8,10 @@
 
 class HcaUIAppendixB
 {
-	function getLocations() 
-	{
-		return [
-			1 => 'Kitchen',
-			2 => 'Guest Bathroom',
-			3 => 'Master Bathroom',
-			4 => 'Half Bathroom'
-		];
-	}
-
 	// Generate Appendix-B PDF file
 	function gen_appendix_b($form_info, $project_info)
 	{
-		global $DBLayer, $property_info;
+		global $DBLayer, $property_info, $HcaUnitInspection;
 		
 		$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 		$query = [
@@ -47,7 +37,6 @@ class HcaUIAppendixB
 			$checked_items[] = $row;
 		}
 
-
 		$box_not_checked = '';
 		$box_checked = '<span style="font-family:helvetica;font-size: 16px;">&#10004;</span>';
 		
@@ -64,7 +53,7 @@ class HcaUIAppendixB
 		$td8 = 'width: 150px;background: white;padding: .2em .417em;';
 		$css_txt_input = 'font-weight: bold;';
 		$css_loc_txt_input = 'width:20%;';
-		$css_border = 'border:1px solid #6a6565;border-spacing:0';
+		$css_border = 'border:1px solid #6a6565;border-spacing:0;';
 
 		$output = '<div style="font-size:10px;margin:5px;padding:5px;">';
 		$output .= '<div class="pdf-title">';
@@ -350,20 +339,18 @@ class HcaUIAppendixB
 		
 		$output .= '<strong>Building material impacted by moisture intrusion:</strong>';
 		
-		$output .= '<table style="'.$style_table.'">';
+		$output .= '<table style="'.$style_table.'width:100%">';
 		$output .= '<tbody style="loc-info">';
 		$output .= '<tr><td style="'.$td1.'">Location - which room / room(s) etc.</td>';
 
-		$locations_array = $this->getLocations();
-
-		foreach($locations_array as $location_id => $location_name)
+		foreach($HcaUnitInspection->locations as $location_id => $location_name)
 		{
 			$ident = false;
 			if (!empty($checked_items))
 			{
 				foreach($checked_items as $cur_info)
 				{
-					if ($cur_info['location_id'] == $location_id)
+					if ($cur_info['location_id'] == $location_id && $location_id < 100)
 					{
 						$problem_ids = explode(',', $cur_info['problem_ids']);
 						// 5 - discolored, 13 - wet
@@ -374,19 +361,19 @@ class HcaUIAppendixB
 			}
 
 			if ($ident && ($location_id != 4 || ($location_id == 4 && $project_info['hbath'] == 1)))
-				$output .= '<td style="td-txt '.$css_border.'">'.html_encode($location_name).'</td>'."\n";
+				$output .= '<td style="'.$css_border.'">'.html_encode($location_name).'</td>'."\n";
 		}
 		$output .= '</tr>';
 		
 		$output .= '<tr><td '.$td1.'>Square Footages</td>';
-		foreach($locations_array as $location_id => $location_name)
+		foreach($HcaUnitInspection->locations as $location_id => $location_name)
 		{
 			$ident = false;
 			if (!empty($checked_items))
 			{
 				foreach($checked_items as $cur_info)
 				{
-					if ($cur_info['location_id'] == $location_id)
+					if ($cur_info['location_id'] == $location_id && $location_id < 100)
 					{
 						$problem_ids = explode(',', $cur_info['problem_ids']);
 						// 5 - discolored, 13 - wet
@@ -403,14 +390,14 @@ class HcaUIAppendixB
 		$output .= '</tr>';
 		
 		$output .= '<tr><td '.$td1.'>Wood moisture meter results</td>';
-		foreach($locations_array as $location_id => $location_name)
+		foreach($HcaUnitInspection->locations as $location_id => $location_name)
 		{
 			$ident = false;
 			if (!empty($checked_items))
 			{
 				foreach($checked_items as $cur_info)
 				{
-					if ($cur_info['location_id'] == $location_id)
+					if ($cur_info['location_id'] == $location_id && $location_id < 100)
 					{
 						$problem_ids = explode(',', $cur_info['problem_ids']);
 						// 5 - discolored, 13 - wet
@@ -426,14 +413,14 @@ class HcaUIAppendixB
 		$output .= '</tr>';
 		
 		$output .= '<tr><td style="'.$td1.'">Concrete moisture meter results</td>';
-		foreach($locations_array as $location_id => $location_name)
+		foreach($HcaUnitInspection->locations as $location_id => $location_name)
 		{
 			$ident = false;
 			if (!empty($checked_items))
 			{
 				foreach($checked_items as $cur_info)
 				{
-					if ($cur_info['location_id'] == $location_id)
+					if ($cur_info['location_id'] == $location_id && $location_id < 100)
 					{
 						$problem_ids = explode(',', $cur_info['problem_ids']);
 						// 5 - discolored, 13 - wet

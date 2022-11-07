@@ -20,7 +20,6 @@ $HcaUISummaryReport = new HcaUISummaryReport;
 $HcaUISummaryReport->getCheckedItems();
 
 $HcaUnitInspection = new HcaUnitInspection;
-$locations = $HcaUnitInspection->getLocations();
 
 $query = array(
 	'SELECT'	=> 'p.*',
@@ -39,19 +38,6 @@ while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
 	$sm_property_db[] = $fetch_assoc;
 }
 
-/*
-$query = array(
-	'SELECT'	=> 'i.*',
-	'FROM'		=> 'hca_ui_items AS i',
-	'WHERE'		=> 'i.summary_report=1',
-	'ORDER BY'	=> 'i.location_id, i.display_position'
-);
-$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$hca_ui_items = [];
-while ($row = $DBLayer->fetch_assoc($result)) {
-	$hca_ui_items[] = $row;
-}
-*/
 $summary_pending = $summary_repaired = $summary_replaced = 0;
 $num_pending = $num_repaired = $num_replaced = [];
 
@@ -137,7 +123,7 @@ while($row = $DBLayer->fetch_assoc($result))
  * This is start page contants all inspected properties.
  * Not inspected properties are not included.
  * SEARCH AREA: 
- * YEAR - need to be add search by "last year"
+ * YEAR - need to be add search by "last 12 months / last 6 months / last 3 months"
  */
 
 if ($search_by_property_id == 0)
@@ -169,24 +155,6 @@ if ($search_by_property_id == 0)
 			++$num_work_orders[$row['property_id']];
 		else
 			$num_work_orders[$row['property_id']] = 1;
-
-/*
-		if (isset($num_pending[$row['property_id']]))
-			$num_pending[$row['property_id']] = $num_pending[$row['property_id']] + $row['num_pending'];
-		else
-			$num_pending[$row['property_id']] = $row['num_pending'];
-
-		if (isset($num_repaired[$row['property_id']]))
-			$num_repaired[$row['property_id']] = $num_repaired[$row['property_id']] + $row['num_repaired'];
-		else
-			$num_repaired[$row['property_id']] = $row['num_repaired'];	
-
-		if (isset($num_replaced[$row['property_id']]))
-			$num_replaced[$row['property_id']] = $num_replaced[$row['property_id']] + $row['num_replaced'];
-		else
-			$num_replaced[$row['property_id']] = $row['num_replaced'];
-
-*/
 	}
 ?>
 
@@ -198,32 +166,31 @@ if ($search_by_property_id == 0)
 					<select name="year" class="form-select form-select-sm">
 						<option value="0">All Years</option>
 <?php
-for ($year = 2021; $year <= date('Y'); $year++)
-{
-			if ($search_by_year == $year)
-				echo '<option value="'.$year.'" selected="selected">'.$year.'</option>';
-			else
-				echo '<option value="'.$year.'">'.$year.'</option>';
-}
+	for ($year = 2021; $year <= date('Y'); $year++)
+	{
+				if ($search_by_year == $year)
+					echo '<option value="'.$year.'" selected="selected">'.$year.'</option>';
+				else
+					echo '<option value="'.$year.'">'.$year.'</option>';
+	}
 ?>
 					</select>
-					<p class="text-muted" for="fld_date_inspected">Period</p>
 				</div>
 				<div class="col-md-auto pe-0 mb-1">
 					<select name="inspection_type" class="form-select-sm">
 <?php
-$inspection_types = [
-	0 => 'All inspections',
-	1 => 'Water Audit',
-	2 => 'Flapper Replacement',
-];
-foreach ($inspection_types as $key => $val)
-{
-	if ($search_by_inspection_type == $key)
-		echo '<option value="'.$key.'" selected>'.$val.'</option>';
-	else
-		echo '<option value="'.$key.'">'.$val.'</option>';
-}
+	$inspection_types = [
+		0 => 'All inspections',
+		1 => 'Water Audit',
+		2 => 'Flapper Replacement',
+	];
+	foreach ($inspection_types as $key => $val)
+	{
+		if ($search_by_inspection_type == $key)
+			echo '<option value="'.$key.'" selected>'.$val.'</option>';
+		else
+			echo '<option value="'.$key.'">'.$val.'</option>';
+	}
 ?>
 					</select>
 				</div>
@@ -236,21 +203,6 @@ foreach ($inspection_types as $key => $val)
 	</form>
 </nav>
 
-<div class="row mb-3">
-	<div class="col-12">
-		<div class="card">
-			<div class="card-header">
-				<h6 class="card-title mb-0 text-primary">Summary Report</h6>
-			</div>
-			<div class="card-body py-3">
-				<div class="chart chart-sm">
-					<canvas id="chartjs-dashboard-pie-pillars"></canvas>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
-
 <div class="card-header">
 	<h6 class="card-title mb-0 text-primary">Property Report</h6>
 </div>
@@ -261,6 +213,7 @@ foreach ($inspection_types as $key => $val)
 			<th class="bg-danger text-white">Pending items</th>
 			<th class="bg-warning text-white">Repaired items</th>
 			<th class="bg-success text-white">Replaced items</th>
+			<th>Date of Last Inspection</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -270,9 +223,6 @@ foreach ($inspection_types as $key => $val)
 	$i = 0;
 	foreach($sm_property_db as $cur_info)
 	{
-		//$inspection_type1 = ($search_by_inspection_type == 1 && in_array($cur_info['id'], [91, 95, 104, 107, 109])) ? true : false;
-		//$inspection_type2 = ($search_by_inspection_type == 2 && !in_array($cur_info['id'], [91, 95, 104, 107, 109])) ? true : false;
-
 		if (isset($num_work_orders[$cur_info['id']]))
 		{
 			$sub_link_args = ['property_id' => $cur_info['id']];
@@ -288,13 +238,11 @@ foreach ($inspection_types as $key => $val)
 			<td class="ta-center fw-bold"><?php echo (isset($num_pending[$cur_info['id']]) ? $num_pending[$cur_info['id']] : 0) ?></td>
 			<td class="ta-center fw-bold"><?php echo (isset($num_repaired[$cur_info['id']]) ? $num_repaired[$cur_info['id']] : 0) ?></td>
 			<td class="ta-center fw-bold"><?php echo (isset($num_replaced[$cur_info['id']]) ? $num_replaced[$cur_info['id']] : 0) ?></td>
+			<td class=""></td>
 		</tr>
 <?php
 
 			++$i;
-			//$summary_pending = $summary_pending + $num_pending[$cur_info['id']];
-			//$summary_repaired = $summary_repaired + $num_repaired[$cur_info['id']];
-			//$summary_replaced = $summary_replaced + $num_replaced[$cur_info['id']];
 		}
 	}
 ?>
@@ -305,6 +253,7 @@ foreach ($inspection_types as $key => $val)
 			<td class="ta-center fw-bold"><?php echo $summary_pending ?></td>
 			<td class="ta-center fw-bold"><?php echo $summary_repaired ?></td>
 			<td class="ta-center fw-bold"><?php echo $summary_replaced ?></td>
+			<td></td>
 		</tr>
 	</tfoot>
 </table>
@@ -313,8 +262,16 @@ foreach ($inspection_types as $key => $val)
 }
 else
 {
-	//$SwiftMenu->addNavAction('<li><a class="dropdown-item" href="'.$URL->link('hca_ui_print', 'pending_items').'" target="_blank"><i class="fa fa-file-pdf-o fa-1x" aria-hidden="true"></i> Print as PDF</a></li>');
-	//$Core->add_page_action('<a href="'.$URL->link('hca_ui_print', 'pending_items').'" target="_blank"><i class="fa fa-file-pdf-o fa-2x"></i>Print as PDF</a>');
+	$sub_link_args = [
+		'section'			=> 'pending_items',
+		'property_id'		=> $search_by_property_id,
+		'inspection_type'	=> $search_by_inspection_type,
+		'job_type'			=> $search_by_job_type,
+		'date_inspected'	=> $search_by_date_inspected,
+		'year'				=> $search_by_year
+	];
+	if ($search_by_job_type == 0)
+		$SwiftMenu->addNavAction('<li><a class="dropdown-item" href="'.$URL->genLink('hca_ui_print', $sub_link_args).'" target="_blank"><i class="fa fa-file-pdf-o fa-1x" aria-hidden="true"></i> Print as PDF</a></li>');
 
 	$Core->set_page_id('hca_ui_summary_report', 'hca_ui');
 	require SITE_ROOT.'header.php';
@@ -374,11 +331,11 @@ else
 				<div class="col-md-auto pe-0 mb-1">
 					<div class="form-check">
 						<input class="form-check-input" type="radio" name="job_type" value="0" id="rd_job_type1" <?=($search_by_job_type == 0 ? 'checked' : '')?>>
-						<label class="form-check-label" for="rd_job_type1">Pending items</label>
+						<label class="form-check-label" for="rd_job_type1">Pending</label>
 					</div>
 					<div class="form-check">
 						<input class="form-check-input" type="radio" name="job_type" value="1" id="rd_job_type2" <?=($search_by_job_type == 1 ? 'checked' : '')?>>
-						<label class="form-check-label" for="rd_job_type2">Replaced items</label>
+						<label class="form-check-label" for="rd_job_type2">Completed</label>
 					</div>
 				</div>
 
@@ -504,7 +461,7 @@ else
 				'inspection_type'	=> $search_by_inspection_type,
 				'item_id'			=> $search_by_item_id,
 				'job_type'			=> $search_by_job_type,
-				'date_inspected'	=>$key
+				'date_inspected'	=> $key
 			];
 
 			$checklist_date_links[] = '<a href="'.$URL->genLink('hca_ui_summary_report', $sub_link_args).'" class="btn btn-outline-primary" role="button">'.$key.'</a>';
@@ -521,8 +478,10 @@ else
 	</div>
 </div>	
 
+
+<?php if ($search_by_job_type == 0): ?>
 <div class="card-header">
-	<h6 class="card-title mb-0 text-primary">List of <?=($search_by_job_type == 0 ? 'Pending' : 'Replaced')?> items</h6>
+	<h6 class="card-title mb-0 text-primary">List of Pending items</h6>
 </div>	
 <table class="table table-striped table-bordered">
 	<thead>
@@ -533,16 +492,15 @@ else
 		</tr>
 	</thead>
 	<tbody>
-
 <?php
 	$total_pending = 0;
 	foreach($hca_ui_items as $cur_info)
 	{
-		if ($cur_info['location_id'] < 3 || ($has_mbath && $cur_info['location_id'] == 3) || ($has_hbath && $cur_info['location_id'] == 4))
+		if ($cur_info['location_id'] < 3 || $cur_info['location_id'] == 100 || ($has_mbath && $cur_info['location_id'] == 3) || ($has_hbath && $cur_info['location_id'] == 4))
 		{
 			if (isset($num_pending[$cur_info['id']]))
 			{
-				$item_name = $locations[$cur_info['location_id']].' -> '.$HcaUnitInspection->getEquipment($cur_info['equipment_id']).' -> '.html_encode($cur_info['item_name']);
+				$item_name = $HcaUnitInspection->getLocation($cur_info['location_id']).' -> '.$HcaUnitInspection->getEquipment($cur_info['equipment_id']).' -> '.html_encode($cur_info['item_name']);
 				
 				$sub_link_args = [
 					'property_id'		=> $search_by_property_id,
@@ -562,9 +520,7 @@ else
 		}
 	}
 ?>
-
 	</tbody>
-
 <?php if ($access_admin): ?>
 	<tfoot>
 		<tr>
@@ -574,17 +530,70 @@ else
 		</tr>
 	</tfoot>
 <?php endif; ?>
-
 </table>
+<?php endif; ?>
+
 
 <?php
 
-	$hca_ui_checklist = $HcaUISummaryReport->genWorkOrderReport();
+	$search_query = [];
+	if ($search_by_property_id > 0)
+		$search_query[] = 'c.property_id='.$search_by_property_id;
 
+	if ($search_by_job_type == 1) // completed
+		$search_query[] = 'c.inspection_completed=2 AND c.work_order_completed=2';
+	else // pending WO
+		$search_query[] = 'c.work_order_completed=1 AND c.inspection_completed=2 AND c.num_problem > 0';
+
+	$hca_ui_checklist = []; //$HcaUISummaryReport->genWorkOrderReport();
+	$query = [
+		'SELECT'	=> 'c.*, p.pro_name, un.unit_number, u1.realname AS owner_name, u2.realname AS inspected_name, u3.realname AS completed_name, u4.realname AS updated_name, u5.realname AS started_name',
+		'FROM'		=> 'hca_ui_checklist as c',
+		'JOINS'		=> [
+			[
+				'INNER JOIN'	=> 'sm_property_db AS p',
+				'ON'			=> 'p.id=c.property_id'
+			],
+			[
+				'INNER JOIN'	=> 'sm_property_units AS un',
+				'ON'			=> 'un.id=c.unit_id'
+			],
+			[
+				'LEFT JOIN'		=> 'users AS u1',
+				'ON'			=> 'u1.id=c.owned_by'
+			],
+			[
+				'LEFT JOIN'		=> 'users AS u2',
+				'ON'			=> 'u2.id=c.inspected_by'
+			],
+			[
+				'LEFT JOIN'		=> 'users AS u3',
+				'ON'			=> 'u3.id=c.completed_by'
+			],
+			[
+				'LEFT JOIN'		=> 'users AS u4',
+				'ON'			=> 'u4.id=c.updated_by'
+			],
+			[
+				'LEFT JOIN'		=> 'users AS u5',
+				'ON'			=> 'u5.id=c.started_by'
+			],
+		],
+		//'ORDER BY'	=> 'c.completed, c.status, p.pro_name, LENGTH(un.unit_number), un.unit_number',
+		'ORDER BY'	=> 'c.inspection_completed, c.work_order_completed, p.pro_name, LENGTH(un.unit_number), un.unit_number', //mycolumn=0 desc, mycolumn desc
+	];
+	if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	while ($row = $DBLayer->fetch_assoc($result)) {
+		$hca_ui_checklist[] = $row;
+	}
+
+
+	$unispected_units = [];
 	if (!empty($hca_ui_checklist))
 	{
 		foreach($hca_ui_checklist as $checklist)
-			$projects_ids[] = $checklist['checklist_id'];
+			$projects_ids[] = $checklist['id'];
 
 		$query = array(
 			'SELECT'	=> 'ci.*, i.item_name, i.req_appendixb',
@@ -618,34 +627,34 @@ else
 			<th class="bg-danger text-white">Pending</th>
 <?php endif; ?>
 <?php if ($search_by_job_type == 1): ?>
-			<th class="bg-success text-white">Replaced</th>
+			<th class="bg-primary text-white">Replaced</th>
+			<th class="bg-info text-white">Repaired</th>
 <?php endif; ?>
 		</tr>
 	</thead>
 	<tbody>
 
 <?php
-		$wo_total_pending = $wo_total_replaced = 0;
+		$wo_total_pending = $wo_total_replaced = $wo_total_repaired = 0;
 		foreach($hca_ui_checklist as $cur_info)
 		{
-			//$num_pending = ($cur_info['num_pending'] > 0) ? $cur_info['num_pending'] : $cur_info['num_problem'];
-			$num_pending = $num_replaced = 0;
+			$num_pending = $num_replaced = $num_repaired = 0;
 
 			if ($cur_info['num_problem'] > 0 && $cur_info['work_order_completed'] == 2)
-				$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['checklist_id']).'" class="badge bg-success text-white">Completed</a>';
+				$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['id']).'" class="badge bg-success text-white">Completed</a>';
 			else if ($cur_info['num_problem'] == 0 && $cur_info['inspection_completed'] == 2)
-				$status = '<a href="'.$URL->link('hca_ui_checklist', $cur_info['checklist_id']).'" class="badge bg-success text-white">Completed</a>';
+				$status = '<a href="'.$URL->link('hca_ui_checklist', $cur_info['id']).'" class="badge bg-success text-white">Completed</a>';
 			else if ($cur_info['num_problem'] > 0 && $cur_info['work_order_completed'] == 1)
-				$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['checklist_id']).'" class="badge bg-primary text-white">Pending</a>';
+				$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['id']).'" class="badge bg-primary text-white">Pending</a>';
 			else
-				$status = '<a href="'.$URL->link('hca_ui_checklist', $cur_info['checklist_id']).'" class="badge bg-primary text-white">Pending</a>';
+				$status = '<a href="'.$URL->link('hca_ui_checklist', $cur_info['id']).'" class="badge bg-primary text-white">Pending</a>';
 
 			$list_of_problems = [];
 			if (!empty($hca_ui_checklist_items))
 			{
 				foreach($hca_ui_checklist_items as $checklist_items)
 				{
-					if ($cur_info['checklist_id'] == $checklist_items['checklist_id'])
+					if ($cur_info['id'] == $checklist_items['checklist_id'])
 					{
 						$status_OR_problems = ($checklist_items['job_type'] > 0) ? ' (<span class="text-success">'.$HcaUnitInspection->getJobType($checklist_items['job_type']).'</span>)' : ' (<span class="text-danger">'.$HcaUnitInspection->getItemProblems($checklist_items['problem_ids']).'</span>)';
 	
@@ -655,6 +664,8 @@ else
 							++$num_pending;
 						else if ($checklist_items['job_type'] == 1)
 							++$num_replaced;
+						else if ($checklist_items['job_type'] == 2)
+							++$num_repaired;
 					}
 				}
 			}
@@ -674,10 +685,12 @@ else
 
 <?php if ($search_by_job_type == 1): ?>
 			<td class="ta-center fw-bold"><?php echo $num_replaced ?></td>
+			<td class="ta-center fw-bold"><?php echo $num_repaired ?></td>
 <?php endif; ?>
 		</tr>
 <?php
 			$wo_total_pending = $wo_total_pending + $num_pending;
+			$wo_total_repaired = $wo_total_repaired + $num_repaired;
 			$wo_total_replaced = $wo_total_replaced + $num_replaced;
 		}
 ?>
@@ -693,6 +706,7 @@ else
 
 <?php if ($search_by_job_type == 1): ?>
 			<td class="ta-center fw-bold"><?php echo $wo_total_replaced ?></td>
+			<td class="ta-center fw-bold"><?php echo $wo_total_repaired ?></td>
 <?php endif; ?>
 		</tr>
 	</tfoot>
@@ -702,7 +716,7 @@ else
 
 <?php
 
-		$hca_ui_checklist = $unispected_units = $search_query = [];
+		$unispected_units_checklist = $search_query = [];
 		if ($search_by_property_id > 0)
 			$search_query[] = 'ch.property_id='.$search_by_property_id;
 
@@ -725,7 +739,7 @@ else
 		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 		while ($row = $DBLayer->fetch_assoc($result))
 		{
-			$hca_ui_checklist[$row['unit_id']] = $row['unit_id'];
+			$unispected_units_checklist[$row['unit_id']] = $row['unit_id'];
 		}
 
 		$query = array(
@@ -737,10 +751,9 @@ else
 		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 		while ($row = $DBLayer->fetch_assoc($result))
 		{
-			if (!in_array($row['id'], $hca_ui_checklist))
+			if (!in_array($row['id'], $unispected_units_checklist))
 				$unispected_units[] = $row['unit_number'];
 		}
-
 ?>
 <div class="card-header">
 	<h6 class="card-title mb-0 text-primary">List of never inspected units (<?php echo count($unispected_units) ?>)</h6>
@@ -755,6 +768,7 @@ else
 </div>
 
 <?php
+
 	}
 	else
 	{
@@ -766,15 +780,41 @@ else
 <div class="my-3">
 	<div class="alert alert-warning mb-3" role="alert">No Work Orders found.</div>
 </div>
-
 <?php
 	}
-}
+
+	// Completed: WO, items, repaired
+	if ($search_by_job_type == 1)
+	{
+		$chart_column_label_1 = '"Completed Work Orders"';
+		$chart_column_label_2 = '"Replaced items"';
+		$chart_column_label_3 = '"Repaired items"';
+
+		$chart_column_total_1 = $summary_pending;
+		$chart_column_total_2 = $summary_repaired;
+		$chart_column_total_3 = $summary_replaced;
+
+		$chart_column_color_1 = 'window.theme.success';
+		$chart_column_color_2 = 'window.theme.primary';
+		$chart_column_color_3 = 'window.theme.info';
+	}
+	else // Pending WO, items, never inspected units
+	{
+		$chart_column_label_1 = '"Pending Work Orders"';
+		$chart_column_label_2 = '"Pending items"';
+		$chart_column_label_3 = '"Never inspected units"';
+
+		$chart_column_total_1 = count($hca_ui_checklist);
+		$chart_column_total_2 = $summary_pending;
+		$chart_column_total_3 = count($unispected_units);
+
+		$chart_column_color_1 = 'window.theme.warning';
+		$chart_column_color_2 = 'window.theme.danger';
+		$chart_column_color_3 = 'window.theme.secondary';
+	}
+
 ?>
 
-<!--
-	Following code works for both sections.
--->
 <script src="<?=BASE_URL?>/vendor/chartjs/dist/chart.js"></script>
 <script src="<?=BASE_URL?>/vendor/app.js"></script>
 
@@ -784,10 +824,10 @@ document.addEventListener("DOMContentLoaded", function() {
 	new Chart(document.getElementById("chartjs-dashboard-pie-pillars"), {
 		type: "bar",
 		data: {
-			labels: ["Pending", "Repaired", "Replaced"],
+			labels: [<?=$chart_column_label_1?>, <?=$chart_column_label_2?>, <?=$chart_column_label_3?>],
 			datasets: [{
-				data: [<?=$summary_pending?>, <?=$summary_repaired?>, <?=$summary_replaced?>],
-				backgroundColor: [window.theme.danger, window.theme.warning, window.theme.success],
+				data: [<?=$chart_column_total_1?>, <?=$chart_column_total_2?>, <?=$chart_column_total_3?>],
+				backgroundColor: [<?=$chart_column_color_1?>, <?=$chart_column_color_2?>, <?=$chart_column_color_3?>],
 				borderWidth: 5
 			}]
 		},
@@ -834,6 +874,6 @@ document.addEventListener("DOMContentLoaded", function() {
 	});
 });
 </script>
-
 <?php
+}
 require SITE_ROOT.'footer.php';
