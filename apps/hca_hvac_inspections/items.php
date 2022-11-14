@@ -190,33 +190,33 @@ if ($id > 0)
 				<span class="text-muted mb-3">Set how would you like to see this item</span>
 			</div>
 
-			<label class="form-label mb-1">Item visibility</label>
+			<label class="form-label mb-1">Create Work Order if checkbox was marked as:</label>
 			<div class="mb-3">
 				<div class="">
 					<div class="form-check form-check-inline">
 						<input class="form-check-input" type="radio" name="item_type" id="fld_item_type0" value="0" <?php echo ($item_info['item_type'] == 0) ? 'checked' : '' ?>>
-						<label class="form-check-label" for="fld_item_type0">Hidden</label>
+						<label class="form-check-label" for="fld_item_type0">Disabled</label>
 					</div>
 					<div class="form-check form-check-inline">
 						<input class="form-check-input" type="radio" name="item_type" id="fld_item_type1" value="1" <?php echo ($item_info['item_type'] == 1) ? 'checked' : '' ?>>
-						<label class="form-check-label" for="fld_item_type1">As Checklist item</label>
+						<label class="form-check-label" for="fld_item_type1">YES</label>
 					</div>
 					<div class="form-check form-check-inline">
 						<input class="form-check-input" type="radio" name="item_type" id="fld_item_type2" value="2" <?php echo ($item_info['item_type'] == 2) ? 'checked' : '' ?>>
-						<label class="form-check-label" for="fld_item_type2">As Work Order item</label>
+						<label class="form-check-label" for="fld_item_type2">NO</label>
 					</div>
 				</div>
-				<span class="text-muted mb-3">Set how would you like to see this item</span>
+				<span class="text-muted mb-3">The Work Order will be created depending on the option selected</span>
 			</div>
 
-			<h6 class="card-title mb-0">Job actions visibility</h6>
+			<h6 class="card-title mb-0">Work Order dropdown options</h6>
 			<hr class="my-2">
 			<div class="mb-3">
 <?php
-$job_actions = explode(',', $item_info['job_actions']);
-foreach($HcaHVACInspections->actions as $key => $value)
-{
-	$checked = in_array($key, $job_actions) ? 'checked' : '';
+	$job_actions = explode(',', $item_info['job_actions']);
+	foreach($HcaHVACInspections->actions as $key => $value)
+	{
+		$checked = in_array($key, $job_actions) ? 'checked' : '';
 ?>
 				<div class="form-check form-check-inline">
 					<input type="hidden" name="job_action[<?=$key?>]" value="0">
@@ -224,7 +224,7 @@ foreach($HcaHVACInspections->actions as $key => $value)
 					<label class="form-check-label" for="fld_job_action<?=$key?>"><?php echo $value ?></label>
 				</div>
 <?php
-}
+	}
 ?>
 			</div>
 
@@ -303,13 +303,13 @@ require SITE_ROOT.'header.php';
 							<label class="form-label" for="select_locations">Equipments</label>
 							<select name="equipment_id" class="form-select form-select-sm">
 <?php
-	foreach($HcaHVACInspections->equipments as $key => $value)
-	{
-		if (isset($_POST['equipment_id']) && $key == $_POST['equipment_id'])
-			echo '<option value="'.$key.'" selected>'.html_encode($value).'</option>';
-		else
-			echo '<option value="'.$key.'">'.html_encode($value).'</option>';
-	}
+foreach($HcaHVACInspections->equipments as $key => $value)
+{
+	if (isset($_POST['equipment_id']) && $key == $_POST['equipment_id'])
+		echo '<option value="'.$key.'" selected>'.html_encode($value).'</option>';
+	else
+		echo '<option value="'.$key.'">'.html_encode($value).'</option>';
+}
 ?>
 							</select>
 						</div>

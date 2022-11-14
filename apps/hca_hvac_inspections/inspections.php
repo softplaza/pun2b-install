@@ -8,6 +8,7 @@ $access11 = ($User->checkAccess('hca_hvac_inspections', 11)) ? true : false;
 $access12 = ($User->checkAccess('hca_hvac_inspections', 12)) ? true : false;
 $access13 = ($User->checkAccess('hca_hvac_inspections', 13)) ? true : false;
 $access15 = ($User->checkAccess('hca_hvac_inspections', 15)) ? true : false; // Reassign
+$access20 = ($User->checkAccess('hca_hvac_inspections', 20)) ? true : false;
 if (!$access)
 	message($lang_common['No permission']);
 
@@ -343,7 +344,10 @@ if (!empty($main_info))
 		if ($access11)
 			$Core->add_dropdown_item('<a href="'.$URL->link('hca_hvac_inspections_checklist', $cur_info['id']).'"><i class="fas fa-edit"></i> CheckList</a>');
 
-		if ($access12 && $cur_info['inspection_completed'] == 2 && $cur_info['num_problem'] > 0)
+		if ($access20)
+			$Core->add_dropdown_item('<a href="'.$URL->link('hca_hvac_inspections_checklist2', $cur_info['id']).'"><i class="fas fa-edit"></i> CheckList 2</a>');
+
+		if ($access12 && $cur_info['work_order_completed'] > 0) //  && $cur_info['num_problem'] > 0
 			$Core->add_dropdown_item('<a href="'.$URL->link('hca_hvac_inspections_work_order', $cur_info['id']).'"><i class="fas fa-file-alt"></i> Work Order</a>');
 
 		$Core->add_dropdown_item('<a href="'.$URL->link('hca_hvac_inspections_files', $cur_info['id']).'"><i class="fas fa-file-upload"></i> Upload Files</a>');

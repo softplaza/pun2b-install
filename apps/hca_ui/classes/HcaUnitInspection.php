@@ -33,6 +33,7 @@ class HcaUnitInspection
 	];
 
 	var $elements = [
+		0 => '',
 		//55 => 'Angle Stops',// remove
 		2 => 'CEILING',
 		3 => 'COUNTERTOP',
@@ -88,6 +89,7 @@ class HcaUnitInspection
 		57 => 'TOILET - Flapper 3 inches',
 		41 => 'TOILET - Fill Valve',
 		42 => 'TOILET - Pressure Tank',
+		65 => 'TOILET - Cartridge',
 		43 => 'TOILET - Lid',
 		44 => 'TOILET - Handle',
 		45 => 'TOILET - Flush Valve',
@@ -98,7 +100,7 @@ class HcaUnitInspection
 		63 => 'Washer',
 		64 => 'Water Heater',
 
-		// Last ID = 64
+		// Last ID = 65
 	];
 
 	var $job_types = [
@@ -108,23 +110,6 @@ class HcaUnitInspection
 		3 => 'Reset',
 		4 => 'Tied',
 	];
-
-	function getJobType($id) 
-	{
-		return isset($this->job_types[$id]) ? $this->job_types[$id] : '';
-	}
-
-	function getLocation($id) {
-		return (isset($this->locations[$id]) && $id > 0) ? $this->locations[$id] : '';
-	}
-
-	function getEquipment($id) {
-		return (isset($this->equipments[$id]) && $id > 0) ? $this->equipments[$id] : '';
-	}
-
-	function getElement($id) {
-		return isset($this->elements[$id]) ? $this->elements[$id] : '';
-	}
 
 	function getProblems() 
 	{
@@ -152,6 +137,64 @@ class HcaUnitInspection
 
 			// Last id 22
 		];
+	}
+
+	function getProperties($excludes = [])
+	{
+		global $DBLayer, $User;
+
+		$query = array(
+			'SELECT'	=> 'p.*',
+			'FROM'		=> 'sm_property_db AS p',
+			'WHERE'		=> 'p.id!=105 AND p.id!=113 AND p.id!=115 AND p.id!=116',
+			'ORDER BY'	=> 'p.pro_name'
+		);
+		if ($User->get('property_access') != '' && $User->get('property_access') != 0)
+		{
+			$property_ids = explode(',', $User->get('property_access'));
+			$query['WHERE'] .= ' AND p.id IN ('.implode(',', $property_ids).')';
+		}
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		
+		$sm_property_db = [];
+		while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
+			$sm_property_db[] = $fetch_assoc;
+		}
+
+		return $sm_property_db;
+	}
+
+	function getPeriods($start = 2000)
+	{
+		$output = [];
+		$output[12] = 'Last 12 months';
+		$output[6] = 'Last 6 months';
+		$output[3] = 'Last 3 months';
+		$output[1] = 'Last month';
+
+		for ($year = $start; $year <= date('Y'); $year++)
+		{
+			$output[$year] = $year;
+		}
+
+		return $output;
+	}
+
+	function getJobType($id) 
+	{
+		return isset($this->job_types[$id]) ? $this->job_types[$id] : '';
+	}
+
+	function getLocation($id) {
+		return (isset($this->locations[$id]) && $id > 0) ? $this->locations[$id] : '';
+	}
+
+	function getEquipment($id) {
+		return (isset($this->equipments[$id]) && $id > 0) ? $this->equipments[$id] : '';
+	}
+
+	function getElement($id) {
+		return isset($this->elements[$id]) ? $this->elements[$id] : '';
 	}
 
 	function get_never_inspected($property_id)

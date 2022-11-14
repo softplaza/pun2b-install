@@ -131,7 +131,7 @@ if ($search_by_status > 0)
 	if ($search_by_status == 1) // pending inspections
 		$search_query[] = 'c.inspection_completed=1';
 	else if ($search_by_status == 2) // pending WO
-		$search_query[] = 'c.work_order_completed=1 AND c.inspection_completed=2 AND c.num_problem > 0';
+		$search_query[] = 'c.work_order_completed=1 AND c.inspection_completed=2'; // AND c.num_problem > 0
 	else if ($search_by_status == 3)
 		$search_query[] = 'c.inspection_completed=2 AND c.work_order_completed=2';
 }
@@ -318,7 +318,7 @@ foreach ($users_info as $user_info)
 			<tr>
 				<th class="min-w-10">Property</th>
 				<th class="min-w-5">Unit #</th>
-				<th class="min-w-10">Identified Problems</th>
+				<th class="min-w-15">Identified Problems</th>
 				<th class="min-w-10">Inspected by</th>
 				<th class="min-w-10">
 					<p class="text-primary">WO Started</p>
@@ -347,7 +347,7 @@ if (!empty($main_info))
 	}
 
 	$query = array(
-		'SELECT'	=> 'ci.*, i.item_name, i.req_appendixb',
+		'SELECT'	=> 'ci.*, i.item_name, i.equipment_id, i.req_appendixb',
 		'FROM'		=> 'hca_ui_checklist_items AS ci',
 		'JOINS'		=> [
 			[
@@ -402,7 +402,8 @@ if (!empty($main_info))
 				{
 					$status_OR_problems = ($checklist_items['job_type'] > 0) ? ' (<span class="text-success">'.$HcaUnitInspection->getJobType($checklist_items['job_type']).'</span>)' : ' (<span class="text-danger">'.$HcaUnitInspection->getItemProblems($checklist_items['problem_ids']).'</span>)';
 
-					$list_of_problems[] = '<p class="text-primary">'.$checklist_items['item_name'].$status_OR_problems.'</p>';
+					$equipment = $HcaUnitInspection->getEquipment($checklist_items['equipment_id']);
+					$list_of_problems[] = '<p class="text-primary">'.$equipment.' -> '.$checklist_items['item_name'].$status_OR_problems.'</p>';
 
 					if ($checklist_items['req_appendixb'] == 1)
 						$req_appendixb = true;

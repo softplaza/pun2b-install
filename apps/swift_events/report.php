@@ -3,7 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-//$access = ($User->checkAccess('swift_events', 1)) ? true : false;
+$access3 = ($User->checkAccess('swift_events', 3)) ? true : false;//edit
 $access4 = ($User->checkAccess('swift_events', 4)) ? true : false;//add
 //if (!$access)
 //	message($lang_common['No permission']);
@@ -13,6 +13,45 @@ $search_by_event_type = isset($_GET['event_type']) ? intval($_GET['event_type'])
 $search_by_event_status = isset($_GET['event_status']) ? intval($_GET['event_status']) : -1;
 
 $SwiftEvents = new SwiftEvents;
+
+if (isset($_POST['update_event']))
+{
+	$event_id = isset($_POST['event_id']) ? intval($_POST['event_id']) : 0;
+	$form_data = [
+		'datetime_created' => isset($_POST['datetime_created']) ? $_POST['datetime_created'] : date('Y-m-d H:i:s'),
+		'message' => isset($_POST['message']) ? swift_trim($_POST['message']) : '',
+		'event_type' => isset($_POST['event_type']) ? intval($_POST['event_type']) : 0,
+	];
+	
+	if (isset($_POST['event_status']))
+		$form_data['event_status'] = intval($_POST['event_status']);
+
+	if ($form_data['message'] == '')
+		$Core->add_error('Message cannot be empty.');
+	
+	if (empty($Core->errors) && $event_id > 0)
+	{
+		$DBLayer->update('swift_events', $form_data, $event_id);
+
+		$flash_message = 'Event was updated.';
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
+	}
+}
+
+else if (isset($_POST['delete_event']))
+{
+	$event_id = isset($_POST['event_id']) ? intval($_POST['event_id']) : 0;
+	
+	if ($event_id > 0)
+	{
+		$DBLayer->delete('swift_events', $event_id);
+
+		$flash_message = 'Event was deleted.';
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
+	}
+}
 
 $query = array(
 	'SELECT'	=> 'u.id, u.realname',
@@ -26,6 +65,50 @@ $users_info = [];
 while ($row = $DBLayer->fetch_assoc($result)) {
 	$users_info[] = $row;
 }
+
+$swift_events = $search_query = [];
+
+if ($search_by_user_id > 0)
+	$search_query[] = 'e.user_id='.$search_by_user_id;
+if ($search_by_event_type > -1)
+	$search_query[] = 'e.event_type='.$search_by_event_type;
+if ($search_by_event_status > -1)
+	$search_query[] = 'e.event_status='.$search_by_event_status;
+
+
+$query = [
+	'SELECT'	=> 'COUNT(e.id)',
+	'FROM'		=> 'swift_events as e',
+	'JOINS'		=> [
+		[
+			'INNER JOIN'	=> 'users AS u',
+			'ON'			=> 'u.id=e.user_id'
+		],
+	],
+	'LIMIT'		=> $PagesNavigator->limit()
+];
+if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+$PagesNavigator->set_total($DBLayer->result($result));
+
+$query = [
+	'SELECT'	=> 'e.*, u.realname',
+	'FROM'		=> 'swift_events as e',
+	'JOINS'		=> [
+		[
+			'INNER JOIN'	=> 'users AS u',
+			'ON'			=> 'u.id=e.user_id'
+		],
+	],
+	'ORDER BY'	=> 'e.datetime_created DESC',
+	'LIMIT'		=> $PagesNavigator->limit()
+];
+if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+while ($row = $DBLayer->fetch_assoc($result)) {
+	$swift_events[] = $row;
+}
+$PagesNavigator->num_items($swift_events);
 
 $Core->set_page_id('swift_events_calendar', 'swift_events');
 require SITE_ROOT.'header.php';
@@ -86,6 +169,7 @@ foreach ($event_statuses as $key => $value)
 	</form>
 </nav>
 
+<?php echo $PagesNavigator->getNavi(); ?>
 <table class="table table-striped table-bordered">
 	<thead>
 		<tr>
@@ -97,33 +181,6 @@ foreach ($event_statuses as $key => $value)
 	<tbody>
 		
 <?php
-
-$swift_events = $search_query = [];
-
-if ($search_by_user_id > 0)
-	$search_query[] = 'e.user_id='.$search_by_user_id;
-if ($search_by_event_type > -1)
-	$search_query[] = 'e.event_type='.$search_by_event_type;
-if ($search_by_event_status > -1)
-	$search_query[] = 'e.event_status='.$search_by_event_status;
-	
-$query = [
-	'SELECT'	=> 'e.*, u.realname',
-	'FROM'		=> 'swift_events as e',
-	'JOINS'		=> [
-		[
-			'INNER JOIN'	=> 'users AS u',
-			'ON'			=> 'u.id=e.user_id'
-		],
-	],
-	'ORDER BY'	=> 'e.datetime_created',
-];
-if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
-$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-while ($row = $DBLayer->fetch_assoc($result)) {
-	$swift_events[] = $row;
-}
-
 if (!empty($swift_events)) 
 {
 	foreach($swift_events as $cur_info)
@@ -136,6 +193,9 @@ if (!empty($swift_events))
 			$event_type = '<i class="fas fa-bell text-danger me-1"></i>';
 		else
 			$event_type = '<i class="fas fa-file-alt text-warning me-1"></i>';
+
+		$actions = ($access3 && $cur_info['user_id'] == $User->get('id')) ? '<span class="float-end"><i class="fas fa-edit" onclick="editEvent('.$cur_info['id'].')" data-bs-toggle="modal" data-bs-target="#modalWindow"></i><span>' : '<span class="float-end text-muted">'.html_encode($cur_info['realname']).'<span>';
+
 ?>
 		<tr>
 			<td><p><?php echo format_date($cur_info['datetime_created'], 'Y-m-d H:i') ?></p></td>
@@ -144,7 +204,7 @@ if (!empty($swift_events))
 				<span><?php echo html_encode($cur_info['message']) ?></span>
 				<span class="float-end"><?php echo $event_status ?></span>
 			</td>
-			<td><?php echo html_encode($cur_info['realname']) ?></td>
+			<td><?php echo $actions ?></td>
 		</tr>
 <?php
 	}
@@ -152,7 +212,6 @@ if (!empty($swift_events))
 ?>
 	</tbody>
 </table>
-
 
 <div class="modal fade" id="modalWindow" tabindex="-1" aria-labelledby="modalWindowLabel" aria-hidden="true">
 	<div class="modal-dialog">
@@ -175,23 +234,6 @@ if (!empty($swift_events))
 </div>
 
 <script>
-function getEventsOfWeek(date)
-{
-	var user_id = <?php echo $search_by_user_id ?>;
-	var csrf_token = "<?php echo generate_form_token($URL->link('swift_events_ajax_get_events')) ?>";
-	jQuery.ajax({
-		url:	"<?php echo $URL->link('swift_events_ajax_get_events') ?>",
-		type:	"POST",
-		dataType: "json",
-		data: ({date:date,user_id:user_id,csrf_token:csrf_token}),
-		success: function(re){
-			$("#ajax_content").empty().html(re.ajax_content);
-		},
-		error: function(re){
-			$("#ajax_content").empty().html('Error: No events.');
-		}
-	});
-}
 function editEvent(id)
 {
 	var csrf_token = "<?php echo generate_form_token($URL->link('swift_events_ajax_edit_event')) ?>";

@@ -1899,11 +1899,24 @@ table .tcr{
 
 
 /* Bootstrap settings */
-.callout{padding:.5rem;border:1px solid #e9ecef;border-left-width:.25rem;border-radius:.25rem}
+.callout{
+    padding: .5rem;
+    border: 1px solid #e9ecef;
+    border-left-width: 0.25rem;
+    border-radius: 0.25rem;
+}
+.callout-success{border-left-color:#198754!important}
+.callout-info{border-left-color:#5bc0de!important}
+.callout-primary{border-left-color:rgb(13,110,253)!important}
+.callout-warning{border-left-color:#f0ad4e!important}
+.callout-danger{border-left-color:#d9534f!important}
+
+
 .bd-callout h4{margin-bottom:.25rem}
 .bd-callout p:last-child{margin-bottom:0}
 .bd-callout code{border-radius:.25rem}
 .bd-callout+.bd-callout{margin-top:-.25rem}
+
 .bd-callout-success{border-left-color:#198754!important}
 .bd-callout-info{border-left-color:#5bc0de!important}
 .bd-callout-warning{border-left-color:#f0ad4e!important}
@@ -1915,7 +1928,6 @@ table .tcr{
     color: darkcyan;
 }
 .table th {text-align:center}
-.table tfoot {background: lavender;}
 
 /* NEW STANDART STYLES*/
 

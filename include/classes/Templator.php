@@ -79,7 +79,7 @@ class Templator
 
 	function getSection($section)
 	{
-		$section = ($section != '') ? $section : '<!--'.$tpl_name.'-->';
+		$section = ($section != '') ? $section : '<!--'.$this->tpl_name.'-->';
 		if ($this->tpl_name == 'admin' && file_exists(SITE_ROOT.'admin/sections/'.$section.'.php'))
 		{
 			ob_start();

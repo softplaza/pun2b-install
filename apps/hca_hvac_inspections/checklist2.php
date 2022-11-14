@@ -13,8 +13,90 @@ $property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
 $unit_id = isset($_GET['unit_id']) ? intval($_GET['unit_id']) : 0;
 
 $HcaHVACInspections = new HcaHVACInspections;
+$SwiftUploader = new SwiftUploader;
 
-if (isset($_POST['update']))
+// Set permissions to view, download and delete files
+$SwiftUploader->access_view_files = true;
+if ($User->checkAccess('hca_hvac_inspections', 18))
+	$SwiftUploader->access_upload_files = true;
+if ($User->checkAccess('hca_hvac_inspections', 19))
+	$SwiftUploader->access_delete_files = true;
+
+if (isset($_POST['create']))
+{
+	$form_data = [
+		'property_id'				=> isset($_POST['property_id']) ? intval($_POST['property_id']) : 0,
+		'unit_id'					=> isset($_POST['unit_id']) ? intval($_POST['unit_id']) : 0,
+		'inspection_completed'		=> isset($_POST['inspection_completed']) ? intval($_POST['inspection_completed']) : 0,
+		'work_order_comment'		=> isset($_POST['work_order_comment']) ? swift_trim($_POST['work_order_comment']) : '',
+		'owned_by'					=> $User->get('id'),
+		//'created'					=> time(),
+		//'date_inspected'			=> date('Y-m-d'),
+		'inspected_by'				=> $User->get('id'),
+		//'status'					=> 1,
+		'datetime_inspection_start' => date('Y-m-d\TH:i:s'),
+		'updated_by'				=> $User->get('id'),
+		'updated_time'				=> time(),
+		'ch_inspection_type'		=> isset($_POST['ch_inspection_type']) ? intval($_POST['ch_inspection_type']) : 0,
+	];
+
+	if ($form_data['property_id'] == 0)
+		$Core->add_error('Select property.');
+	if ($form_data['unit_id'] == 0)
+		$Core->add_error('Select unit number.');
+	if ($form_data['ch_inspection_type'] == 0)
+		$Core->add_error('Select type of inspection.');
+
+	$query = array(
+		'SELECT'	=> 'i.*',
+		'FROM'		=> 'hca_hvac_inspections_items AS i',
+		'ORDER BY'	=> 'i.display_position'
+	);
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	$hca_hvac_inspections_items = [];
+	while ($row = $DBLayer->fetch_assoc($result)) {
+		$hca_hvac_inspections_items[] = $row;
+	}
+
+	if (empty($hca_hvac_inspections_items))
+		$Core->add_error('Checklist items list is empty.');
+
+	if (empty($Core->errors))
+	{
+		// Create a New Project
+		$new_id = $DBLayer->insert_values('hca_hvac_inspections_checklist', $form_data);
+
+		foreach($hca_hvac_inspections_items as $element)
+		{
+			$checklist_item = [
+				'checklist_id'	=> $new_id,
+				'item_id'		=> $element['id'],
+
+			];
+
+			if ($form_data['ch_inspection_type'] == 1)
+				$DBLayer->insert_values('hca_hvac_inspections_checklist_items', $checklist_item);
+			else if ($form_data['ch_inspection_type'] == 2 && $element['item_inspection_type'] == 2)
+				$DBLayer->insert_values('hca_hvac_inspections_checklist_items', $checklist_item);
+		}
+
+		// Add flash message
+		$flash_message = 'Checklist was created by '.$User->get('realname');
+
+		$action_data = [
+			'checklist_id'			=> $new_id,
+			'submitted_by'			=> $User->get('id'),
+			'time_submitted'		=> time(),
+			'action'				=> $flash_message
+		];
+		$DBLayer->insert_values('hca_hvac_inspections_actions', $action_data);
+
+		$FlashMessenger->add_info($flash_message);
+		redirect($URL->link('hca_hvac_inspections_checklist2', $new_id), $flash_message);
+	}
+}
+
+else if (isset($_POST['update']))
 {
 	$form_data = [
 		'updated_by'				=> $User->get('id'),
@@ -40,16 +122,15 @@ if (isset($_POST['update']))
 	
 	if (empty($Core->errors))
 	{
-		
 		//$form_data['num_problem'] = $form_data['num_pending'] = 0;
-		if (isset($_POST['comment']) && !empty($_POST['comment']))
+		if (isset($_POST['check_type']))
 		{
-			foreach($_POST['comment'] as $key => $problem)
+			foreach($_POST['check_type'] as $key => $problem)
 			{
 				$checklist_item = [
-					'comment'		=> isset($_POST['comment'][$key]) ? swift_trim($_POST['comment'][$key]) : '',
+					//'comment'		=> isset($_POST['comment'][$key]) ? swift_trim($_POST['comment'][$key]) : '',
 					'check_type'	=> isset($_POST['check_type'][$key]) ? intval($_POST['check_type'][$key]) : 0,
-					'job_type'		=> isset($_POST['job_type'][$key]) ? intval($_POST['job_type'][$key]) : 0,
+					//'job_type'		=> isset($_POST['job_type'][$key]) ? intval($_POST['job_type'][$key]) : 0,
 				];
 				$DBLayer->update('hca_hvac_inspections_checklist_items', $checklist_item, $key);
 
@@ -58,6 +139,32 @@ if (isset($_POST['update']))
 				//if ($problem > 0 && $checklist_item['job_type'] == 0)
 				//	++$form_data['num_pending'];
 			}
+
+			// Check Checklist status of checkboxes to create WO
+			$query = [
+				'SELECT'	=> 'ci.check_type, i.item_type',
+				'FROM'		=> 'hca_hvac_inspections_items AS i',
+				'JOINS'		=> [
+					[
+						'INNER JOIN'	=> 'hca_hvac_inspections_checklist_items AS ci',
+						'ON'			=> 'i.id=ci.item_id'
+					],
+				],
+				'WHERE'		=> 'ci.checklist_id='.$id,
+				'ORDER BY'	=> 'i.equipment_id, i.display_position'
+			];
+			$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+
+			$work_order_ident = false;
+			while($row = $DBLayer->fetch_assoc($result))
+			{
+				// if found problem change status as WO
+				if ($row['check_type'] == 1 && $row['item_type'] == 2 || $row['check_type'] == 2 && $row['item_type'] == 1)
+					$work_order_ident = true;
+			}
+
+			if ($work_order_ident)
+				$form_data['work_order_completed'] = 1;
 		}
 
 		$DBLayer->update('hca_hvac_inspections_checklist', $form_data, $id);
@@ -74,7 +181,7 @@ if (isset($_POST['update']))
 		$DBLayer->insert_values('hca_hvac_inspections_actions', $action_data);
 
 		$FlashMessenger->add_info($flash_message);
-		redirect($URL->link('hca_hvac_inspections_checklist', $id), $flash_message);
+		redirect($URL->link('hca_hvac_inspections_checklist2', $id), $flash_message);
 	}
 }
 
@@ -118,57 +225,209 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 $Core->set_page_id('hca_hvac_inspections_checklist', 'hca_hvac_inspections');
 require SITE_ROOT.'header.php';
 
-$query = [
-	'SELECT'	=> 'ch.*, u1.realname AS inspected_name, u2.realname AS completed_name, p.pro_name, un.unit_number, un.unit_type, un.mbath, un.hbath',
-	'FROM'		=> 'hca_hvac_inspections_checklist AS ch',
-	'JOINS'		=> [
-		[
-			'LEFT JOIN'		=> 'users AS u1',
-			'ON'			=> 'u1.id=ch.inspected_by'
-		],
-		[
-			'LEFT JOIN'		=> 'users AS u2',
-			'ON'			=> 'u2.id=ch.completed_by'
-		],
-		[
-			'LEFT JOIN'		=> 'sm_property_db AS p',
-			'ON'			=> 'p.id=ch.property_id'
-		],
-		[
-			'LEFT JOIN'		=> 'sm_property_units AS un',
-			'ON'			=> 'un.id=ch.unit_id'
-		],
-	],
-	'WHERE'		=> 'ch.id='.$id
-];
-$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$main_info = $DBLayer->fetch_assoc($result);
-
-$query = [
-	'SELECT'	=> 'ci.*, i.item_name, i.equipment_id, i.req_appendixb, i.item_type, i.job_actions, i.comment_required',
-	'FROM'		=> 'hca_hvac_inspections_items AS i',
-	'JOINS'		=> [
-		[
-			'INNER JOIN'	=> 'hca_hvac_inspections_checklist_items AS ci',
-			'ON'			=> 'i.id=ci.item_id'
-		],
-	],
-	'WHERE'		=> 'ci.checklist_id='.$id,
-	'ORDER BY'	=> 'i.equipment_id, i.display_position'
-];
-$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$checked_items = [];
-while($row = $DBLayer->fetch_assoc($result))
+if ($id == 0)
 {
-	$checked_items[] = $row;
+?>
+
+<form method="post" accept-charset="utf-8" action="" class="was-validated">
+	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
+	<div class="card">
+		<div class="card-header">
+			<h6 class="card-title mb-0">New HVAC inspection</h6>
+		</div>
+		<div class="card-body">
+	
+			<div class="mb-3">
+				<label class="form-label" for="property_id">Property</label>
+				<select id="property_id" class="form-select form-select-sm" name="property_id" onchange="getUnits()" required>
+<?php
+echo '<option value="" selected disabled>Select Property</option>'."\n";
+foreach ($sm_property_db as $cur_info)
+{
+	if (isset($_POST['property_id']) && $_POST['property_id'] == $cur_info['id'] || $property_id == $cur_info['id'])
+		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'" selected>'.html_encode($cur_info['pro_name']).'</option>'."\n";
+	else
+		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'">'.html_encode($cur_info['pro_name']).'</option>'."\n";
 }
+?>
+				</select>
+			</div>
+			<div class="mb-3">
+				<label class="form-label" for="fld_unit_number">Unit number</label>
+				<div id="unit_number">
+					<input type="text" value="" class="form-control" id="fld_unit_number" disabled>
+				</div>
+			</div>
+
+			<div class="col-md-3 mb-3">
+				<label class="form-label" for="fld_key_number">Key number</label>
+				<span><i id="key_number_eye" class="fas fa-eye-slash" onclick="showKey()"></i></span>
+				<div id="key_number" class="hidden"></div>
+			</div>
+
+			<div class="mb-3">
+				<label class="form-label">Type of inspection</label>
+				<div class="form-check">
+					<input class="form-check-input" type="radio" name="ch_inspection_type" value="1" id="fld_ch_inspection_type1" required>
+					<label class="form-check-label" for="fld_ch_inspection_type1">Full inspection</label>
+				</div>
+				<div class="form-check">
+					<input class="form-check-input" type="radio" name="ch_inspection_type" value="2" id="fld_ch_inspection_type2">
+					<label class="form-check-label" for="fld_ch_inspection_type2">Filter Replacement Only</label>
+				</div>
+			</div>
+
+			<label class="form-label mb-1">Did you get into the unit?</label>
+			<div class="mb-3">
+				<div class="form-check form-check-inline">
+					<input class="form-check-input" type="radio" name="inspection_completed" id="fld_inspection_completed2" value="0" onclick="checkRadioBox(0)" required>
+					<label class="form-check-label" for="fld_inspection_completed2">YES</label>
+				</div>
+				<div class="form-check form-check-inline">
+					<input class="form-check-input" type="radio" name="inspection_completed" id="fld_inspection_completed1" value="1" onclick="checkRadioBox(1)">
+					<label class="form-check-label" for="fld_inspection_completed1">NO</label>
+				</div>
+			</div>
+
+			<div class="mb-3 hidden" id="box_work_order_comment">
+				<label class="form-label text-danger" for="fld_work_order_comment">Why the inspection cannot be completed?</label>
+				<textarea class="form-control" id="fld_work_order_comment" name="work_order_comment" placeholder="Please, provide the reason"></textarea>
+			</div>
+
+			<div id="btn_actions"></div>
+
+		</div>
+	</div>
+</form>
+
+<script>
+function getUnits(pid,uid){
+	var csrf_token = "<?php echo generate_form_token($URL->link('hca_hvac_inspections_ajax_get_units')) ?>";
+	var pid = $("#property_id").val();
+	jQuery.ajax({
+		url:	"<?php echo $URL->link('hca_hvac_inspections_ajax_get_units') ?>",
+		type:	"POST",
+		dataType: "json",
+		cache: false,
+		data: ({property_id:pid,unit_id:uid,csrf_token:csrf_token}),
+		success: function(re){
+			$("#unit_number").empty().html(re.unit_number);
+			$("#key_number").empty().html(re.key_number);
+			$("#key_number_eye").removeClass("fa-eye");
+			$("#key_number_eye").addClass("fa-eye-slash");
+			$("#btn_actions").empty().html(re.btn_actions);
+		},
+		error: function(re){
+			document.getElementById("unit_number").innerHTML = re;
+		}
+	});
+}
+function getUnitKey(){
+	var csrf_token = "<?php echo generate_form_token($URL->link('hca_hvac_inspections_ajax_get_units')) ?>";
+	var uid = $("#unit_numbers").val();
+	jQuery.ajax({
+		url:	"<?php echo $URL->link('hca_hvac_inspections_ajax_get_units') ?>",
+		type:	"POST",
+		dataType: "json",
+		cache: false,
+		data: ({unit_id:uid,csrf_token:csrf_token}),
+		success: function(re){
+			$("#key_number").empty().html(re.key_number);
+			$("#key_number_eye").removeClass("fa-eye");
+			$("#key_number_eye").addClass("fa-eye-slash");
+			$("#btn_actions").empty().html(re.btn_actions);
+		},
+		error: function(re){
+			document.getElementById("key_number").innerHTML = re;
+		}
+	});
+}
+function showKey()
+{
+    if ($("#key_number_eye").hasClass('fa-eye-slash'))
+	{
+		$("#key_number_eye").removeClass("fa-eye-slash");
+		$("#key_number_eye").addClass("fa-eye");
+		$("#key_number").removeClass("hidden");
+    } else {
+		$("#key_number_eye").removeClass("fa-eye");
+		$("#key_number_eye").addClass("fa-eye-slash");
+		$("#key_number").addClass("hidden");
+    }
+}
+function checkRadioBox(key){
+	if (key === 1)//if NO
+	{
+		$('#fld_work_order_comment').prop('required', true);
+		$("#box_work_order_comment").removeClass("hidden");
+		//$("button").html('Submit');
+	}
+	else{
+		$('#fld_work_order_comment').prop('required', false);
+		$("#box_work_order_comment").addClass("hidden");
+		//$("button").html('Start inspection');
+	}
+}
+document.addEventListener("DOMContentLoaded", function() {
+	getUnits(<?=$property_id?>,<?=$unit_id?>);
+});
+</script>
+
+<?php
+
+} else {
+
+	$query = [
+		'SELECT'	=> 'ch.*, u1.realname AS inspected_name, u2.realname AS completed_name, p.pro_name, un.unit_number, un.unit_type, un.mbath, un.hbath',
+		'FROM'		=> 'hca_hvac_inspections_checklist AS ch',
+		'JOINS'		=> [
+			[
+				'LEFT JOIN'		=> 'users AS u1',
+				'ON'			=> 'u1.id=ch.inspected_by'
+			],
+			[
+				'LEFT JOIN'		=> 'users AS u2',
+				'ON'			=> 'u2.id=ch.completed_by'
+			],
+			[
+				'LEFT JOIN'		=> 'sm_property_db AS p',
+				'ON'			=> 'p.id=ch.property_id'
+			],
+			[
+				'LEFT JOIN'		=> 'sm_property_units AS un',
+				'ON'			=> 'un.id=ch.unit_id'
+			],
+		],
+		'WHERE'		=> 'ch.id='.$id
+	];
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	$main_info = $DBLayer->fetch_assoc($result);
+
+	$query = [
+		'SELECT'	=> 'ci.*, i.item_name, i.equipment_id, i.req_appendixb, i.item_type, i.job_actions, i.comment_required',
+		'FROM'		=> 'hca_hvac_inspections_items AS i',
+		'JOINS'		=> [
+			[
+				'INNER JOIN'	=> 'hca_hvac_inspections_checklist_items AS ci',
+				'ON'			=> 'i.id=ci.item_id'
+			],
+		],
+		'WHERE'		=> 'ci.checklist_id='.$id,
+		'ORDER BY'	=> 'i.equipment_id, i.display_position'
+	];
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	$checked_items = [];
+	while($row = $DBLayer->fetch_assoc($result))
+	{
+		$checked_items[] = $row;
+	}
 ?>
 
 <form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data" class="was-validated">
 	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 	<div class="card">
 		<div class="card-header">
-			<h6 class="card-title mb-0">HVAC Work Order #<?=$main_info['id']?></h6>
+			<h6 class="card-title mb-0">AC Unit Inspection #<?=$main_info['id']?></h6>
 		</div>
 		<div class="card-body pb-0">
 			<div class="row">
@@ -203,15 +462,13 @@ while($row = $DBLayer->fetch_assoc($result))
 
 		<div class="card-body pb-0">
 
-<?php if ($main_info['work_order_completed'] == 2) : ?>
-			<div class="alert alert-success" role="alert">The Work Order already was completed.</div>
-<?php elseif ($main_info['work_order_completed'] == 1): ?>
-			<div class="alert alert-warning" role="alert">Complete the Work Order and press "Submit" button.</div>
+<?php if ($main_info['inspection_completed'] == 2) : ?>
+			<div class="alert alert-success" role="alert">The checklist already has been completed.</div>
 <?php else: ?>
-			<div class="alert alert-danger" role="alert">Work Order not created yet. Checklist was completed with no issues.</div>
+			<div class="alert alert-danger" role="alert">All checkboxes must be marked "Yes" or "No".</div>
 <?php endif; ?>
-
 <?php
+
 $query = array(
 	'SELECT'	=> 'f.*, p.pro_name',
 	'FROM'		=> 'hca_hvac_inspections_filters AS f',
@@ -234,24 +491,23 @@ $req_appendixb = false;
 $equipment_id = 0;
 foreach($checked_items as $cur_info)
 {
-	$item_body = [];
-
 	if ($equipment_id != $cur_info['equipment_id'])
 	{
 		$equipment_name = isset($HcaHVACInspections->equipments[$cur_info['equipment_id']]) ? $HcaHVACInspections->equipments[$cur_info['equipment_id']] : '';
+?>
+			<div class="row mt-1">
+				<div class="col-8">
+					<span class="fw-bold"><?php echo html_encode($equipment_name) ?></span>
+				</div>
+				<div class="col-2 ta-center">
+					<span class="fw-bold">Yes</span>
+				</div>
+				<div class="col-2 ta-center">
+					<span class="fw-bold">No</span>
+				</div>
+			</div>
 
-		$item_body[] = '<div class="row mt-1">';
-		$item_body[] = '<div class="col-3">';
-		$item_body[] = '<span class="fw-bold">'.html_encode($equipment_name).'</span>';
-		$item_body[] = '</div>';
-		$item_body[] = '<div class="col-2 ta-center">';
-		$item_body[] = '<span class="fw-bold"></span>';
-		$item_body[] = '</div>';
-		$item_body[] = '<div class="col-2 ta-center">';
-		$item_body[] = '<span class="fw-bold">Action</span>';
-		$item_body[] = '</div>';
-		$item_body[] = '<div class="col-5"></div>';
-		$item_body[] = '</div>';
+<?php
 	}
 
 	if ($cur_info['item_id'] == 1 && in_array($main_info['property_id'], [100, 111]) || $cur_info['item_id'] > 1)
@@ -272,87 +528,25 @@ foreach($checked_items as $cur_info)
 			$filter_sizes[] = '</select>';
 			$filter_sizes[] = '<div class="invalid-tooltip">Please select filter size from dropdown.</div>';
 		}
-
-		$item_type1 = ($cur_info['item_type'] == 2) ? 1 : 2;
-		$item_type2 = ($cur_info['item_type'] == 2) ? 2 : 1;
-
-		$check_type_param1 = $check_type_param2 = [];
-
-		$check_type_param1[] = ($cur_info['item_type'] == 2) ? 1 : 2;
-		$check_type_param2[] = ($cur_info['item_type'] == 2) ? 2 : 1;
-
-		$check_type_param1[] = $check_type_param2[] = $cur_info['id'];
-		$check_type_param1[] = $check_type_param2[] = $cur_info['comment_required'];
-
-		$item_body[] = '<div class="row">';
-		$item_body[] = '<div class="col-3">';
-		$item_body[] = '<span class="">'.html_encode($cur_info['item_name']).'</span>';
-		$item_body[] = '<p><?php echo implode("\n", $filter_sizes) ?></p>';
-		$item_body[] = '</div>';
-		$item_body[] = '<input type="hidden" name="check_type['.$cur_info['id'].']" value="0">';
-		$item_body[] = '<div class="col-2 alert-info ta-center">';
-		$item_body[] = '<span class="fw-bold">'.($cur_info['check_type'] == 2 ? 'Yes' : 'No').'</span>';
-		$item_body[] = '</div>';
-
-		$job_actions = [];
-		$item_job_actions = explode(',', $cur_info['job_actions']);
-		foreach($HcaHVACInspections->actions as $key => $value)
-		{
-			if (in_array($key, $item_job_actions))
-				$job_actions[$key] = $value;
-		}
-
-		if (!empty($job_actions))
-		{
-			$class_job_type = '';
-			$col_job_type_param = $fld_job_type_param = [];
-			if ($cur_info['check_type'] == 1 && $cur_info['item_type'] == 1) // YES & Problem
-				$col_job_type_param[] = 'style="display:none"';
-			else if ($cur_info['check_type'] == 2 && $cur_info['item_type'] == 2) // YES & Work Order
-				$col_job_type_param[] = 'style="display:none"';
-			else
-			{
-				$fld_job_type_param[] = 'required';
-				$class_job_type = 'fld-required';
-			}
-
-			$item_body[] = '<div class="col-2" id="col_job_type'.$cur_info['id'].'" '.implode(' ', $col_job_type_param).'>';
-			$item_body[] = '<select name="job_type['.$cur_info['id'].']" class="form-select form-select-sm '.$class_job_type.'" id="fld_job_type'.$cur_info['id'].'" '.implode(' ', $fld_job_type_param).'>';
-
-			$item_body[] = '<option value="" selected>Choose action</option>'."\n";
-			foreach ($job_actions as $key => $value)
-			{
-				if (isset($_POST['job_type']) && $_POST['job_type'] == $key || $cur_info['job_type'] == $key)
-					$item_body[] = "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$value.'</option>'."\n";
-				else
-					$item_body[] = "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$value.'</option>'."\n";
-			}
-
-			$item_body[] = '</select>';
-			$item_body[] = '</div>';
-		}
-
-		$comment_param = [];
-		if ($cur_info['comment_required'] == 1 && $cur_info['check_type'] < 2)
-		{
-			$comment_param[] = 'class="form-control fld-required"';
-			$comment_param[] = 'required';
-		}
-
-		$item_body[] = '<div class="col">';
-		$item_body[] = '<input type="text" name="comment['.$cur_info['id'].']" value="'.html_encode($cur_info['comment']).'" id="fld_comment'.$cur_info['id'].'" '.(implode(' ', $comment_param)).'>';
-		$item_body[] = '</div>';
-		$item_body[] = '</div>';
+?>
+			<div class="row">
+				<div class="col-8">
+					<span class=""><?php echo html_encode($cur_info['item_name']) ?></span>
+					<p><?php echo implode("\n", $filter_sizes) ?></p>
+				</div>
+				<input type="hidden" name="check_type[<?=$cur_info['id']?>]" value="0">
+				<div class="col-2 alert-info ta-center pb-2">
+					<input type="radio" name="check_type[<?=$cur_info['id']?>]" value="2" class="form-check-input fld-required" <?php echo ($cur_info['check_type'] == 2 ? 'checked' : '') ?> required>
+				</div>
+				<div class="col-2 alert-info ta-center pb-2">
+					<input type="radio" name="check_type[<?=$cur_info['id']?>]" value="1" class="form-check-input" <?php echo ($cur_info['check_type'] == 1 ? 'checked' : '') ?>>
+				</div>
+			</div>
+<?php
 
 		if ($cur_info['req_appendixb'] == 1 && $cur_info['check_type'] == 2)
 			$req_appendixb = true;
-
-		// Need to setup these two options to display items all time
-		
-		//if ($cur_info['check_type'] == 1 && $cur_info['item_type'] == 2 || $cur_info['check_type'] == 2 && $cur_info['item_type'] == 1)
-			echo implode('', $item_body);
 	}
-
 	$equipment_id = $cur_info['equipment_id'];
 }
 ?>
@@ -370,14 +564,17 @@ foreach($checked_items as $cur_info)
 					<label class="form-check-label" for="fld_inspection_completed1">NO</label>
 				</div>
 			</div>
-
 			<div class="mb-3">
 				<label class="form-label text-danger" for="fld_work_order_comment">Remarks. If checklist is not copleted - Why?</label>
 				<textarea class="form-control" id="fld_work_order_comment" name="work_order_comment" placeholder="Leave your comments" <?php echo ($main_info['inspection_completed'] == 1) ? 'required' : '' ?>><?php echo isset($_POST['work_order_comment']) ? html_encode($_POST['work_order_comment']) : html_encode($main_info['work_order_comment']) ?></textarea>
 			</div>
 
 			<div class="mb-3">
+<?php if ($main_info['inspection_completed'] == 1): ?>
 				<button type="submit" name="update" class="btn btn-primary">Submit</button>
+<?php else: ?>
+				<button type="submit" name="update" class="btn btn-primary">Update</button>
+<?php endif; ?>
 
 <?php if ($req_appendixb) : ?>
 				<a href="<?php echo $URL->link('hca_hvac_inspections_appendixb', $id) ?>" class="btn btn-info text-white">Create Appendix-B</a>
@@ -491,27 +688,6 @@ if ($User->checkAccess('hca_hvac_inspections', 17))
 }
 ?>
 <script>
-function showHideItemActions(key,id,com)
-{
-	if (key === 2)
-	{
-		$('#col_job_type'+id).css("display", "block");
-		$('#fld_job_type'+id).prop('required', true);
-
-		if (com === 1)
-			$('#fld_comment'+id).prop('required', true);
-	}
-	else
-	{
-		$('#col_job_type'+id).css("display", "none");
-		$('#fld_job_type'+id).prop('required', false);
-		$('#fld_job_type'+id+' option[value=""]').prop('selected', true);
-
-		if (com === 1)
-			$('#fld_comment'+id).prop('required', false);
-	}
-}
-
 function checkRadioBox(key){
 	if (key === 1){
 		$('#fld_work_order_comment').prop('required', true);
@@ -556,4 +732,7 @@ document.addEventListener("DOMContentLoaded", function() {
 <?php
 }
 
+$SwiftUploader->addJS();
+
+}
 require SITE_ROOT.'footer.php';

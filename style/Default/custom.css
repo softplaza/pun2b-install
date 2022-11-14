@@ -9,7 +9,10 @@
 
 /* BOOTSTRAP SETTINGS*/
 .card-header {
-  background-color: #ceecff !important;
+  background-color: #63c2ff !important;
+}
+.card-header .card-title{
+  color: #ffffff !important;
 }
 .form-actions-fixed-bottom {
   position: fixed;
@@ -320,9 +323,9 @@
   position: sticky;
   top: 40px;
   z-index: 250;
-  background: #ffe2b8;
+  background: #e1e1e1;
 }
-
+.table>tfoot {background: #e1e1e1;}
 .table .th1{
     left: 58px;
     position: sticky;

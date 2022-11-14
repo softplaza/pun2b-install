@@ -181,10 +181,10 @@ class PagesNavigator
 			// Display num items only
 			$output = ($total_items > 1) ? '<nav aria-label="Page navigation" class="nav-pagination">'."\n\t".'<span class="page-link">Items: <span class="fw-bold">'.$items_per_page.'</span> of <span class="fw-bold">'.$total_items.'</span></span>'."\n".'</nav>' : '';
 
-		if ($this->navigation)
-		{
-			$this->navigation = false;
+		//if ($this->navigation)
+		//{
+			//$this->navigation = false;
 			return $output;
-		}	
+		//}	
 	}
 }

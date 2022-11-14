@@ -14,7 +14,7 @@ $HcaMi = new HcaMi;
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 $work_statuses = array(1 => 'IN PROGRESS', 2 => 'ON HOLD', 3 => 'COMPLETED', 0 => 'DELETE');
-
+/*
 if (isset($_POST['send_email']))
 {
 	$project_id = isset($_POST['project_id']) ? intval($_POST['project_id']) : 0;
@@ -92,7 +92,7 @@ if (isset($_POST['send_email']))
 	else
 		$Core->add_error('Your message is empty or there are no sender addresses.');
 }
-
+*/
 $search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
 $search_by_year = isset($_GET['year']) ? intval($_GET['year']) : 0;
 $search_by_unit = isset($_GET['unit_number']) ? swift_trim($_GET['unit_number']) : '';
@@ -389,7 +389,33 @@ if (!empty($projects_info))
 				if ($User->checkAccess('hca_mi', 13))
 					$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_invoice', $cur_info['id']).'"><i class="fas fa-file-invoice-dollar"></i> View Invoice</a>');
 				if ($User->checkAccess('hca_mi', 16))
-					$Core->add_dropdown_item('<a href="#!" onclick="emailWindow('.$cur_info['id'].')"><i class="far fa-envelope"></i> Send Email</a>');
+				{
+					$email_param = [];
+					$email_param[] = 'mailto:'.html_encode($Config->get('o_hca_5840_mailing_list'));
+					$email_param[] = '?subject=HCA: Moisture Inspection';
+					$email_param[] = '&amp;body=Property: '.html_encode($cur_info['pro_name']);
+					$email_param[] = '%0D%0A%0D%0A'; // 2 lines spaces
+					$email_param[] = 'Unit #: '.html_encode($cur_info['unit_number']);
+					$email_param[] = '%0D%0A%0D%0A'; // 2 lines spaces
+					$email_param[] = 'Location: '.html_encode(str_replace(',', ', ', $cur_info['location']));
+
+					$email_param[] = '%0D%0A%0D%0A'; // 2 lines spaces
+					$email_param[] = 'Inspection Date: '.format_time($cur_info['mois_inspection_date'], 1);
+					$email_param[] = '%0D%0A%0D%0A'; // 2 lines spaces
+					$email_param[] = 'Inspected by: '.($cur_info['performed_uid'] > 0 ? html_encode($cur_info['realname']) : html_encode($cur_info['mois_performed_by']));
+
+					$email_param[] = '%0D%0A%0D%0A'; // 2 lines spaces
+					$email_param[] = 'Source: '.html_encode($cur_info['mois_source']);
+					$email_param[] = '%0D%0A%0D%0A'; // 2 lines spaces
+					$email_param[] = 'Symptoms: '.html_encode($cur_info['symptoms']);	
+					$email_param[] = '%0D%0A%0D%0A'; // 2 lines spaces
+					$email_param[] = 'Action: '.html_encode($cur_info['action']);	
+					$email_param[] = '%0D%0A%0D%0A'; // 2 lines spaces
+					$email_param[] = 'Remarks: '.html_encode($cur_info['remarks']);
+
+					$Core->add_dropdown_item('<a href="'.implode('', $email_param).'"><i class="far fa-envelope"></i> Send Email</a>');
+					//$Core->add_dropdown_item('<a href="#!" onclick="emailWindow('.$cur_info['id'].')"><i class="far fa-envelope"></i> Send Email</a>');
+				}
 			}
 
 			$td['property_info'][] = '<span class="float-end">'.$Core->get_dropdown_menu($cur_info['id']).'</span>';
@@ -463,7 +489,7 @@ foreach($hca_5840_mailing_fields_details as $key => $value) {
 
 
 
-
+<!--
 <div class="email-window" style="display:none">
 	<label class="close-window"><img src="./img/close.png" width="16px" onclick="closeWindows()"/></label>
 	<form method="post" accept-charset="utf-8" action="">
@@ -484,7 +510,7 @@ foreach($hca_5840_mailing_fields_details as $key => $value) {
 		</div>
 	</form>
 </div>
-
+-->
 <?php
 
 $MonthlyFrequency = $Hca5840Chart->getMonthlyFrequency();
@@ -697,6 +723,7 @@ foreach($Hca5840Chart->symptoms_colors as $key => $color){
 </script>
 
 <script>
+
 function emailWindow(id){
 	var pos = $("#row"+id).position();
 	var posT = pos.top - 145;

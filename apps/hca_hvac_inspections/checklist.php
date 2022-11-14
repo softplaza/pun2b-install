@@ -335,7 +335,7 @@ function checkRadioBox(key){
 	{
 		$('#fld_work_order_comment').prop('required', true);
 		$("#box_work_order_comment").removeClass("hidden");
-		$("button").html('Submit');
+		//$("button").html('Submit');
 	}
 	else{
 		$('#fld_work_order_comment').prop('required', false);

@@ -38,6 +38,9 @@ if ($property_id > 0 && $unit_id > 0)
 	}
 	$unit_numbers[] = '</select>'."\n";
 
+	$DateTime = new DateTime();
+	$DateTime->modify('-1 month');
+
 	$checklist_dupes = [];
 	$query = [
 		'SELECT'	=> 'ch.*, p.pro_name, un.unit_number',
@@ -52,9 +55,8 @@ if ($property_id > 0 && $unit_id > 0)
 				'ON'			=> 'un.id=ch.unit_id'
 			],
 		],
-		'WHERE'		=> 'ch.unit_id='.$unit_id,
-		//'ORDER BY'	=> 'LENGTH(un.unit_number), un.unit_number',
-
+		'WHERE'		=> 'ch.unit_id='.$unit_id.' AND DATE(ch.datetime_inspection_start) > \''.$DBLayer->escape($DateTime->format('Y-m-d')).'\'',
+		'ORDER BY'	=> 'ch.datetime_inspection_start DESC',
 	];
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	while ($row = $DBLayer->fetch_assoc($result)) {
@@ -64,7 +66,7 @@ if ($property_id > 0 && $unit_id > 0)
 	$btn_actions = [];
 	if (!empty($checklist_dupes))
 	{
-		$btn_actions[] = '<div class="mb-3 callout bd-callout-danger alert-warning">Found inspections that were performed in this unit. You can resume an existing inspection or start a new one.</div>';
+		$btn_actions[] = '<div class="mb-3 callout bd-callout-danger alert-warning">Found inspections that were started in this unit in the last month. You can continue working with the current checklist only.</div>';
 
 		$btn_actions[] = '<div class="mb-3">';
 		foreach($checklist_dupes as $cur_info)
@@ -72,13 +74,15 @@ if ($property_id > 0 && $unit_id > 0)
 			$btn_actions[] = '<div class="form-check-inline">';
 			$btn_actions[] = '<div class="border border-secondary px-2 py-1">';
 			$btn_actions[] = '<h6 class="mb-0">Date: '.format_date($cur_info['datetime_inspection_start'], 'n/j/Y').'</h6>';
-			$btn_actions[] = ($cur_info['inspection_completed'] == 2) ? '<p>Status: <span class="text-success fw-bold">Completed</span></p>' : '<p>Status: <span class="text-primary fw-bold">Pending</span></p>';
+			$btn_actions[] = ($cur_info['inspection_completed'] == 2) ? '<p>Status: <span class="text-success fw-bold">Completed</span></p>' : '<p>Status: <span class="badge bg-primary text-white">Pending</span></p>';
 			$btn_actions[] = '<p><a href="'.$URL->link('hca_hvac_inspections_checklist', $cur_info['id']).'" class="fw-bold">Go to checklist</a></p>';
 			$btn_actions[] = '</div>';
 			$btn_actions[] = '</div>';
+
+			break;
 		}
 		$btn_actions[] = '</div>';
-		$btn_actions[] = '<div class="mb-3"><button type="submit" name="create" class="btn btn-primary">Start inspection anyway</button></div>';
+		//$btn_actions[] = '<div class="mb-3"><button type="submit" name="create" class="btn btn-primary">Start inspection anyway</button></div>';
 	}
 	else
 		$btn_actions[] = '<div class="mb-3"><button type="submit" name="create" class="btn btn-primary">Start inspection</button></div>';
@@ -137,6 +141,9 @@ else if ($unit_id > 0)
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	$unit_info = $DBLayer->fetch_assoc($result);
 
+	$DateTime = new DateTime();
+	$DateTime->modify('-1 month');
+
 	$checklist_dupes = [];
 	$query = [
 		'SELECT'	=> 'ch.*, p.pro_name, un.unit_number',
@@ -151,7 +158,7 @@ else if ($unit_id > 0)
 				'ON'			=> 'un.id=ch.unit_id'
 			],
 		],
-		'WHERE'		=> 'ch.unit_id='.$unit_id,
+		'WHERE'		=> 'ch.unit_id='.$unit_id.' AND DATE(ch.datetime_inspection_start) > \''.$DBLayer->escape($DateTime->format('Y-m-d')).'\'',
 		'ORDER BY'	=> 'ch.datetime_inspection_start DESC',
 	];
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -162,7 +169,7 @@ else if ($unit_id > 0)
 	$btn_actions = [];
 	if (!empty($checklist_dupes))
 	{
-		$btn_actions[] = '<div class="mb-3 callout bd-callout-danger alert-warning">Found inspections that were performed in this unit. You can resume an existing inspection or start a new one.</div>';
+		$btn_actions[] = '<div class="mb-3 callout bd-callout-danger alert-warning">Found inspections that were started in this unit in the last month. You can continue working with the current checklist only.</div>';
 
 		$btn_actions[] = '<div class="mb-3">';
 		foreach($checklist_dupes as $cur_info)
@@ -171,12 +178,12 @@ else if ($unit_id > 0)
 			$btn_actions[] = '<div class="border border-secondary px-2 py-1">';
 			$btn_actions[] = '<h6 class="mb-0">Date: '.format_date($cur_info['datetime_inspection_start'], 'n/j/Y').'</h6>';
 			$btn_actions[] = ($cur_info['inspection_completed'] == 2) ? '<p>Status: <span class="text-success fw-bold">Completed</span></p>' : '<p>Status: <span class="text-primary fw-bold">Pending</span></p>';
-			$btn_actions[] = '<p><a href="'.$URL->link('hca_hvac_inspections_checklist', $cur_info['id']).'" class="fw-bold">Go to checklist</a></p>';
+			$btn_actions[] = '<p><a href="'.$URL->link('hca_hvac_inspections_checklist', $cur_info['id']).'" class="badge bg-primary text-white">Go to checklist</a></p>';
 			$btn_actions[] = '</div>';
 			$btn_actions[] = '</div>';
 		}
 		$btn_actions[] = '</div>';
-		$btn_actions[] = '<div class="mb-3"><button type="submit" name="create" class="btn btn-primary">Start inspection anyway</button></div>';
+		//$btn_actions[] = '<div class="mb-3"><button type="submit" name="create" class="btn btn-primary">Start inspection anyway</button></div>';
 	}
 	else
 		$btn_actions[] = '<div class="mb-3"><button type="submit" name="create" class="btn btn-primary">Start inspection</button></div>';

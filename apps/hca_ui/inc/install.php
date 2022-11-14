@@ -122,4 +122,3 @@ $schema = array(
 	'PRIMARY KEY'	=> array('id')
 );
 $DBLayer->create_table('hca_ui_actions', $schema);
-

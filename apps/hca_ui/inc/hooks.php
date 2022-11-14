@@ -16,7 +16,10 @@ function hca_ui_co_modify_url_scheme()
     
     $urls['hca_ui_appendixb'] = 'apps/'.$app_id.'/appendixb.php?id=$1';
     $urls['hca_ui_files'] = 'apps/'.$app_id.'/files.php?id=$1';
+
     $urls['hca_ui_summary_report'] = 'apps/'.$app_id.'/summary_report.php';
+    $urls['hca_ui_property_report'] = 'apps/'.$app_id.'/property_report.php';
+
     $urls['hca_ui_print'] = 'apps/'.$app_id.'/print.php';
 
     $urls['hca_ui_water_pressure'] = 'apps/'.$app_id.'/water_pressure.php?id=$1';

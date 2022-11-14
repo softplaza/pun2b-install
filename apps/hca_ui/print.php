@@ -25,11 +25,11 @@ if ($section == 'pending_items')
 
 	$search_query = [];
 	$search_query[] = 'i.summary_report=1';
-	if ($search_by_job_type == 0) {
-		$search_query[] = 'ch.inspection_completed=2';
-		$search_query[] = 'ch.work_order_completed=1';
-	}
-	$search_query[] = 'ch.num_problem > 0';
+	//if ($search_by_job_type == 0) {
+	//	$search_query[] = 'ch.inspection_completed=2';
+	//	$search_query[] = 'ch.work_order_completed=1';
+	//}
+	//$search_query[] = 'ch.num_problem > 0';
 	if ($search_by_property_id > 0)
 		$search_query[] = 'ch.property_id='.$search_by_property_id;
 
@@ -42,8 +42,27 @@ if ($section == 'pending_items')
 		$search_query[] = 'ci.item_id='.$search_by_item_id;
 	if ($search_by_date_inspected != '')
 		$search_query[] = 'DATE(ch.date_inspected)=\''.$DBLayer->escape($search_by_date_inspected).'\'';
-	if ($search_by_year > 0)
+
+	if ($search_by_year > 2020)
 		$search_query[] = 'YEAR(ch.date_inspected)=\''.$DBLayer->escape($search_by_year).'\'';
+	else if ($search_by_year == 3)
+	{
+		$DateTime = new DateTime();
+		$DateTime->modify('-3 months');
+		$search_query[] = 'DATE(ch.date_inspected) > \''.$DBLayer->escape($DateTime->format('Y-m-d')).'\'';
+	}
+	else if ($search_by_year == 6)
+	{
+		$DateTime = new DateTime();
+		$DateTime->modify('-6 months');
+		$search_query[] = 'DATE(ch.date_inspected) > \''.$DBLayer->escape($DateTime->format('Y-m-d')).'\'';
+	}
+	else
+	{
+		$DateTime = new DateTime();
+		$DateTime->modify('-1 year');
+		$search_query[] = 'DATE(ch.date_inspected) > \''.$DBLayer->escape($DateTime->format('Y-m-d')).'\'';
+	}
 
 	if ($search_by_job_type == 0)
 		$search_query[] = 'ci.job_type=0';

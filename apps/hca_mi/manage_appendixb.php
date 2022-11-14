@@ -50,7 +50,7 @@ $project_info = $DBLayer->fetch_assoc($result);
 $query = array(
 	'SELECT'	=> '*',
 	'FROM'		=> 'sm_property_db',
-	'WHERE'		=> 'id='.$project_info['property_id'].' OR pro_name=\''.$DBLayer->escape($project_info['property_name']).'\'',
+	'WHERE'		=> 'id='.$project_info['property_id'],
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $property_info = $DBLayer->fetch_assoc($result);

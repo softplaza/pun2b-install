@@ -168,4 +168,44 @@ class HcaHVACInspections
 		return $i;
 	}
 
+	function getProperties($excludes = [])
+	{
+		global $DBLayer, $User;
+
+		$query = array(
+			'SELECT'	=> 'p.*',
+			'FROM'		=> 'sm_property_db AS p',
+			'WHERE'		=> 'p.id!=105 AND p.id!=113 AND p.id!=115 AND p.id!=116',
+			'ORDER BY'	=> 'p.pro_name'
+		);
+		if ($User->get('property_access') != '' && $User->get('property_access') != 0)
+		{
+			$property_ids = explode(',', $User->get('property_access'));
+			$query['WHERE'] .= ' AND p.id IN ('.implode(',', $property_ids).')';
+		}
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		
+		$sm_property_db = [];
+		while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
+			$sm_property_db[] = $fetch_assoc;
+		}
+
+		return $sm_property_db;
+	}
+
+	function getPeriods($start = 2000)
+	{
+		$output = [];
+		$output[12] = 'Last 12 months';
+		$output[6] = 'Last 6 months';
+		$output[3] = 'Last 3 months';
+		$output[1] = 'Last month';
+
+		for ($year = $start; $year <= date('Y'); $year++)
+		{
+			$output[$year] = $year;
+		}
+
+		return $output;
+	}
 }
