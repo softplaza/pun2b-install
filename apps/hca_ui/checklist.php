@@ -41,6 +41,9 @@ if (isset($_POST['create']))
 		//'inspection_type'		=> isset($_POST['inspection_type']) ? intval($_POST['inspection_type']) : 0,//to remove
 		'type_audit'			=> isset($_POST['type_audit']) ? intval($_POST['type_audit']) : 0,
 		'type_flapper'			=> isset($_POST['type_flapper']) ? intval($_POST['type_flapper']) : 0,
+
+		'inspection_completed' => 1, // 1 - created, 2 - completed
+		'work_order_completed' => 0 // 0 - not created, 1 - created, 2 - completed
 	];
 
 	if ($form_data['property_id'] == 0)
@@ -117,6 +120,10 @@ else if (isset($_POST['complete']))
 		// If checklist is closed, copy 'num_problem' to "num_pending"
 		if ($form_data['inspection_completed'] == 2)
 			$form_data['num_pending'] = $num_problem;
+
+		// Create Work Order if problem more than 0
+		if ($form_data['inspection_completed'] == 2 && $num_problem > 0)
+			$form_data['work_order_completed'] = 1;
 
 		$DBLayer->update('hca_ui_checklist', $form_data, $id);
 

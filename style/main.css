@@ -1911,6 +1911,61 @@ table .tcr{
 .callout-warning{border-left-color:#f0ad4e!important}
 .callout-danger{border-left-color:#d9534f!important}
 
+.badge-primary {
+    background-color: #dfe7f6 !important;
+    color: #2c58a0 !important;
+}
+.badge-secondary {
+    background-color: #ebedef !important;
+    color: #40464f !important;
+}
+.badge-success {
+    background-color: #d6f0e0 !important;
+    color: #0d6832 !important;
+}
+.badge-danger {
+    background-color: #f9e1e5 !important;
+    color: #af233a !important;
+}
+.badge-warning {
+    background-color: #fbf0da !important;
+    color: #73510d !important;
+}
+.badge-info {
+    background-color: #def1f7 !important;
+    color: #1c657d !important;
+}
+.badge-light {
+    background-color: #f5f5f5 !important;
+    color: #4f4f4f !important;
+}
+.badge-dark {
+    background-color: #332e2e !important;
+    color: #f5f5f5 !important;
+}
+
+.toast {z-index:999}
+.toast-success {
+    background-color: #d6f0e0 !important;
+    color: #0d6831 !important;
+    border-color: #c0e7d0 !important;
+}
+.toast-danger {
+    background-color: #f9e1e5 !important;
+    color: #af233a !important;
+    border-color: #f4c8cf !important;
+}
+.toast-warning {
+    background-color: #fbf0da;
+    color: #73510d;
+    border-color: #f9e4be;
+}
+.toast-info {
+    background-color: #def1f7;
+    color: #1c657d;
+    border-color: #c6e6f1;
+}
+
 
 .bd-callout h4{margin-bottom:.25rem}
 .bd-callout p:last-child{margin-bottom:0}

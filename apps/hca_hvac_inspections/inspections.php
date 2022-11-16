@@ -130,11 +130,11 @@ if ($search_by_user_id > 0)
 if ($search_by_status > 0)
 {
 	if ($search_by_status == 1) // pending inspections
-		$search_query[] = 'c.inspection_completed=1';
+		$search_query[] = 'c.inspection_completed < 2';
 	else if ($search_by_status == 2) // pending WO
-		$search_query[] = 'c.work_order_completed=1 AND c.inspection_completed=2 AND c.num_problem > 0';
+		$search_query[] = 'c.inspection_completed=2 AND c.work_order_completed=1';
 	else if ($search_by_status == 3)
-		$search_query[] = 'c.inspection_completed=2 AND c.work_order_completed=2';
+		$search_query[] = 'c.inspection_completed=2 AND c.work_order_completed!=1';
 }
 
 if ($search_by_key_word != '') {
@@ -280,6 +280,22 @@ foreach ($users_info as $user_info)
 					<input name="date" type="date" value="<?php echo $search_by_date ?>" class="form-control-sm">
 				</div>
 				<div class="col-md-auto pe-0 mb-1">
+					<select name="status" class="form-select-sm">
+						<option value="0">All Statuses</option>
+<?php
+$work_statuses = [1 => 'Pending Inspections', 2 => 'Pending Work Orders', 3 => 'Completed'];
+foreach ($work_statuses as $key => $val)
+{
+	if ($search_by_status == $key) {
+		echo '<option value="'.$key.'" selected>'.$val.'</option>';
+	} else {
+		echo '<option value="'.$key.'">'.$val.'</option>';
+	}
+}
+?>
+					</select>
+				</div>
+				<div class="col-md-auto pe-0 mb-1">
 					<div class="mb-0">
 						<input name="appendixb" type="checkbox" value="1" <?php echo ($search_by_appendixb == 1) ? 'checked' : '' ?> class="form-check-input" id="fld_appendixb">  
 						<label class="form-check-label" for="fld_appendixb">Appendix-B</label>
@@ -359,10 +375,13 @@ if (!empty($main_info))
 			//$Core->add_dropdown_item('<a href="#" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="getPropertyInfo('.$cur_info['id'].')"><i class="fas fa-at"></i> Send Email</a>');
 		}
 
-		if ($cur_info['inspection_completed'] == 2)
-			$td1[] = '<p class="badge bg-success mb-1">Completed</p>';
+		if ($cur_info['work_order_completed'] == 1) // if created WO but not completed
+			$td1[] = '<p class="badge badge-primary mb-1">Pending W.O.</p>';	
+		else if ($cur_info['inspection_completed'] < 2) // if created but not completed
+			$td1[] = '<p class="badge badge-warning mb-1">Pending inspection</p>';
 		else
-			$td1[] = '<p class="badge bg-primary mb-1">Pending</p>';
+		//if ($cur_info['inspection_completed'] == 2 && $cur_info['work_order_completed'] == 2)
+			$td1[] = '<p class="badge badge-success mb-1">Completed</p>';
 
 		if (in_array($cur_info['id'], $uploader_info))
 			$td1[] = '<p><a href="'.$URL->link('hca_hvac_inspections_files', $cur_info['id']).'" class="btn btn-sm btn-outline-success">Files</a></p>';

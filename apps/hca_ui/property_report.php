@@ -3,10 +3,10 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access_admin = ($User->is_admin()) ? true : false;
+//$access_admin = ($User->is_guest()) ? true : false;
 $access6 = ($User->checkAccess('hca_ui', 6)) ? true : false;
-if (!$access6)
-	message($lang_common['No permission']);
+//if (!$access6)
+//	message($lang_common['No permission']);
 
 $search_by_inspection_type = isset($_GET['inspection_type']) ? intval($_GET['inspection_type']) : 0; // 0 all, 1 audit, 2 flapper
 $search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
@@ -21,6 +21,14 @@ $HcaUIPropertyReport = new HcaUIPropertyReport;
 // IF PROPERTY SELECTED
 if ($search_by_property_id > 0)
 {
+	$query = [
+		'SELECT'	=> 'p.pro_name, p.manager_email',
+		'FROM'		=> 'sm_property_db AS p',
+		'WHERE'		=> 'p.id='.$search_by_property_id
+	];
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	$cur_property_info = $DBLayer->fetch_assoc($result);
+
 	$HcaUIPropertyReport->genItemsData();
 
 	// Generate parameters for Printing List of Items
@@ -35,11 +43,22 @@ if ($search_by_property_id > 0)
 	if ($search_by_job_type == 0)
 		$SwiftMenu->addNavAction('<li><a class="dropdown-item" href="'.$URL->genLink('hca_ui_print', $sub_link_args).'" target="_blank"><i class="fa fa-file-pdf-o fa-1x" aria-hidden="true"></i> Print as PDF</a></li>');
 
+	$email_param = [];
+	$email_param[] = 'mailto:'.html_encode($cur_property_info['manager_email']);
+	$email_param[] = '?subject=HCA: Plumbing Inspections - Summary Report';
+	$email_param[] = '&amp;body=Hello,';
+	$email_param[] = '%0D%0A%0D%0A'; // 2 lines spaces
+	$email_param[] = 'This email contains a link to Plumbing Inspections of '.html_encode($cur_property_info['pro_name']).'. To view the report, follow the link below:';
+	$email_param[] = '%0D%0A%0D%0A'; // 2 lines spaces
+	$email_param[] = str_replace('&', '%26', $URL->genLink('hca_ui_property_report', $sub_link_args));
+
+	$SwiftMenu->addNavAction('<li><a class="dropdown-item" href="'.implode('', $email_param).'" target="_blank"><i class="fa fa-at" aria-hidden="true"></i> Send Email</a></li>');
+
 	$Core->set_page_id('hca_ui_property_report', 'hca_ui');
 	require SITE_ROOT.'header.php';
 ?>
 
-<nav class="navbar alert-info mb-1">
+<nav class="navbar alert-info mb-1 <?=($User->is_guest() ? 'hidden' : '')?>">
 	<form method="get" accept-charset="utf-8" action="" class="d-flex">
 		<div class="container-fluid justify-content-between">
 			<div class="row">
@@ -242,7 +261,12 @@ if ($search_by_property_id > 0)
 					{
 						$status_OR_problems = ($checklist_items['job_type'] > 0) ? ' (<span class="text-success">'.$HcaUnitInspection->getJobType($checklist_items['job_type']).'</span>)' : ' (<span class="text-danger">'.$HcaUnitInspection->getItemProblems($checklist_items['problem_ids']).'</span>)';
 	
-						$list_of_problems[] = '<p class="text-primary">'.$checklist_items['item_name'].$status_OR_problems.'</p>';
+						$item_title = [
+							$HcaUnitInspection->getLocation($checklist_items['location_id']),
+							$HcaUnitInspection->getEquipment($checklist_items['equipment_id']),
+							$checklist_items['item_name'],
+						];
+						$list_of_problems[] = '<p class="text-primary">'.implode(' -> ', $item_title) . $status_OR_problems.'</p>';
 
 						if ($checklist_items['job_type'] == 0)
 							++$num_pending;
@@ -362,7 +386,13 @@ if ($search_by_property_id > 0)
 					{
 						$status_OR_problems = ($checklist_items['job_type'] > 0) ? ' (<span class="text-success">'.$HcaUnitInspection->getJobType($checklist_items['job_type']).'</span>)' : ' (<span class="text-danger">'.$HcaUnitInspection->getItemProblems($checklist_items['problem_ids']).'</span>)';
 	
-						$list_of_problems[] = '<p class="text-primary">'.$checklist_items['item_name'].$status_OR_problems.'</p>';
+						$item_title = [
+							$HcaUnitInspection->getLocation($checklist_items['location_id']),
+							$HcaUnitInspection->getEquipment($checklist_items['equipment_id']),
+							$checklist_items['item_name'],
+						];
+						$list_of_problems[] = '<p class="text-primary">'.implode(' -> ', $item_title) . $status_OR_problems.'</p>';
+
 
 						if ($checklist_items['job_type'] == 0)
 							++$num_pending;

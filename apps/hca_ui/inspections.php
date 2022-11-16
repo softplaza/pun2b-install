@@ -131,7 +131,7 @@ if ($search_by_status > 0)
 	if ($search_by_status == 1) // pending inspections
 		$search_query[] = 'c.inspection_completed=1';
 	else if ($search_by_status == 2) // pending WO
-		$search_query[] = 'c.work_order_completed=1 AND c.inspection_completed=2'; // AND c.num_problem > 0
+		$search_query[] = 'c.work_order_completed=1 AND c.inspection_completed=2 AND c.num_problem > 0'; // AND c.num_problem > 0
 	else if ($search_by_status == 3)
 		$search_query[] = 'c.inspection_completed=2 AND c.work_order_completed=2';
 }
@@ -347,7 +347,7 @@ if (!empty($main_info))
 	}
 
 	$query = array(
-		'SELECT'	=> 'ci.*, i.item_name, i.equipment_id, i.req_appendixb',
+		'SELECT'	=> 'ci.*, i.item_name, i.location_id, i.equipment_id, i.req_appendixb',
 		'FROM'		=> 'hca_ui_checklist_items AS ci',
 		'JOINS'		=> [
 			[
@@ -365,6 +365,9 @@ if (!empty($main_info))
 
 	foreach($main_info as $cur_info)
 	{
+		$tr_css = [];
+		if ($cur_info['id'] == $id) $tr_css[] = 'anchor';
+
 		$td1 = [];
 		if ($access11)
 			$Core->add_dropdown_item('<a href="'.$URL->link('hca_ui_checklist', $cur_info['id']).'"><i class="fas fa-edit"></i> CheckList</a>');
@@ -402,11 +405,20 @@ if (!empty($main_info))
 				{
 					$status_OR_problems = ($checklist_items['job_type'] > 0) ? ' (<span class="text-success">'.$HcaUnitInspection->getJobType($checklist_items['job_type']).'</span>)' : ' (<span class="text-danger">'.$HcaUnitInspection->getItemProblems($checklist_items['problem_ids']).'</span>)';
 
-					$equipment = $HcaUnitInspection->getEquipment($checklist_items['equipment_id']);
-					$list_of_problems[] = '<p class="text-primary">'.$equipment.' -> '.$checklist_items['item_name'].$status_OR_problems.'</p>';
+					$item_title = [
+						$HcaUnitInspection->getLocation($checklist_items['location_id']),
+						$HcaUnitInspection->getEquipment($checklist_items['equipment_id']),
+						$checklist_items['item_name'],
+					];
+
+					$list_of_problems[] = '<p class="text-primary">'.implode(' -> ', $item_title) . $status_OR_problems.'</p>';
 
 					if ($checklist_items['req_appendixb'] == 1)
 						$req_appendixb = true;
+
+					$problem_ids_arr = explode(',', $checklist_items['problem_ids']);
+					if (in_array(8, $problem_ids_arr)) $tr_css[] = 'table-danger';
+					if (in_array(22, $problem_ids_arr)) $tr_css[] = 'table-danger';
 				}
 			}
 
@@ -428,7 +440,7 @@ if (!empty($main_info))
 		$search_str = '<span class="fw-bold text-danger">'.$search_by_key_word.'</span>';
 		$work_order_comment = ($search_by_key_word != '') ? preg_replace('/'.$search_by_key_word.'/i', $search_str, $cur_info['work_order_comment']) : html_encode($cur_info['work_order_comment']);
 ?>
-			<tr id="row<?php echo $cur_info['id'] ?>" class="<?php echo ($cur_info['id'] == $id ? 'anchor' : '') ?>">
+			<tr id="row<?php echo $cur_info['id'] ?>" class="<?php echo implode(' ', $tr_css) ?>">
 				<td>
 					<p class="fw-bold"><?php echo html_encode($cur_info['pro_name']) ?></p>
 					<span class="float-start"><?php echo implode("\n", $td1) ?></span>
@@ -453,7 +465,7 @@ if (!empty($main_info))
 					<p><?php echo $work_order_comment ?></p>
 				</td>
 				<td class="ta-center"><?php echo $cur_info['num_problem'] ?></td>
-				<td class="ta-center <?php echo ($cur_info['num_pending'] > 0) ? 'table-danger' : ''?>"><?php echo $cur_info['num_pending'] ?></td>
+				<td class="ta-center"><?php echo $cur_info['num_pending'] ?></td>
 			</tr>
 <?php
 	}

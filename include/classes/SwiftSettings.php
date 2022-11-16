@@ -693,7 +693,9 @@ class SwiftSettings
 	{
 		global $URL;
 
-		?>
+?>
+		<div class="toast-container" id="toast_container"></div>
+
 		<script>
 		function switchSection(id){
 			if (id == 1){
@@ -703,6 +705,13 @@ class SwiftSettings
 				$('#users_list').css('display', 'none');
 				$('#group_list').css('display', 'block');
 			}
+		}
+		// Move this function in CORE & use it for json updates
+		function schowToastMessage()
+		{
+			const toastLiveExample = document.getElementById('liveToast');
+			const toast = new bootstrap.Toast(toastLiveExample);
+			toast.show();
 		}
 		function updateRules(type,id){
 			var val = 0;
@@ -726,15 +735,23 @@ class SwiftSettings
 				cache: false,
 				data: ({type:type,id:id,val:val,csrf_token:csrf_token}),
 				success: function(re){
-					$(".msg-section").empty().html(re.message);
+					$("#toast_container").empty().html(re.toast_message);
+					schowToastMessage();
 				},
 				error: function(re){
-					$(".msg-section").empty().html('Error: Please refresh this page and try again.');
+					var msg = '<div id="liveToast" class="toast position-fixed bottom-0 end-0 m-2" role="alert" aria-live="assertive" aria-atomic="true">';
+					msg += '<div class="toast-header toast-danger">';
+					msg += '<strong class="me-auto">Message</strong>';
+					msg += '</div>';
+					msg += '<div class="toast-body toast-danger">Failed to update settings.</div>';
+					msg += '</div>';
+					$("#toast_container").empty().html(msg);
+					schowToastMessage();
 				}
 			});	
 		}
 		</script>
 
-		<?php
+<?php
 	}
 }

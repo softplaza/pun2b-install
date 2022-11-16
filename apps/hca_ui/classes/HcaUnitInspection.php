@@ -114,7 +114,7 @@ class HcaUnitInspection
 	function getProblems() 
 	{
 		return [
-			22 => 'Broken',
+			22 => 'Broken', // emergency
 			1 => 'Clogged',
 			2 => 'Corroded',
 			3 => 'Cracked',
@@ -123,7 +123,7 @@ class HcaUnitInspection
 			6 => 'Dripping',
 			7 => 'Failing',
 			15 => 'High',
-			8 => 'Leaking',
+			8 => 'Leaking', // emergency
 			9 => 'Loose',
 			12 => 'Low',
 			10 => 'Missing',
@@ -186,7 +186,14 @@ class HcaUnitInspection
 	}
 
 	function getLocation($id) {
-		return (isset($this->locations[$id]) && $id > 0) ? $this->locations[$id] : '';
+		$locations = [
+			1 => 'Kitchen',
+			2 => 'GBath',
+			3 => 'MBath',
+			4 => 'HBath',
+			100 => 'Appliances',
+		];
+		return (isset($locations[$id]) && $id > 0) ? $locations[$id] : '';
 	}
 
 	function getEquipment($id) {

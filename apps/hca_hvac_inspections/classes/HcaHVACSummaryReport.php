@@ -173,8 +173,8 @@ class HcaHVACSummaryReport
 				++$this->total_inspections_pending;
 			}
 
-			//if ($row['inspection_completed'] == 2)
-				$this->found_units_ids[$row['unit_id']] = $row['unit_id'];
+			// search any created inspections
+			$this->found_units_ids[$row['unit_id']] = $row['unit_id'];
 
 			if (strtotime($row['datetime_inspection_start']) > 0)
 				$this->date_last_inspected[$row['property_id']] = $row['datetime_inspection_start'];

@@ -21,7 +21,7 @@ $query = array(
 			'ON'			=> 'g.g_id=u.group_id'
 		)
 	),
-	'WHERE'		=> 'group_id > 2',
+	'WHERE'		=> 'group_id != 2',
 	'ORDER BY'	=> 'g.g_id, u.realname',
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -33,7 +33,7 @@ while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
 $query = array(
 	'SELECT'	=> 'COUNT(*)',
 	'FROM'		=> 'sm_user_actions',
-//	'WHERE'		=> 'user_id != 2'
+	//'WHERE'		=> 'user_id != 2'
 );
 
 if ($search_by_user_id == 0) $query['WHERE'] = 'user_id > 0';
@@ -55,7 +55,7 @@ $query = array(
 			'ON'			=> 'u.id=a.user_id'
 		)
 	),
-//	'WHERE'		=> 'a.user_id != 2',
+	//'WHERE'		=> 'a.user_id != 2',
 	'ORDER BY'	=> 'a.visit_time DESC',
 	'LIMIT'		=> $PagesNavigator->limit(),
 );

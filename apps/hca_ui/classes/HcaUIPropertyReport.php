@@ -316,8 +316,8 @@ class HcaUIPropertyReport
 		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 		while ($row = $DBLayer->fetch_assoc($result))
 		{
-			if ($row['inspection_completed'] == 2)
-				$unispected_units_checklist[$row['unit_id']] = $row['unit_id'];
+			// if found any created inspections
+			$unispected_units_checklist[$row['unit_id']] = $row['unit_id'];
 		}
 
 		$query = array(

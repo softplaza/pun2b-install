@@ -45,18 +45,18 @@ $schema = array(
 		'status'					=> $DBLayer->dt_int('TINYINT(1)'),
 		'owned_by'					=> $DBLayer->dt_int(),
 
-		'inspected_by'				=> $DBLayer->dt_int(),
 		'datetime_inspection_start'	=> $DBLayer->dt_datetime(), // DATETIME format
 		'datetime_inspection_end'	=> $DBLayer->dt_datetime(),
 		'inspection_comment'		=> $DBLayer->dt_text(),
 		'inspection_completed'		=> $DBLayer->dt_int('TINYINT(1)'), // Inspection status
-		'completed_by'				=> $DBLayer->dt_int(),
+		'inspected_by'				=> $DBLayer->dt_int(),
 
 		'started_by'				=> $DBLayer->dt_int(),
 		'datetime_completion_start'	=> $DBLayer->dt_datetime(),
 		'datetime_completion_end'	=> $DBLayer->dt_datetime(),
 		'work_order_comment'		=> $DBLayer->dt_text(),
 		'work_order_completed'		=> $DBLayer->dt_int('TINYINT(1)'), // Work Order status// 1 - created // 2 - completed
+		'completed_by'				=> $DBLayer->dt_int(),
 
 		'updated_by'				=> $DBLayer->dt_int(),
 		'updated_time'				=> $DBLayer->dt_int(),

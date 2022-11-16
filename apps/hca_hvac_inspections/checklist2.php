@@ -461,14 +461,33 @@ document.addEventListener("DOMContentLoaded", function() {
 		</div>
 
 		<div class="card-body pb-0">
+<?php if ($main_info['inspection_completed'] == 2): ?>
+			<div class="alert alert-success mb-3" role="alert">
+				<h6 class="alert-heading">The Checklist already completed.</h6>
+				<hr class="my-1">
+				<a href="<?php echo $URL->link('hca_hvac_inspections_checklist', 0).'&property_id='.$main_info['property_id'] ?>" class="badge bg-light text-primary border border-secondary mb-1">Start New Inspection</a>
+	<?php if ($main_info['work_order_completed'] > 0): ?>
+				<a href="<?php echo $URL->link('hca_hvac_inspections_work_order', $id) ?>" class="badge bg-light text-primary border border-secondary mb-1">Go to Work Order</a>
+	<?php endif; ?>
+			</div>
+
+<?php else: ?>
+			<div class="alert alert-warning mb-3" role="alert">All checkboxes must be marked "Yes" or "No".</div>
+<?php endif; ?>
+
+
+
 
 <?php if ($main_info['inspection_completed'] == 2) : ?>
 			<div class="alert alert-success" role="alert">The checklist already has been completed.</div>
 <?php else: ?>
 			<div class="alert alert-danger" role="alert">All checkboxes must be marked "Yes" or "No".</div>
 <?php endif; ?>
-<?php
 
+
+
+
+<?php
 $query = array(
 	'SELECT'	=> 'f.*, p.pro_name',
 	'FROM'		=> 'hca_hvac_inspections_filters AS f',

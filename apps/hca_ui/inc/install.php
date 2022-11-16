@@ -35,7 +35,7 @@ $schema = array(
 		'time_inspection_start'		=> $DBLayer->dt_time(),
 		'time_inspection_end'		=> $DBLayer->dt_time(),
 		'inspection_comment'		=> $DBLayer->dt_text(),
-		'inspection_completed'		=> $DBLayer->dt_int('TINYINT(1)', false, '1'),
+		'inspection_completed'		=> $DBLayer->dt_int('TINYINT(1)'),
 
 		// remove
 		//'time_completion_start'	=> $DBLayer->dt_time(),// remove
@@ -48,7 +48,7 @@ $schema = array(
 
 		'completed_by'				=> $DBLayer->dt_int(),
 		'work_order_comment'		=> $DBLayer->dt_text(),
-		'work_order_completed'		=> $DBLayer->dt_int('TINYINT(1)', false, '1'),
+		'work_order_completed'		=> $DBLayer->dt_int('TINYINT(1)'),
 
 		'updated_by'				=> $DBLayer->dt_int(),
 		'updated_time'				=> $DBLayer->dt_int(),

@@ -19,7 +19,7 @@ if (isset($_POST['update']))
 	$form_data = [
 		'updated_by'				=> $User->get('id'),
 		'updated_time'				=> time(),
-		'inspection_completed'		=> isset($_POST['inspection_completed']) ? intval($_POST['inspection_completed']) : 0,
+		'work_order_completed'		=> isset($_POST['work_order_completed']) ? intval($_POST['work_order_completed']) : 0,
 		'work_order_comment'		=> isset($_POST['work_order_comment']) ? swift_trim($_POST['work_order_comment']) : '',
 		'filter_size_id'			=> isset($_POST['filter_size_id']) ? intval($_POST['filter_size_id']) : 0,
 	];
@@ -32,34 +32,34 @@ if (isset($_POST['update']))
 	}
 
 	// Form Validations
-	if ($form_data['inspection_completed'] == 1 && $form_data['work_order_comment'] == '')
-		$Core->add_error('Please provide a reason if you close the checklist without issues or Checklist is not completed.');
+	if ($form_data['work_order_completed'] == 1 && $form_data['work_order_comment'] == '')
+		$Core->add_error('Please provide a reason: Why the Work Order not completed.');
 
-	if ($form_data['inspection_completed'] == 0)
+	if ($form_data['work_order_completed'] == 0)
 		$Core->add_error('Choose one of the options: "Is the checklist completed?".');
-	
+
+	$work_order_status_ident = true;
+	if (isset($_POST['comment']) && !empty($_POST['comment']))
+	{
+		foreach($_POST['comment'] as $key => $problem)
+		{
+			$checklist_item = [
+				//'check_type'	=> isset($_POST['check_type'][$key]) ? intval($_POST['check_type'][$key]) : 0,
+				'job_type'		=> isset($_POST['job_type'][$key]) ? intval($_POST['job_type'][$key]) : 0,
+				'comment'		=> isset($_POST['comment'][$key]) ? swift_trim($_POST['comment'][$key]) : '',
+			];
+			$DBLayer->update('hca_hvac_inspections_checklist_items', $checklist_item, $key);
+
+			if ($checklist_item['job_type'] == 0)
+				$work_order_status_ident = false;
+		}
+	}
+
+	if (!$work_order_status_ident && $form_data['work_order_completed'] == 2)
+		$Core->add_error('To compleete the Work Order you must check all items or leave the Work Order as not completed with your comments.');
+
 	if (empty($Core->errors))
 	{
-		
-		//$form_data['num_problem'] = $form_data['num_pending'] = 0;
-		if (isset($_POST['comment']) && !empty($_POST['comment']))
-		{
-			foreach($_POST['comment'] as $key => $problem)
-			{
-				$checklist_item = [
-					'comment'		=> isset($_POST['comment'][$key]) ? swift_trim($_POST['comment'][$key]) : '',
-					'check_type'	=> isset($_POST['check_type'][$key]) ? intval($_POST['check_type'][$key]) : 0,
-					'job_type'		=> isset($_POST['job_type'][$key]) ? intval($_POST['job_type'][$key]) : 0,
-				];
-				$DBLayer->update('hca_hvac_inspections_checklist_items', $checklist_item, $key);
-
-				//if ($problem > 0)
-				//	++$form_data['num_problem'];
-				//if ($problem > 0 && $checklist_item['job_type'] == 0)
-				//	++$form_data['num_pending'];
-			}
-		}
-
 		$DBLayer->update('hca_hvac_inspections_checklist', $form_data, $id);
 
 		// Add flash message
@@ -74,7 +74,7 @@ if (isset($_POST['update']))
 		$DBLayer->insert_values('hca_hvac_inspections_actions', $action_data);
 
 		$FlashMessenger->add_info($flash_message);
-		redirect($URL->link('hca_hvac_inspections_checklist', $id), $flash_message);
+		redirect($URL->link('hca_hvac_inspections_work_order', $id), $flash_message);
 	}
 }
 
@@ -115,7 +115,7 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	$sm_property_db[] = $row;
 }
 
-$Core->set_page_id('hca_hvac_inspections_checklist', 'hca_hvac_inspections');
+$Core->set_page_id('hca_hvac_inspections_work_order', 'hca_hvac_inspections');
 require SITE_ROOT.'header.php';
 
 $query = [
@@ -164,7 +164,7 @@ while($row = $DBLayer->fetch_assoc($result))
 }
 ?>
 
-<form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data" class="was-validated">
+<form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data">
 	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 	<div class="card">
 		<div class="card-header">
@@ -206,7 +206,7 @@ while($row = $DBLayer->fetch_assoc($result))
 <?php if ($main_info['work_order_completed'] == 2) : ?>
 			<div class="alert alert-success" role="alert">The Work Order already was completed.</div>
 <?php elseif ($main_info['work_order_completed'] == 1): ?>
-			<div class="alert alert-warning" role="alert">Complete the Work Order and press "Submit" button.</div>
+			<div class="alert alert-warning" role="alert">Complete the Work Order and press "Submit".</div>
 <?php else: ?>
 			<div class="alert alert-danger" role="alert">Work Order not created yet. Checklist was completed with no issues.</div>
 <?php endif; ?>
@@ -306,6 +306,8 @@ foreach($checked_items as $cur_info)
 		{
 			$class_job_type = '';
 			$col_job_type_param = $fld_job_type_param = [];
+
+/*
 			if ($cur_info['check_type'] == 1 && $cur_info['item_type'] == 1) // YES & Problem
 				$col_job_type_param[] = 'style="display:none"';
 			else if ($cur_info['check_type'] == 2 && $cur_info['item_type'] == 2) // YES & Work Order
@@ -315,9 +317,12 @@ foreach($checked_items as $cur_info)
 				$fld_job_type_param[] = 'required';
 				$class_job_type = 'fld-required';
 			}
+*/
+
+			$css_job_type = ($cur_info['job_type'] == 0) ? 'alert-warning' : 'alert-success';
 
 			$item_body[] = '<div class="col-2" id="col_job_type'.$cur_info['id'].'" '.implode(' ', $col_job_type_param).'>';
-			$item_body[] = '<select name="job_type['.$cur_info['id'].']" class="form-select form-select-sm '.$class_job_type.'" id="fld_job_type'.$cur_info['id'].'" '.implode(' ', $fld_job_type_param).'>';
+			$item_body[] = '<select name="job_type['.$cur_info['id'].']" class="form-select form-select-sm '.$css_job_type.'" id="fld_job_type'.$cur_info['id'].'" '.implode(' ', $fld_job_type_param).'>';
 
 			$item_body[] = '<option value="" selected>Choose action</option>'."\n";
 			foreach ($job_actions as $key => $value)
@@ -333,12 +338,13 @@ foreach($checked_items as $cur_info)
 		}
 
 		$comment_param = [];
+/*
 		if ($cur_info['comment_required'] == 1 && $cur_info['check_type'] < 2)
 		{
 			$comment_param[] = 'class="form-control fld-required"';
 			$comment_param[] = 'required';
 		}
-
+*/
 		$item_body[] = '<div class="col">';
 		$item_body[] = '<input type="text" name="comment['.$cur_info['id'].']" value="'.html_encode($cur_info['comment']).'" id="fld_comment'.$cur_info['id'].'" '.(implode(' ', $comment_param)).'>';
 		$item_body[] = '</div>';
@@ -349,7 +355,7 @@ foreach($checked_items as $cur_info)
 
 		// Need to setup these two options to display items all time
 		
-		//if ($cur_info['check_type'] == 1 && $cur_info['item_type'] == 2 || $cur_info['check_type'] == 2 && $cur_info['item_type'] == 1)
+		if ($cur_info['check_type'] == 1 && $cur_info['item_type'] == 2 || $cur_info['check_type'] == 2 && $cur_info['item_type'] == 1)
 			echo implode('', $item_body);
 	}
 
@@ -362,18 +368,18 @@ foreach($checked_items as $cur_info)
 			<label class="form-label mb-1">Is the checklist completed?</label>
 			<div class="mb-3">
 				<div class="form-check form-check-inline">
-					<input class="form-check-input" type="radio" name="inspection_completed" id="fld_inspection_completed2" value="2" <?php echo ($main_info['inspection_completed'] == 2) ? 'checked' : '' ?> onclick="checkRadioBox(2)">
-					<label class="form-check-label" for="fld_inspection_completed2">YES</label>
+					<input class="form-check-input" type="radio" name="work_order_completed" id="fld_work_order_completed2" value="2" <?php echo ($main_info['work_order_completed'] == 2) ? 'checked' : '' ?> onclick="checkRadioBox(2)">
+					<label class="form-check-label" for="fld_work_order_completed2">YES</label>
 				</div>
 				<div class="form-check form-check-inline">
-					<input class="form-check-input" type="radio" name="inspection_completed" id="fld_inspection_completed1" value="1" <?php echo ($main_info['inspection_completed'] == 1) ? 'checked' : '' ?> required onclick="checkRadioBox(1)">
-					<label class="form-check-label" for="fld_inspection_completed1">NO</label>
+					<input class="form-check-input" type="radio" name="work_order_completed" id="fld_work_order_completed1" value="1" <?php echo ($main_info['work_order_completed'] == 1) ? 'checked' : '' ?> required onclick="checkRadioBox(1)">
+					<label class="form-check-label" for="fld_work_order_completed1">NO</label>
 				</div>
 			</div>
 
 			<div class="mb-3">
 				<label class="form-label text-danger" for="fld_work_order_comment">Remarks. If checklist is not copleted - Why?</label>
-				<textarea class="form-control" id="fld_work_order_comment" name="work_order_comment" placeholder="Leave your comments" <?php echo ($main_info['inspection_completed'] == 1) ? 'required' : '' ?>><?php echo isset($_POST['work_order_comment']) ? html_encode($_POST['work_order_comment']) : html_encode($main_info['work_order_comment']) ?></textarea>
+				<textarea class="form-control" id="fld_work_order_comment" name="work_order_comment" placeholder="Leave your comments" <?php echo ($main_info['work_order_completed'] == 1) ? 'required' : '' ?>><?php echo isset($_POST['work_order_comment']) ? html_encode($_POST['work_order_comment']) : html_encode($main_info['work_order_comment']) ?></textarea>
 			</div>
 
 			<div class="mb-3">
@@ -399,7 +405,7 @@ $hca_hvac_inspections_checklist = $unispected_units = [];
 $query = array(
 	'SELECT'	=> 'ch.unit_id',
 	'FROM'		=> 'hca_hvac_inspections_checklist AS ch',
-	'WHERE'		=> 'ch.property_id='.$main_info['property_id'],
+	'WHERE'		=> 'ch.property_id='.$main_info['property_id'], // Add filter by period
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 while ($row = $DBLayer->fetch_assoc($result))
