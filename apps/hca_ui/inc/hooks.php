@@ -229,6 +229,98 @@ class HcaUIHooks
 <?php
         }
     }
+
+    public function IndexBody()
+    {
+        global $DBLayer, $URL, $User, $user;
+
+        if ($User->checkAccess('hca_ui'))
+        {
+            //$user_id = isset($user['id']) ? intval($user['id']) : $User->get('id');
+            $period = date('Y-m-d', strtotime('- 6 month'));
+
+            $search_query = [];
+            //$search_query[] = '(ch.inspected_by='.$user_id.' OR ch.owned_by='.$user_id.' OR ch.completed_by='.$user_id.' OR ch.updated_by='.$user_id.')';
+            $search_query[] = 'DATE(ch.date_inspected) > \''.$DBLayer->escape($period).'\'';
+
+            $query = [
+                'SELECT'	=> 'ch.*, p.pro_name, un.unit_number',
+                'FROM'		=> 'hca_ui_checklist as ch',
+                'JOINS'		=> [
+                    [
+                        'INNER JOIN'	=> 'sm_property_db AS p',
+                        'ON'			=> 'p.id=ch.property_id'
+                    ],
+                    [
+                        'INNER JOIN'	=> 'sm_property_units AS un',
+                        'ON'			=> 'un.id=ch.unit_id'
+                    ],
+                ],
+            ];
+            if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
+            $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+            $projects = [];
+            while ($row = $DBLayer->fetch_assoc($result)) {
+                $projects[] = $row;
+            }
+
+            if (!empty($projects))
+            {
+                $total = $due_projects = $completed = $pending_inspections = $pending_wo = 0;
+                $time_now = time() - 2592000;
+                foreach($projects as $project)
+                {
+                    // Overdue WO only
+                    if ($project['work_order_completed'] == 1 && $project['inspection_completed'] == 2 && $project['num_problem'] > 0 && strtotime($project['date_inspected']) > $time_now)
+                        ++$due_projects;
+
+                    if ($project['inspection_completed'] == 1)
+                        ++$pending_inspections;
+
+                    if ($project['work_order_completed'] == 1 && $project['inspection_completed'] == 2 && $project['num_problem'] > 0)
+                        ++$pending_wo;
+
+                    if ($project['work_order_completed'] == 2 && $project['inspection_completed'] == 2)
+                        ++$completed;
+
+                    ++$total;
+                }
+
+                $date = date('Y-m-d', strtotime('- 1 month'));
+                $output = [];
+
+                if ($due_projects > 0)
+                    $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 2, 'date_from' => $date]).'" class="badge bg-danger text-white me-1">Overdue Work Orders <span class="badge badge-secondary fw-bolder">'.$due_projects.'</span></a>';
+
+                if ($pending_inspections > 0)
+                    $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 1]).'" class="badge bg-secondary text-white me-1">Pending inspections <span class="badge badge-secondary fw-bolder">'.$pending_inspections.'</span></a>';
+                
+                if ($pending_wo > 0)
+                    $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 2]).'" class="badge bg-warning text-white me-1">Pending WO <span class="badge badge-secondary fw-bolder">'.$pending_wo.'</span></a>';
+
+                if ($completed > 0)
+                    $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 3]).'" class="badge bg-success text-white me-1">Completed <span class="badge badge-secondary fw-bolder">'.$completed.'</span></a>';
+
+                if (empty($output))
+                    $output[] = '<span class="badge badge-warning me-1">No project activity in the last six months.</span>';
+
+                $main_css = 'callout-success bd-callout-success';
+                if ($due_projects > 0)
+                    $main_css = 'callout-danger bd-callout-danger';
+                else if ($pending_inspections > 0)
+                    $main_css = 'callout-secondary bd-callout-secondary';
+                else if ($pending_wo > 0)
+                    $main_css = 'callout-warning bd-callout-warning';
+?>
+        <div class="callout <?=$main_css?> mb-3">
+            <h4 class="alert-heading">Plumbing Inspections</h4>
+            <hr class="my-1">
+            <p class="mb-0"> <?php echo implode($output) ?></p>
+        </div>
+<?php
+            }
+        }
+    }
 }
 
 
@@ -236,3 +328,5 @@ class HcaUIHooks
 Hook::addAction('ProfileAdminAccess', ['HcaUIHooks', 'ProfileAdminAccess']);
 
 Hook::addAction('ProfileAboutMyProjects', ['HcaUIHooks', 'ProfileAboutMyProjects']);
+
+Hook::addAction('IndexBody', ['HcaUIHooks', 'IndexBody']);

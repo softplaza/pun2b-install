@@ -45,14 +45,17 @@ class SwiftMenu
 
 		$profile_links = $actions = [];
 
-		$profile_links[] = '<li class="nav-item dropdown">';
-		//$profile_links[] = '<span class="position-absolute start-50 badge rounded-pill bg-danger">9</span>';
-		$profile_links[] = '<span class="nav-link text-white"><a href="'.BASE_URL.'" class="text-white"><i class="fa-solid fa-bell fa-lg"></i></a></span>';
-		//$profile_links[] = '<ul class="dropdown-menu dropdown-menu-end">';
-		//$profile_links[] = '<li><a class="dropdown-item" href="'.BASE_URL.'"><i class="fa fa-print fa-1x" aria-hidden="true"></i> My projects</a></li>';
-		//$profile_links[] = '</ul>';
-		$profile_links[] = '</li>';
-
+		if ($User->is_admmod())
+		{
+			// <i class="fa-solid fa-bell fa-lg"></i>
+			$profile_links[] = '<li class="nav-item dropdown">';
+			//$profile_links[] = '<span class="position-absolute start-50 badge rounded-pill bg-danger">9</span>';
+			$profile_links[] = '<span class="nav-link text-white"><a href="'.BASE_URL.'" class="text-white"><i class="fa-solid fa-bell fa-lg"></i></a></span>';
+			//$profile_links[] = '<ul class="dropdown-menu dropdown-menu-end">';
+			//$profile_links[] = '<li><a class="dropdown-item" href="'.BASE_URL.'"><i class="fa fa-print fa-1x" aria-hidden="true"></i> My projects</a></li>';
+			//$profile_links[] = '</ul>';
+			$profile_links[] = '</li>';
+		}
 
 		// Profile links
 		$profile_links[] = '<li class="nav-item dropdown">';
@@ -240,6 +243,10 @@ class SwiftMenu
 					$output .= "\t\t\t\t\t\t\t".'<li class="'.$show.'">'."\n";
 					$output .= '<div class="sub-arrow d-flex justify-content-between">';
 					$output .= '<a href="#" id="menu_item_'.$item['id'].'" class="flex-fill">';
+
+					//$output .= '<i class="fas fa-project-diagram fa-lg"></i>';
+					$output .= '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M0 80C0 53.5 21.5 32 48 32h96c26.5 0 48 21.5 48 48V96H384V80c0-26.5 21.5-48 48-48h96c26.5 0 48 21.5 48 48v96c0 26.5-21.5 48-48 48H432c-26.5 0-48-21.5-48-48V160H192v16c0 1.7-.1 3.4-.3 5L272 288h96c26.5 0 48 21.5 48 48v96c0 26.5-21.5 48-48 48H272c-26.5 0-48-21.5-48-48V336c0-1.7 .1-3.4 .3-5L144 224H48c-26.5 0-48-21.5-48-48V80z"/></svg>';
+
 					$output .= $item['title'];
 					$output .= '</a>';
 					$output .= '<i class="fas fa-chevron-down fa-lg"></i>';

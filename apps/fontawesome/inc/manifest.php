@@ -14,5 +14,5 @@ $app_info = [
 	// Application's author
 	'author'		=> 'https://fontawesome.com/',
 	// Last version of application
-	'version'		=> '5.15.4.02'
+	'version'		=> '1.01.6.2.1'
 ];

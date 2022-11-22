@@ -68,7 +68,7 @@ if (isset($_POST['reassign']))
 		$DBLayer->insert_values('hca_ui_actions', $action_data);
 
 		$FlashMessenger->add_info($flash_message);
-		redirect($URL->link('hca_ui_inspections', $checklist_id).get_to_str(), $flash_message);
+		redirect('', $flash_message);
 	}
 }
 

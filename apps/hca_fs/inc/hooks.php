@@ -12,7 +12,7 @@ function hca_fs_co_modify_url_scheme()
     global $URL;
 
     $urls = [];
-    $urls['hca_fs_updater'] = 'apps/hca_fs/updater.php';
+
     $urls['hca_fs_new_request'] = 'apps/hca_fs/new_request.php?id=$1';
     $urls['hca_fs_requests'] = 'apps/hca_fs/requests.php?section=$1&id=$2';
     $urls['hca_fs_report'] = 'apps/hca_fs/report.php';

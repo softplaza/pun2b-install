@@ -1,6 +1,6 @@
 <?php
 
-//CHECK EXPIRED REQUESTS
+// CHECK EXPIRED REQUESTS
 function hca_fs_check_expired_requests()
 {
 	global $DBLayer, $Config, $FlashMessenger;
@@ -34,7 +34,7 @@ function hca_fs_check_expired_requests()
 }
 
 
-//CHECK ALL ON HOLD REQUESTS
+// CHECK ALL ON HOLD REQUESTS
 function hca_fs_check_on_hold()
 {
 	global $DBLayer, $Config;

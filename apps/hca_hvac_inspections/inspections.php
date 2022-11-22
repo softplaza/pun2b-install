@@ -69,7 +69,7 @@ if (isset($_POST['reassign']))
 		$DBLayer->insert_values('hca_hvac_inspections_actions', $action_data);
 
 		$FlashMessenger->add_info($flash_message);
-		redirect($URL->link('hca_hvac_inspections_inspections', $checklist_id).get_to_str(), $flash_message);
+		redirect('', $flash_message);
 	}
 }
 
@@ -151,7 +151,7 @@ else if (isset($_POST['reassign_more']))
 
 		$flash_message = html_encode($user_info['realname']).' has been assigned to the following units: '.implode(', ', $units);
 		$FlashMessenger->add_info($flash_message);
-		//redirect('', $flash_message);
+		redirect('', $flash_message);
 	}
 }
 

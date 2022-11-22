@@ -121,23 +121,14 @@ $DBLayer->add_field('groups', 'hca_fs', 'TINYINT(1)', false, '0'); // DO NOT REM
 //$DBLayer->add_field('users', 'hca_fs_access', 'TINYINT(1)', false, '0');
 $DBLayer->add_field('users', 'hca_fs_mailing', 'VARCHAR(255)', false, '');
 $DBLayer->add_field('users', 'hca_fs_perms', 'VARCHAR(255)', false, '');
-
 $DBLayer->add_field('users', 'hca_fs_group', 'INT(10) UNSIGNED', false, '0');
 $DBLayer->add_field('users', 'hca_fs_property_id', 'INT(10) UNSIGNED', false, '0');
 $DBLayer->add_field('users', 'hca_fs_zone', 'TINYINT(1)', false, '0');
 $DBLayer->add_field('sm_property_db', 'emergency_uid', 'INT(10) UNSIGNED', false, '0');
 
-// New date fields
-$DBLayer->add_field('hca_fs_requests', 'template_type', 'TINYINT(1)', false, '0');
-$DBLayer->add_field('hca_fs_requests', 'start_time', 'TIME', false, '00:00:00');
-$DBLayer->add_field('hca_fs_requests', 'end_time', 'TIME', false, '00:00:00');
-
-$DBLayer->add_field('hca_fs_requests', 'date_requested', 'DATE', false, '1000-01-01');
-
 // use serialised array (day => property_id)
 //$DBLayer->add_field('users', 'hca_fs_property_days', 'VARCHAR(255)', false); // REMOVE
 //$DBLayer->add_field('users', 'hca_fs_groups', 'VARCHAR(255)', false, ''); // REMOVE
-$DBLayer->drop_field('hca_fs_requests', 'vcr_id');
 
 config_add('o_hca_fs_msg', 'Please see the schedule for the week.');//remove
 //config_add('o_hca_fs_mailed_property', '0'); // remove
