@@ -58,6 +58,7 @@ if ($search_by_property_id > 0)
 	require SITE_ROOT.'header.php';
 ?>
 
+
 <nav class="navbar alert-info mb-1 <?=($User->is_guest() ? 'hidden' : '')?>">
 	<form method="get" accept-charset="utf-8" action="" class="d-flex">
 		<div class="container-fluid justify-content-between">
@@ -128,6 +129,7 @@ if ($search_by_property_id > 0)
 	</form>
 </nav>
 
+
 <div class="row mb-3">
 	<div class="col-12">
 		<div class="card">
@@ -143,6 +145,7 @@ if ($search_by_property_id > 0)
 	</div>
 </div>
 
+
 <div class="card-header">
 	<h6 class="card-title mb-0 text-primary">Inspection dates</h6>
 </div>	
@@ -151,6 +154,7 @@ if ($search_by_property_id > 0)
 		<?php echo $HcaUIPropertyReport->implodeInspectedDates() ?>
 	</div>
 </div>	
+
 
 <?php if ($search_by_job_type == 0): ?>
 <div class="card-header">

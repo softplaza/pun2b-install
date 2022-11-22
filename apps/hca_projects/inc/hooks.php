@@ -47,7 +47,7 @@ class HcaProjects
         return self::getInstance();
     }
 
-    public function ProfileAboutNewAccess()
+    public function ProfileAdminAccess()
     {
         global $access_info;
 
@@ -59,21 +59,21 @@ class HcaProjects
             13 => 'Upload Files',
             14 => 'Remove projects',
         
-            20 => 'Settings'
+            //20 => 'Settings'
         ];
 
         if (check_app_access($access_info, 'hca_projects'))
         {
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title mb-0">HCA Projects</h6>
+            <h5 class="h5 card-title mb-0">HCA Projects</h5>
 <?php
             foreach($access_options as $key => $title)
             {
                 if (check_access($access_info, $key, 'hca_projects'))
-                    echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-success ms-1">'.$title.'</span>';
                 else
-                    echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
             }
             echo '</div>';
         }
@@ -81,4 +81,4 @@ class HcaProjects
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
-Hook::addAction('ProfileAboutNewAccess', ['HcaProjects', 'ProfileAboutNewAccess']);
+Hook::addAction('ProfileAdminAccess', ['HcaProjects', 'ProfileAdminAccess']);

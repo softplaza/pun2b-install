@@ -15,7 +15,5 @@ function swift_updater_hd_head()
         $Loader->add_css(BASE_URL.'/apps/swift_updater/css/'.$User->get('style').'.css?v='.time(), array('type' => 'url', 'media' => 'screen'));
     else
         $Loader->add_css(BASE_URL.'/apps/swift_updater/css/Default.css?v='.time(), array('type' => 'url', 'media' => 'screen'));
-        
-    $Loader->add_css('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css', array('type' => 'url', 'media' => 'screen'));
 }
 

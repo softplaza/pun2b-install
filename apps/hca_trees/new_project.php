@@ -26,6 +26,7 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 if (isset($_POST['form_sent']))
 {
 	$form_data = array();
+	$form_data['created_by'] = $User->get('id');
 	$form_data['property_id'] = isset($_POST['property_id']) ? intval($_POST['property_id']) : '';
 	$form_data['location'] = isset($_POST['location']) ? swift_trim($_POST['location']) : '';
 	$form_data['project_desc'] = isset($_POST['project_desc']) ? swift_trim($_POST['project_desc']) : '';

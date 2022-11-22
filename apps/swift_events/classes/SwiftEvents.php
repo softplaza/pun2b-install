@@ -1,8 +1,8 @@
 <?php
-
 /**
- * 
- * 
+ * @copyright (C) 2020 SwiftManager.Org, partially based on PunBB
+ * @license http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
+ * @package SwiftEvents
  */
 
 class SwiftEvents
@@ -209,7 +209,7 @@ class SwiftEvents
 	<div class="col px-0">
 		<div class="card h-100<?=$css_today?>">
 			<div class="card-body px-1 py-1">
-				<h2 class="card-title"><a href="#!" onclick="getEventsOfWeek('<?=$dt->format('Y-m-d')?>')"><?=$display_date?></a></h2>
+				<h2 class="card-title"><a href="#heading<?=$d?>" onclick="getEventsOfWeek('<?=$dt->format('Y-m-d')?>')"><?=$display_date?></a></h2>
 			</div>
 		</div>
 	</div>

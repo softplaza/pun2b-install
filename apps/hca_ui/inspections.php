@@ -15,6 +15,7 @@ $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
 $search_by_unit_number = isset($_GET['unit_number']) ? swift_trim($_GET['unit_number']) : '';
 $search_by_date = isset($_GET['date']) ? swift_trim($_GET['date']) : '';
+$search_by_date_from = isset($_GET['date_from']) ? swift_trim($_GET['date_from']) : '';
 $search_by_status = isset($_GET['status']) ? intval($_GET['status']) : 0;
 $search_by_user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
 $search_by_key_word = isset($_GET['key_word']) ? swift_trim($_GET['key_word']) : '';
@@ -121,6 +122,8 @@ if ($search_by_unit_number != '')
 
 if ($search_by_date != '')
 	$search_query[] = '(c.date_inspected=\''.$DBLayer->escape($search_by_date).'\' OR DATE(c.datetime_completion_start)=\''.$DBLayer->escape($search_by_date).'\' OR DATE(c.datetime_completion_end)=\''.$DBLayer->escape($search_by_date).'\')';
+else if ($search_by_date_from != '')
+	$search_query[] = 'c.date_inspected >= \''.$DBLayer->escape($search_by_date_from).'\'';
 
 // owned_by, inspected_by, completed_by, updated_by
 if ($search_by_user_id > 0)
@@ -312,6 +315,9 @@ foreach ($users_info as $user_info)
 	</form>
 </nav>
 
+<div class="card-header">
+	<h6 class="card-title mb-0">List of Plumbing Inspections & Work Orders</h6>
+</div>
 <form method="post" accept-charset="utf-8" action="">
 	<table class="table table-striped table-bordered">
 		<thead>
@@ -385,11 +391,11 @@ if (!empty($main_info))
 		}
 
 		if ($cur_info['inspection_completed'] == 2 && $cur_info['work_order_completed'] == 2 || $cur_info['inspection_completed'] == 2 && $cur_info['num_problem'] == 0)
-			$td1[] = '<p class="badge bg-success mb-1">Completed</p>';
+			$td1[] = '<p class="badge badge-success mb-1">Completed</p>';
 		else if ($cur_info['inspection_completed'] == 1)
-			$td1[] = '<p class="fw-bold text-primary mb-1">Pending inspection</p>';
+			$td1[] = '<p class="badge badge-warning mb-1">Pending inspection</p>';
 		else if ($cur_info['work_order_completed'] == 1 && $cur_info['num_problem'] > 0)
-			$td1[] = '<p class="fw-bold text-info mb-1">Pending Work Order</p>';	
+			$td1[] = '<p class="badge badge-primary mb-1">Pending Work Order</p>';	
 
 		if (in_array($cur_info['id'], $uploader_info))
 			$td1[] = '<p><a href="'.$URL->link('hca_ui_files', $cur_info['id']).'" class="btn btn-sm btn-outline-success">Files</a></p>';
@@ -416,9 +422,12 @@ if (!empty($main_info))
 					if ($checklist_items['req_appendixb'] == 1)
 						$req_appendixb = true;
 
-					$problem_ids_arr = explode(',', $checklist_items['problem_ids']);
-					if (in_array(8, $problem_ids_arr)) $tr_css[] = 'table-danger';
-					if (in_array(22, $problem_ids_arr)) $tr_css[] = 'table-danger';
+					if ($checklist_items['job_type'] == 0 && ($cur_info['inspection_completed'] == 1 || $cur_info['work_order_completed'] == 1 && $cur_info['num_problem'] > 0))
+					{
+						$problem_ids_arr = explode(',', $checklist_items['problem_ids']);
+						if (in_array(8, $problem_ids_arr)) $tr_css[] = 'table-danger';
+						else if (in_array(22, $problem_ids_arr)) $tr_css[] = 'table-danger';
+					}
 				}
 			}
 

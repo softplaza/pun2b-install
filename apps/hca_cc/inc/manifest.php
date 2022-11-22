@@ -8,7 +8,7 @@ $app_info = [
 	// id as directory name
 	'id'			=> 'hca_cc',
 	// Application's name
-	'title'			=> 'HCA Compliance Calendar	',
+	'title'			=> 'HCA Compliance Calendar',
 	// Application's description
 	'description' 	=> 'These lists are a quick glance at all items due, displaying the property and month due.',
 	// Application's author

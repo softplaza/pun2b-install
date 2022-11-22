@@ -138,7 +138,7 @@ if ($id > 0)
 	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
 	<div class="card">
 		<div class="card-header">
-			<h6 class="card-title mb-0">Edit item</h6>
+			<h6 class="card-title mb-0">Edit inpsected item</h6>
 		</div>
 		<div class="card-body">
 
@@ -418,7 +418,7 @@ foreach($HcaHVACInspections->actions as $key => $value)
 </div>
 
 <div class="card-header">
-	<h6 class="card-title mb-0">List of items</h6>
+	<h6 class="card-title mb-0">List of inspected items</h6>
 </div>
 <table class="table table-striped table-bordered table-hover">
 	<thead>

@@ -52,7 +52,7 @@ class SwiftEventsHooks
         return self::getInstance();
     }
 
-    public function ProfileAboutNewAccess()
+    public function ProfileAdminAccess()
     {
         global $access_info;
 
@@ -60,20 +60,21 @@ class SwiftEventsHooks
             1 => 'View Calendar',
             2 => 'Add events',
             3 => 'Edit events',
+            4 => 'Report',
         ];
 
         if (check_app_access($access_info, 'swift_events'))
         {
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title mb-0">Calendar</h6>
+            <h5 class="h5 card-title mb-0">Calendar</h5>
 <?php
             foreach($access_options as $key => $title)
             {
                 if (check_access($access_info, $key, 'swift_events'))
-                    echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-success ms-1">'.$title.'</span>';
                 else
-                    echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
             }
             echo '</div>';
         }
@@ -81,5 +82,5 @@ class SwiftEventsHooks
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
-Hook::addAction('ProfileAboutNewAccess', ['SwiftEventsHooks', 'ProfileAboutNewAccess']);
+Hook::addAction('ProfileAdminAccess', ['SwiftEventsHooks', 'ProfileAdminAccess']);
 

@@ -105,7 +105,7 @@ class HcaPunchListHooks
         return self::getInstance();
     }
 
-    public function ProfileAboutNewAccess()
+    public function ProfileAdminAccess()
     {
         global $access_info;
 
@@ -121,21 +121,21 @@ class HcaPunchListHooks
             9 => 'Management',
             10 => 'Delete Punch List',
 
-            20 => 'Settings',
+            //20 => 'Settings',
         ];
 
         if (check_app_access($access_info, 'punch_list_management'))
         {
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title">Punch List</h6>
+            <h5 class="h5 card-title mb-0">Punch List Management</h5>
 <?php
             foreach($access_options as $key => $title)
             {
                 if (check_access($access_info, $key, 'punch_list_management'))
-                    echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-success ms-1">'.$title.'</span>';
                 else
-                    echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
             }
             echo '</div>';
         }
@@ -143,4 +143,4 @@ class HcaPunchListHooks
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
-Hook::addAction('ProfileAboutNewAccess', ['HcaPunchListHooks', 'ProfileAboutNewAccess']);
+Hook::addAction('ProfileAdminAccess', ['HcaPunchListHooks', 'ProfileAdminAccess']);

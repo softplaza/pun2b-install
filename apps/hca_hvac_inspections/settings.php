@@ -16,9 +16,11 @@ $SwiftSettings->setId('hca_hvac_inspections');
 // Set User access, permissions and notifications.
 $SwiftSettings->addAccessOption(20, 'Settings');
 $SwiftSettings->addAccessOption(1, 'CheckList');
+$SwiftSettings->addAccessOption(2, 'Work Order');
 $SwiftSettings->addAccessOption(4, 'List of Inspections');
 $SwiftSettings->addAccessOption(5, 'Smoke Alarms & CO Test');
 $SwiftSettings->addAccessOption(6, 'Summary Report');
+$SwiftSettings->addAccessOption(8, 'P.O. Numbers');
 $SwiftSettings->addAccessOption(9, 'Add/Edit items in Itemslist');
 $SwiftSettings->addAccessOption(10, 'Add/Edit filter sizes');
 $SwiftSettings->addAccessOption(11, 'Edit CheckList');

@@ -133,7 +133,7 @@ class HcaPCHooks
         }
     }
 
-    public function ProfileAboutNewAccess()
+    public function ProfileAdminAccess()
     {
         global $access_info;
 
@@ -151,21 +151,21 @@ class HcaPCHooks
             14 => 'Send emails to managers',
             
             // Admin Settings
-            20 => 'Settings'
+            //20 => 'Settings'
         ];
 
         if (check_app_access($access_info, 'hca_pc'))
         {
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title mb-0">Pest Control Projects</h6>
+            <h5 class="h5 card-title mb-0">Pest Control Projects</h5>
 <?php
             foreach($access_options as $key => $title)
             {
                 if (check_access($access_info, $key, 'hca_pc'))
-                    echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-success ms-1">'.$title.'</span>';
                 else
-                    echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
             }
             echo '</div>';
         }
@@ -190,7 +190,7 @@ class HcaPCHooks
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
-Hook::addAction('ProfileAboutNewAccess', ['HcaPCHooks', 'ProfileAboutNewAccess']);
+Hook::addAction('ProfileAdminAccess', ['HcaPCHooks', 'ProfileAdminAccess']);
 
 Hook::addAction('ProfileChangeDetailsSettingsValidation', ['HcaPCHooks', 'ProfileChangeDetailsSettingsValidation']);
 Hook::addAction('ProfileChangeDetailsSettingsEmailFieldsetEnd', ['HcaPCHooks', 'ProfileChangeDetailsSettingsEmailFieldsetEnd']);

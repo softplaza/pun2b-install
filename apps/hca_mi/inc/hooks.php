@@ -38,12 +38,13 @@ function hca_mi_co_modify_url_scheme()
 
 function hca_mi_IncludeCommon()
 {
-    global $User, $SwiftMenu, $URL, $Config;
+    global $User, $SwiftMenu, $URL;
 
     $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
+    // Main menu item
     if ($User->checkAccess('hca_mi'))
-        $SwiftMenu->addItem(['title' => 'Moisture Inspections', 'link' =>  $URL->link('hca_5840_projects', ['active', 0]), 'id' => 'hca_mi', 'icon' => '<i class="fas fa-tint-slash"></i>', 'level' => 12]);
+        $SwiftMenu->addItem(['title' => 'Moisture Inspections', 'link' => '#', 'id' => 'hca_mi', 'icon' => '<i class="fas fa-tint-slash"></i>', 'level' => 12]);
 
     if ($User->checkAccess('hca_mi', 11))
         $SwiftMenu->addItem(['title' => '+ New Project', 'link' => $URL->link('hca_5840_new_project'), 'id' => 'hca_5840_new_project', 'parent_id' => 'hca_mi', 'level' => 1]);
@@ -142,7 +143,7 @@ class HcaMoistureInspections
         return self::getInstance();
     }
 
-    public function ProfileAboutNewAccess()
+    public function ProfileAdminAccess()
     {
         global $access_info;
 
@@ -160,27 +161,27 @@ class HcaMoistureInspections
             17 => 'Change project status',
             18 => 'Remove projects',
         
-            20 => 'Settings'
+            //20 => 'Settings'
         ];
 
         if (check_app_access($access_info, 'hca_mi'))
         {
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title mb-0">Moisture Inspections</h6>
+            <h5 class="h5 card-title mb-0">Moisture Inspections</h5>
 <?php
             foreach($access_options as $key => $title)
             {
                 if (check_access($access_info, $key, 'hca_mi'))
-                    echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-success ms-1">'.$title.'</span>';
                 else
-                    echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
             }
             echo '</div>';
         }
     }
 
-    public function ProfileAboutNewNotifications()
+    public function ProfileAdminNotifications()
     {
         global $notifications_info;
 
@@ -192,14 +193,14 @@ class HcaMoistureInspections
         ];
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title mb-0">Moisture Inspections</h6>
+            <h5 class="h5 card-title mb-0">Moisture Inspections</h5>
 <?php
         foreach($notifications_options as $key => $title)
         {
             if (check_notification($notifications_info, $key, 'hca_mi'))
-                echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                echo '<span class="badge badge-success ms-1">'.$title.'</span>';
             else
-                echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
         }
         echo '</div>';
     }
@@ -223,9 +224,9 @@ class HcaMoistureInspections
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
-Hook::addAction('ProfileAboutNewAccess', ['HcaMoistureInspections', 'ProfileAboutNewAccess']);
-Hook::addAction('ProfileAboutNewPermissions', ['HcaMoistureInspections', 'ProfileAboutNewPermissions']);
-Hook::addAction('ProfileAboutNewNotifications', ['HcaMoistureInspections', 'ProfileAboutNewNotifications']);
+Hook::addAction('ProfileAdminAccess', ['HcaMoistureInspections', 'ProfileAdminAccess']);
+//Hook::addAction('ProfileAdminPermissions', ['HcaMoistureInspections', 'ProfileAdminPermissions']);
+Hook::addAction('ProfileAdminNotifications', ['HcaMoistureInspections', 'ProfileAdminNotifications']);
 
 Hook::addAction('HcaVendorsEditUpdateValidation', ['HcaMoistureInspections', 'HcaVendorsEditUpdateValidation']);
 Hook::addAction('HcaVendorsEditPreSumbit', ['HcaMoistureInspections', 'HcaVendorsEditPreSumbit']);

@@ -59,7 +59,7 @@ class HcaInventoryHooks
         return self::getInstance();
     }
 
-    public function ProfileAboutNewAccess()
+    public function ProfileAdminAccess()
     {
         global $access_info;
 
@@ -74,21 +74,21 @@ class HcaInventoryHooks
             14 => 'Reassign equipments',
             15 => 'Sign-Out equipment',
 
-            20 => 'Settings',
+           // 20 => 'Settings',
         ];
 
         if (check_app_access($access_info, 'hca_inventory'))
         {
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title">Inventory</h6>
+            <h5 class="h5 card-title mb-0">Inventory</h5>
 <?php
             foreach($access_options as $key => $title)
             {
                 if (check_access($access_info, $key, 'hca_inventory'))
-                    echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-success ms-1">'.$title.'</span>';
                 else
-                    echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
             }
             echo '</div>';
         }
@@ -96,5 +96,5 @@ class HcaInventoryHooks
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
-Hook::addAction('ProfileAboutNewAccess', ['HcaInventoryHooks', 'ProfileAboutNewAccess']);
+Hook::addAction('ProfileAdminAccess', ['HcaInventoryHooks', 'ProfileAdminAccess']);
 

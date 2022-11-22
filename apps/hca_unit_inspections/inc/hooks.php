@@ -79,7 +79,7 @@ class HcaUnitInspectionsHooks
         return self::getInstance();
     }
 
-    public function ProfileAboutNewAccess()
+    public function ProfileAdminAccess()
     {
         global $access_info;
 
@@ -109,14 +109,14 @@ class HcaUnitInspectionsHooks
         {
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title mb-0">Unit Inspections</h6>
+            <h5 class="h5 card-title mb-0">Unit Inspections</h5>
 <?php
             foreach($access_options as $key => $title)
             {
                 if (check_access($access_info, $key, 'hca_unit_inspections'))
-                    echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-success ms-1">'.$title.'</span>';
                 else
-                    echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
             }
             echo '</div>';
         }
@@ -124,5 +124,5 @@ class HcaUnitInspectionsHooks
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
-Hook::addAction('ProfileAboutNewAccess', ['HcaUnitInspectionsHooks', 'ProfileAboutNewAccess']);
+Hook::addAction('ProfileAdminAccess', ['HcaUnitInspectionsHooks', 'ProfileAdminAccess']);
 

@@ -35,7 +35,7 @@ function swift_property_management_IncludeCommon()
 
     if ($User->checkAccess('swift_property_management'))
     {
-        $SwiftMenu->addItem(['title' => 'Properties', 'link' => $URL->link('sm_property_management_properties_list'), 'id' => 'sm_property_management', 'icon' => '<i class="far fa-building"></i>']);
+        $SwiftMenu->addItem(['title' => 'Properties', 'link' => '#', 'id' => 'sm_property_management', 'icon' => '<i class="far fa-building"></i>']);
 
         if ($User->checkAccess('swift_property_management', 11))
             $SwiftMenu->addItem(['title' => '+ Add Property', 'link' => $URL->link('sm_property_management_new_property'), 'id' => 'sm_property_management_new_property', 'parent_id' => 'sm_property_management']);
@@ -135,7 +135,7 @@ class HcaPropertyManagementHooks
         }
     }
 
-    public function ProfileAboutNewAccess()
+    public function ProfileAdminAccess()
     {
         global $access_info;
 
@@ -158,21 +158,21 @@ class HcaPropertyManagementHooks
             19 => 'Remove unit sizes',
             
             // Admin Settings
-            20 => 'Settings'
+            //20 => 'Settings'
         ];
 
         if (check_app_access($access_info, 'swift_property_management'))
         {
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title">Property management</h6>
+            <h5 class="h5 card-title mb-0">Property management</h5>
 <?php
             foreach($access_options as $key => $title)
             {
                 if (check_access($access_info, $key, 'swift_property_management'))
-                    echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-success ms-1">'.$title.'</span>';
                 else
-                    echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
             }
             echo '</div>';
         }
@@ -180,7 +180,7 @@ class HcaPropertyManagementHooks
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
-Hook::addAction('ProfileAboutNewAccess', ['HcaPropertyManagementHooks', 'ProfileAboutNewAccess']);
+Hook::addAction('ProfileAdminAccess', ['HcaPropertyManagementHooks', 'ProfileAdminAccess']);
 
 Hook::addAction('ProfileChangeDetailsSettingsValidation', ['HcaPropertyManagementHooks', 'ProfileChangeDetailsSettingsValidation']);
 Hook::addAction('ProfileChangeDetailsSettingsEmailFieldsetEnd', ['HcaPropertyManagementHooks', 'ProfileChangeDetailsSettingsEmailFieldsetEnd']);

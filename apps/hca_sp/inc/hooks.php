@@ -51,7 +51,7 @@ function hca_sp_IncludeCommon()
     $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
     if ($User->checkAccess('hca_sp'))
-        $SwiftMenu->addItem(['title' => 'Project & Construction', 'link' =>  $URL->link('sm_special_projects_active', 0), 'id' => 'hca_sp', 'icon' => '<i class="fas fa-comments-dollar"></i>', 'level' => 13]);
+        $SwiftMenu->addItem(['title' => 'Project & Construction', 'link' => '#', 'id' => 'hca_sp', 'icon' => '<i class="fas fa-comments-dollar"></i>', 'level' => 13]);
 
     if ($User->checkAccess('hca_sp', 11))
         $SwiftMenu->addItem(['title' => '+ New Project', 'link' => $URL->link('hca_sp_new'), 'id' => 'hca_sp_new', 'parent_id' => 'hca_sp']);
@@ -139,7 +139,7 @@ class HcaSPHooks
         }
     }
 
-    public function ProfileAboutNewAccess()
+    public function ProfileAdminAccess()
     {
         global $access_info;
 
@@ -156,21 +156,21 @@ class HcaSPHooks
             14 => 'Show in the list of project managers',
             
             // Admin Settings
-            20 => 'Settings'
+            //20 => 'Settings'
         ];
 
         if (check_app_access($access_info, 'hca_sp'))
         {
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title mb-0">Project Construction Department</h6>
+            <h5 class="h5 card-title mb-0">Project Construction Department</h5>
 <?php
             foreach($access_options as $key => $title)
             {
                 if (check_access($access_info, $key, 'hca_sp'))
-                    echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-success ms-1">'.$title.'</span>';
                 else
-                    echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
             }
             echo '</div>';
         }
@@ -195,7 +195,7 @@ class HcaSPHooks
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
-Hook::addAction('ProfileAboutNewAccess', ['HcaSPHooks', 'ProfileAboutNewAccess']);
+Hook::addAction('ProfileAdminAccess', ['HcaSPHooks', 'ProfileAdminAccess']);
 
 Hook::addAction('ProfileChangeDetailsSettingsValidation', ['HcaSPHooks', 'ProfileChangeDetailsSettingsValidation']);
 Hook::addAction('ProfileChangeDetailsSettingsEmailFieldsetEnd', ['HcaSPHooks', 'ProfileChangeDetailsSettingsEmailFieldsetEnd']);

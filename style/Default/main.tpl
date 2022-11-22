@@ -36,16 +36,45 @@
 		<!--sidebar_menu-->
 		
 		<!--footer_javascript-->
-		
+
 <script>
-let arrow = document.querySelectorAll(".arrow");
-for (var i = 0; i < arrow.length; i++) {
+// Open/close main menu items by click on ".icon-link"
+let arrow = document.querySelectorAll(".icon-link");
+for (var i = 0; i < arrow.length; i++)
+{
 	arrow[i].addEventListener("click", (e)=>{
-		let arrowParent = e.target.parentElement.parentElement; //selecting main parent of arrow
+		
+		// Accordion. Close others by click on current
+		let show = document.querySelectorAll(".show");
+		show.forEach(s => {
+				s.classList.remove("show");
+		});
+
+		//selecting main parent of arrow
+		let arrowParent = e.target.parentElement.parentElement;
 		arrowParent.classList.toggle("show");
 	});
 }
+/*
+// Open/close menu by click on arrow
+let arrow = document.querySelectorAll(".arrow");
+for (var i = 0; i < arrow.length; i++)
+{
+	arrow[i].addEventListener("click", (e)=>{
+		
+		// Accordion. Close others by click on current
+		let show = document.querySelectorAll(".show");
+		show.forEach(s => {
+				s.classList.remove("show");
+		});
 
+		//selecting main parent of arrow
+		let arrowParent = e.target.parentElement.parentElement;
+		arrowParent.classList.toggle("show");
+	});
+}
+*/
+// Open/close Sidebar
 let sidebar = document.querySelector(".sidebar");
 let sidebarBtn = document.querySelector(".fa-bars");
 sidebarBtn.addEventListener("click", ()=>{
@@ -58,9 +87,11 @@ sidebarBtn.addEventListener("click", ()=>{
 	}
 });
 
+// Close Sidebar by click outside
 document.addEventListener('click', function(event) {
 	var isClickInsideElement = sidebar.contains(event.target);
-	if (!isClickInsideElement) {
+	if (!isClickInsideElement)
+	{
 		//Do something click is outside specified element
 		if (sidebar.classList.contains("opened")){
 			sidebar.classList.remove("opened");
@@ -68,6 +99,17 @@ document.addEventListener('click', function(event) {
 		}
 	}
 });
+
+// Open/close sub-menu by click on sub-arrow
+let subArrow = document.querySelectorAll(".sub-arrow");
+for (var i = 0; i < subArrow.length; i++)
+{
+	subArrow[i].addEventListener("click", (e)=>{
+		//selecting main parent of arrow
+		let subArrowParent = e.target.parentElement.parentElement;
+		subArrowParent.classList.toggle("show");
+	});
+}
 </script>
 
 	</body>

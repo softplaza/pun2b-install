@@ -109,6 +109,7 @@ class HcaUnitInspection
 		2 => 'Repaired',
 		3 => 'Reset',
 		4 => 'Tied',
+		5 => 'Refinish'
 	];
 
 	function getProblems() 

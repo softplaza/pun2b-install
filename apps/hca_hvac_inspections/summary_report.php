@@ -11,7 +11,6 @@ if (!$access6)
 $search_by_year = isset($_GET['year']) ? intval($_GET['year']) : 12;
 
 $HcaHVACInspections = new HcaHVACInspections;
-
 $HcaHVACSummaryReport = new HcaHVACSummaryReport;
 
 $Core->set_page_id('hca_hvac_inspections_summary_report', 'hca_hvac_inspections');
@@ -84,7 +83,7 @@ foreach($HcaHVACInspections->getProperties() as $cur_info)
 		<tr>
 			<td>
 				<span class="fw-bold"><?php echo html_encode($cur_info['pro_name']) ?></span>
-				<a href="<?php echo $URL->genLink('hca_ui_property_report', $sub_link_args) ?>" class="badge bg-primary float-end text-white hidden">View</a>
+				<a href="<?php echo $URL->genLink('hca_hvac_inspections_property_report', $sub_link_args) ?>" class="badge bg-primary float-end text-white">View</a>
 			</td>
 			<td class="ta-center fw-bold"><?php echo $inspections_pending ?></td>
 			<td class="ta-center fw-bold"><?php echo $inspections_completed ?></td>
@@ -94,6 +93,7 @@ foreach($HcaHVACInspections->getProperties() as $cur_info)
 			<td class="ta-center"><?php echo $date_inspected ?></td>
 		</tr>
 <?php
+		$HcaHVACSummaryReport->total_units_never_inspected = $HcaHVACSummaryReport->total_units_never_inspected + $units_never_inspected;
 	}
 }
 ?>

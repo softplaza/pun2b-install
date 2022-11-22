@@ -1,9 +1,11 @@
 <?php
 
+use Mpdf\Tag\P;
+
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_hvac_inspections', 1)) ? true : false;
+$access = ($User->checkAccess('hca_hvac_inspections', 2)) ? true : false;
 $access20 = ($User->checkAccess('hca_hvac_inspections', 20)) ? true : false;
 if (!$access)
 	message($lang_common['No permission']);
@@ -21,13 +23,12 @@ if (isset($_POST['update']))
 		'updated_time'				=> time(),
 		'work_order_completed'		=> isset($_POST['work_order_completed']) ? intval($_POST['work_order_completed']) : 0,
 		'work_order_comment'		=> isset($_POST['work_order_comment']) ? swift_trim($_POST['work_order_comment']) : '',
-		'filter_size_id'			=> isset($_POST['filter_size_id']) ? intval($_POST['filter_size_id']) : 0,
 	];
 
 	$inspections_checklist = $DBLayer->select('hca_hvac_inspections_checklist', $id);
-	if ($inspections_checklist['inspection_completed'] != 2 && $form_data['inspection_completed'] == 2)
+	if ($inspections_checklist['work_order_completed'] != 2 && $form_data['work_order_completed'] == 2)
 	{
-		$form_data['datetime_inspection_end'] = date('Y-m-d\TH:i:s');
+		$form_data['datetime_completion_end'] = date('Y-m-d\TH:i:s');
 		$form_data['completed_by'] = $User->get('id');
 	}
 
@@ -44,7 +45,6 @@ if (isset($_POST['update']))
 		foreach($_POST['comment'] as $key => $problem)
 		{
 			$checklist_item = [
-				//'check_type'	=> isset($_POST['check_type'][$key]) ? intval($_POST['check_type'][$key]) : 0,
 				'job_type'		=> isset($_POST['job_type'][$key]) ? intval($_POST['job_type'][$key]) : 0,
 				'comment'		=> isset($_POST['comment'][$key]) ? swift_trim($_POST['comment'][$key]) : '',
 			];
@@ -63,7 +63,10 @@ if (isset($_POST['update']))
 		$DBLayer->update('hca_hvac_inspections_checklist', $form_data, $id);
 
 		// Add flash message
-		$flash_message = 'Checklist was completed by '.$User->get('realname');
+		if ($inspections_checklist['work_order_completed'] != 2 && $form_data['work_order_completed'] == 2)
+			$flash_message = 'Work Order was completed by '.$User->get('realname');
+		else
+			$flash_message = 'Work Order was updated by '.$User->get('realname');
 
 		$action_data = [
 			'checklist_id'			=> $id,
@@ -203,10 +206,15 @@ while($row = $DBLayer->fetch_assoc($result))
 
 		<div class="card-body pb-0">
 
-<?php if ($main_info['work_order_completed'] == 2) : ?>
-			<div class="alert alert-success" role="alert">The Work Order already was completed.</div>
+<?php if ($main_info['work_order_completed'] == 2): ?>
+			<div class="alert alert-success mb-3" role="alert">
+				<h6 class="alert-heading">The Work Order completed.</h6>
+				<hr class="my-1">
+				<a href="<?php echo $URL->link('hca_hvac_inspections_checklist', 0).'&property_id='.$main_info['property_id'] ?>" class="badge bg-light text-primary border border-secondary mb-1">Start a New Inspection</a>
+				<a href="<?php echo $URL->link('hca_hvac_inspections_checklist2', $id) ?>" class="badge bg-light text-primary border border-secondary mb-1">Back to Checklist</a>
+			</div>
 <?php elseif ($main_info['work_order_completed'] == 1): ?>
-			<div class="alert alert-warning" role="alert">Complete the Work Order and press "Submit".</div>
+			<div class="alert alert-warning mb-3" role="alert">Complete the Work Order and press "Submit".</div>
 <?php else: ?>
 			<div class="alert alert-danger" role="alert">Work Order not created yet. Checklist was completed with no issues.</div>
 <?php endif; ?>
@@ -231,141 +239,97 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 }
 
 $req_appendixb = false;
-$equipment_id = 0;
-foreach($checked_items as $cur_info)
+foreach($HcaHVACInspections->equipments as $equipment_id => $equipment_name)
 {
-	$item_body = [];
+	$equipment_body = $item_body = [];
 
-	if ($equipment_id != $cur_info['equipment_id'])
+	$equipment_body[] = '<div class="mb-1 mt-3">';
+	$equipment_body[] = '<span class="fw-bold h4">'.html_encode($equipment_name).'</span>';
+	$equipment_body[] = '</div>';
+
+	foreach($checked_items as $cur_info)
 	{
-		$equipment_name = isset($HcaHVACInspections->equipments[$cur_info['equipment_id']]) ? $HcaHVACInspections->equipments[$cur_info['equipment_id']] : '';
+		$has_problem = ($cur_info['check_type'] == 1 && $cur_info['item_type'] == 2 || $cur_info['check_type'] == 2 && $cur_info['item_type'] == 1) ? true : false;
 
-		$item_body[] = '<div class="row mt-1">';
-		$item_body[] = '<div class="col-3">';
-		$item_body[] = '<span class="fw-bold">'.html_encode($equipment_name).'</span>';
-		$item_body[] = '</div>';
-		$item_body[] = '<div class="col-2 ta-center">';
-		$item_body[] = '<span class="fw-bold"></span>';
-		$item_body[] = '</div>';
-		$item_body[] = '<div class="col-2 ta-center">';
-		$item_body[] = '<span class="fw-bold">Action</span>';
-		$item_body[] = '</div>';
-		$item_body[] = '<div class="col-5"></div>';
-		$item_body[] = '</div>';
-	}
-
-	if ($cur_info['item_id'] == 1 && in_array($main_info['property_id'], [100, 111]) || $cur_info['item_id'] > 1)
-	{
-		$filter_sizes = [];
-		if (!empty($hca_hvac_inspections_filters) && $cur_info['item_id'] == 10)
+		if ($equipment_id == $cur_info['equipment_id'] && $has_problem && ($cur_info['item_id'] == 1 && in_array($main_info['property_id'], [100, 111]) || $cur_info['item_id'] > 1))
 		{
-			$filter_sizes[] = '<span>Filter size: </span>';
-			$filter_sizes[] = '<select name="filter_size_id" required class="form-select form-select-sm alert-warning fw-bold fld-required">';
-			$filter_sizes[] = '<option value="">Select one</option>';
-			foreach($hca_hvac_inspections_filters as $filters)
+			$filter_size = '';
+			if (!empty($hca_hvac_inspections_filters) && $cur_info['item_id'] == 10)
 			{
-				if ($main_info['filter_size_id'] == $filters['id'])
-					$filter_sizes[] =  '<option value="'.$filters['id'].'" selected>'.html_encode($filters['filter_size']).'</option>';
-				else
-					$filter_sizes[] =  '<option value="'.$filters['id'].'">'.html_encode($filters['filter_size']).'</option>';
-			}
-			$filter_sizes[] = '</select>';
-			$filter_sizes[] = '<div class="invalid-tooltip">Please select filter size from dropdown.</div>';
-		}
-
-		$item_type1 = ($cur_info['item_type'] == 2) ? 1 : 2;
-		$item_type2 = ($cur_info['item_type'] == 2) ? 2 : 1;
-
-		$check_type_param1 = $check_type_param2 = [];
-
-		$check_type_param1[] = ($cur_info['item_type'] == 2) ? 1 : 2;
-		$check_type_param2[] = ($cur_info['item_type'] == 2) ? 2 : 1;
-
-		$check_type_param1[] = $check_type_param2[] = $cur_info['id'];
-		$check_type_param1[] = $check_type_param2[] = $cur_info['comment_required'];
-
-		$item_body[] = '<div class="row">';
-		$item_body[] = '<div class="col-3">';
-		$item_body[] = '<span class="">'.html_encode($cur_info['item_name']).'</span>';
-		$item_body[] = '<p><?php echo implode("\n", $filter_sizes) ?></p>';
-		$item_body[] = '</div>';
-		$item_body[] = '<input type="hidden" name="check_type['.$cur_info['id'].']" value="0">';
-		$item_body[] = '<div class="col-2 alert-info ta-center">';
-		$item_body[] = '<span class="fw-bold">'.($cur_info['check_type'] == 2 ? 'Yes' : 'No').'</span>';
-		$item_body[] = '</div>';
-
-		$job_actions = [];
-		$item_job_actions = explode(',', $cur_info['job_actions']);
-		foreach($HcaHVACInspections->actions as $key => $value)
-		{
-			if (in_array($key, $item_job_actions))
-				$job_actions[$key] = $value;
-		}
-
-		if (!empty($job_actions))
-		{
-			$class_job_type = '';
-			$col_job_type_param = $fld_job_type_param = [];
-
-/*
-			if ($cur_info['check_type'] == 1 && $cur_info['item_type'] == 1) // YES & Problem
-				$col_job_type_param[] = 'style="display:none"';
-			else if ($cur_info['check_type'] == 2 && $cur_info['item_type'] == 2) // YES & Work Order
-				$col_job_type_param[] = 'style="display:none"';
-			else
-			{
-				$fld_job_type_param[] = 'required';
-				$class_job_type = 'fld-required';
-			}
-*/
-
-			$css_job_type = ($cur_info['job_type'] == 0) ? 'alert-warning' : 'alert-success';
-
-			$item_body[] = '<div class="col-2" id="col_job_type'.$cur_info['id'].'" '.implode(' ', $col_job_type_param).'>';
-			$item_body[] = '<select name="job_type['.$cur_info['id'].']" class="form-select form-select-sm '.$css_job_type.'" id="fld_job_type'.$cur_info['id'].'" '.implode(' ', $fld_job_type_param).'>';
-
-			$item_body[] = '<option value="" selected>Choose action</option>'."\n";
-			foreach ($job_actions as $key => $value)
-			{
-				if (isset($_POST['job_type']) && $_POST['job_type'] == $key || $cur_info['job_type'] == $key)
-					$item_body[] = "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$value.'</option>'."\n";
-				else
-					$item_body[] = "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$value.'</option>'."\n";
+				foreach($hca_hvac_inspections_filters as $filters)
+				{
+					if ($main_info['filter_size_id'] == $filters['id'])
+						$filter_size = 'Size: '.html_encode($filters['filter_size']);
+				}
 			}
 
-			$item_body[] = '</select>';
+			$item_body[] = '<div class="row mb-2 alert-secondary border">';
+			$item_body[] = '<div class="col-md-4 mb-1">';
+			$item_body[] = '<p class="fw-bold">'.$filter_size.'</p>';
+			$item_body[] = '<span class="">'.html_encode($cur_info['item_name']).'</span>';
+			$item_body[] = '<span class="fw-bold text-danger">'.($cur_info['check_type'] == 2 ? 'YES' : 'NO').'</span>';
 			$item_body[] = '</div>';
+			$item_body[] = '<input type="hidden" name="check_type['.$cur_info['id'].']" value="0">';
+			$item_body[] = '<div class="col-md-2 ta-center mb-1 py-2">';
+
+			$action_body = $job_actions = [];
+			$item_job_actions = explode(',', $cur_info['job_actions']);
+			foreach($HcaHVACInspections->actions as $key => $value)
+			{
+				if (in_array($key, $item_job_actions))
+					$job_actions[$key] = $value;
+			}
+
+			if (!empty($job_actions))
+			{
+				$class_job_type = '';
+				$col_job_type_param = $fld_job_type_param = [];
+
+				$css_job_type = ($cur_info['job_type'] == 0) ? 'alert-danger' : 'alert-success';
+
+				$action_body[] = '<select name="job_type['.$cur_info['id'].']" class="form-select form-select-sm '.$css_job_type.'" id="fld_job_type'.$cur_info['id'].'" '.implode(' ', $fld_job_type_param).'>';
+
+				$action_body[] = '<option value="" selected>Choose action</option>'."\n";
+				foreach ($job_actions as $key => $value)
+				{
+					if (isset($_POST['job_type']) && $_POST['job_type'] == $key || $cur_info['job_type'] == $key)
+						$action_body[] = "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$value.'</option>'."\n";
+					else
+						$action_body[] = "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$value.'</option>'."\n";
+				}
+
+				$action_body[] = '</select>';
+
+				$item_body[] = implode('', $action_body);
+			}
+
+			$item_body[] = '</div>';
+
+			$item_body[] = '<div class="col-md-6 mb-1 py-2">';
+			$item_body[] = '<input type="text" name="comment['.$cur_info['id'].']" value="'.html_encode($cur_info['comment']).'" class="" placeholder="Comments">';
+			$item_body[] = '</div>';
+
+			$item_body[] = '</div>';
+
+
+			if ($cur_info['req_appendixb'] == 1 && $cur_info['check_type'] == 2)
+				$req_appendixb = true;
 		}
 
-		$comment_param = [];
-/*
-		if ($cur_info['comment_required'] == 1 && $cur_info['check_type'] < 2)
-		{
-			$comment_param[] = 'class="form-control fld-required"';
-			$comment_param[] = 'required';
-		}
-*/
-		$item_body[] = '<div class="col">';
-		$item_body[] = '<input type="text" name="comment['.$cur_info['id'].']" value="'.html_encode($cur_info['comment']).'" id="fld_comment'.$cur_info['id'].'" '.(implode(' ', $comment_param)).'>';
-		$item_body[] = '</div>';
-		$item_body[] = '</div>';
 
-		if ($cur_info['req_appendixb'] == 1 && $cur_info['check_type'] == 2)
-			$req_appendixb = true;
-
-		// Need to setup these two options to display items all time
-		
-		if ($cur_info['check_type'] == 1 && $cur_info['item_type'] == 2 || $cur_info['check_type'] == 2 && $cur_info['item_type'] == 1)
-			echo implode('', $item_body);
 	}
 
-	$equipment_id = $cur_info['equipment_id'];
+	if (!empty($item_body))
+		echo implode($equipment_body);
+
+	echo implode($item_body);
+
 }
 ?>
 		</div>
 
 		<div class="card-body">
-			<label class="form-label mb-1">Is the checklist completed?</label>
+			<label class="form-label mb-1">Is the Work Order completed?</label>
 			<div class="mb-3">
 				<div class="form-check form-check-inline">
 					<input class="form-check-input" type="radio" name="work_order_completed" id="fld_work_order_completed2" value="2" <?php echo ($main_info['work_order_completed'] == 2) ? 'checked' : '' ?> onclick="checkRadioBox(2)">
@@ -378,7 +342,7 @@ foreach($checked_items as $cur_info)
 			</div>
 
 			<div class="mb-3">
-				<label class="form-label text-danger" for="fld_work_order_comment">Remarks. If checklist is not copleted - Why?</label>
+				<label class="form-label text-danger" for="fld_work_order_comment">Remarks. If the Work Order is not copleted - Why?</label>
 				<textarea class="form-control" id="fld_work_order_comment" name="work_order_comment" placeholder="Leave your comments" <?php echo ($main_info['work_order_completed'] == 1) ? 'required' : '' ?>><?php echo isset($_POST['work_order_comment']) ? html_encode($_POST['work_order_comment']) : html_encode($main_info['work_order_comment']) ?></textarea>
 			</div>
 
@@ -430,10 +394,10 @@ while ($row = $DBLayer->fetch_assoc($result))
 	<h6 class="card-title mb-0">List of never inspected units (<?php echo count($unispected_units) ?>)</h6>
 </div>
 <div class="mb-3">
-	<div class="alert alert-info mb-0 py-2" role="alert">
+	<div class="callout callout-primary">
 		<p class="text-muted">This unit list displays never inspected units of <?=html_encode($main_info['pro_name'])?> property. Click on the link below to start a new inspection.</p>
 	</div>
-	<div class="alert alert-warning" role="alert">
+	<div class="alert alert-warning">
 		<p class="fw-bold"><?php echo implode(' ', $unispected_units) ?></p>
 	</div>
 </div>
@@ -451,7 +415,7 @@ if ($User->checkAccess('hca_hvac_inspections', 17))
 			],
 		],
 		'WHERE'		=> 'a.checklist_id='.$id,
-		'ORDER BY'	=> 'a.time_submitted'
+		'ORDER BY'	=> 'a.time_submitted DESC'
 	];
 	//if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -465,7 +429,7 @@ if ($User->checkAccess('hca_hvac_inspections', 17))
 ?>
 
 <div class="card-header">
-	<h6 class="card-title mb-0">Project's actions</h6>
+	<h6 class="card-title mb-0">Project's tracking</h6>
 </div>
 <table class="table table-striped table-bordered">
 	<thead>

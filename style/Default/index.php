@@ -30,8 +30,8 @@ $Loader->add_js(BASE_URL.'/vendor/bootstrap/js/bootstrap.bundle.min.js', [
     'weight' => 75
 ]);
 
-$Loader->add_css(BASE_URL.'/vendor/fontawesome/css/fontawesome.min.css', array('type' => 'url', 'media' => 'screen'));
-$Loader->add_css(BASE_URL.'/vendor/fontawesome/css/regular.min.css', array('type' => 'url', 'media' => 'screen'));
-$Loader->add_css(BASE_URL.'/vendor/fontawesome/css/solid.min.css', array('type' => 'url', 'media' => 'screen'));
+//$Loader->add_css(BASE_URL.'/vendor/fontawesome/6.2.1/css/fontawesome.min.css', array('type' => 'url', 'media' => 'screen'));
+//$Loader->add_css(BASE_URL.'/vendor/fontawesome/6.2.1/css/regular.min.css', array('type' => 'url', 'media' => 'screen'));
+//$Loader->add_css(BASE_URL.'/vendor/fontawesome/6.2.1/css/solid.min.css', array('type' => 'url', 'media' => 'screen'));
 
 $Loader->add_css(BASE_URL.'/vendor/icofont/icofont.min.css', array('type' => 'url', 'media' => 'screen'));

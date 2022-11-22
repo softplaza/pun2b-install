@@ -108,7 +108,9 @@
   cursor: pointer;
   transition: all 0.3s ease;
 }
-.sidebar .nav-links li.show i.arrow{
+.sidebar .nav-links li.show i.arrow,
+.sidebar .nav-links .sub-menu li.show i.fa-chevron-down
+{
   transform: rotate(-180deg);
 }
 .sidebar.close .nav-links i.arrow{
@@ -131,7 +133,9 @@
   pointer-events: none;
   line-height: 20px;
 }
-.sidebar .nav-links li .sub-menu{
+.sidebar .nav-links li .sub-menu, 
+.sidebar .nav-links li .sub-menu-2
+{
  /* padding: 6px 6px 14px 30px;*/
   margin-top: -10px;
   background: #000000;
@@ -145,17 +149,27 @@
 .sidebar .show .icon-link .link_name{
   color: #80f1ff;
 }
+.sidebar ul.sub-menu-2 .active a.sub-menu-link{
+  color: #c5efff;
+}
 .sidebar .nav-links li .sub-menu .active{
     background: #1d1b31;
     font-weight: bold;
 }
-.sidebar .nav-links li .sub-menu .active>a{
-  padding-left: 0.25em;
-  border-left: 1px solid #3181f8;
-  border-left-width: 0.25em;
+.sidebar .nav-links li .sub-menu-2 .active>div{
+  padding-left: 0.5em;
+  border-left: 1px solid cyan;
+  /*border-left-width: 0.25em;*/
 }
-
-.sidebar .nav-links li.show .sub-menu{
+.sidebar .nav-links .sub-menu {
+  padding-left: 2em;
+}
+.sidebar .nav-links .sub-menu .sub-menu-2 {
+  padding-left: 1em;
+}
+.sidebar .nav-links li.show .sub-menu,
+.sidebar .nav-links .sub-menu li.show .sub-menu-2
+{
   display: block;
 }
 .sidebar .nav-links li .sub-menu a{
@@ -163,7 +177,7 @@
   font-size: 15px;
   padding: 5px 0;
   white-space: nowrap;
-  opacity: 0.6;
+  /*opacity: 0.6;*/
   transition: all 0.3s ease;
 }
 .sidebar .nav-links li .sub-menu a:hover{
@@ -187,7 +201,7 @@
   pointer-events: auto;
   transition: all 0.4s ease;
 }
-.sidebar .nav-links li .sub-menu .link_name{
+.sidebar .nav-links li .sub-menu .link_name {
   display: none;
 }
 .sidebar.close .nav-links li .sub-menu .link_name{
@@ -253,6 +267,9 @@
 .sidebar .profile-details .job{
   font-size: 12px;
 }
+.sidebar ul.sub-menu-2 a.sub-menu-link{
+  color: #99e9ff;
+}
 .home-section{
   position: relative;
   left: 260px;
@@ -286,6 +303,8 @@
     display: none;
   }
 }
+
+
 
 /* Navbar settings */
 .swift-navbar{

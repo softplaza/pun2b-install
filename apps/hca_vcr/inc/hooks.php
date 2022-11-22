@@ -117,7 +117,7 @@ class HcaVCRHooks
         return self::getInstance();
     }
 
-    public function ProfileAboutNewAccess()
+    public function ProfileAdminAccess()
     {
         global $access_info;
 
@@ -130,21 +130,21 @@ class HcaVCRHooks
             6 => 'In-House schedule',
             7 => 'Property schedule',
 
-            20 => 'Settings'
+            //20 => 'Settings'
         ];
 
         if (check_app_access($access_info, 'hca_vcr'))
         {
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title mb-0">VCR</h6>
+            <h5 class="h5 card-title mb-0">VCR</h5>
 <?php
             foreach($access_options as $key => $title)
             {
                 if (check_access($access_info, $key, 'hca_vcr'))
-                    echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-success ms-1">'.$title.'</span>';
                 else
-                    echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
             }
             echo '</div>';
         }
@@ -152,7 +152,8 @@ class HcaVCRHooks
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
-Hook::addAction('ProfileAboutNewAccess', ['HcaVCRHooks', 'ProfileAboutNewAccess']);
+Hook::addAction('ProfileAdminAccess', ['HcaVCRHooks', 'ProfileAdminAccess']);
+
 //Hook::addAction('ProfileAboutNewPermissions', ['HcaFacilityHooks', 'ProfileAboutNewPermissions']);
 //Hook::addAction('ProfileAboutNewNotifications', ['HcaFacilityHooks', 'ProfileAboutNewNotifications']);
 

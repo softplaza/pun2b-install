@@ -3,7 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access9 = ($User->checkAccess('hca_hvac_inspections', 10)) ? true : false;
+$access9 = ($User->checkAccess('hca_hvac_inspections', 9)) ? true : false;
 
 if (!$access9)
 	message($lang_common['No permission']);

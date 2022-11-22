@@ -24,6 +24,7 @@ class HcaHVACInspections
 		//100 => 'Thermostat 2',
 	];
 
+	// NOT IN USED !!!
 	var $elements = [
 		// A
 		1 => 'AC Cabinet',
@@ -113,6 +114,10 @@ class HcaHVACInspections
 		0 => 'Pending',
 		1 => 'Replaced',
 	];
+
+	function getLocation($id) {
+		return (isset($this->locations[$id]) && $id > 0) ? $this->locations[$id] : '';
+	}
 
 	function getElement($id) {
 		return isset($this->elements[$id]) ? $this->elements[$id] : '';

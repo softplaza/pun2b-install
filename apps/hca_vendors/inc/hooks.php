@@ -33,7 +33,7 @@ function hca_vendors_IncludeCommon()
     if ($User->checkAccess('hca_vendors'))
     {
         //$SwiftMenu->addItem(['title' => 'Vendors', 'link' => $URL->link('sm_vendors_list'), 'id' => 'sm_vendors', 'icon' => '<i class="fas fa-hard-hat"></i>', 'level' => 15]);
-        $SwiftMenu->addItem(['title' => 'Vendors', 'link' => $URL->link('sm_vendors_list'), 'id' => 'sm_vendors', 'icon' => '<i class="icofont-labour" style="font-size: 34px;"></i>', 'level' => 15]);
+        $SwiftMenu->addItem(['title' => 'Vendors', 'link' => '#', 'id' => 'sm_vendors', 'icon' => '<i class="icofont-labour" style="font-size: 34px;"></i>', 'level' => 15]);
 
         if ($User->checkAccess('hca_vendors', 2))
             $SwiftMenu->addItem(['title' => '+ Add Vendor', 'link' =>  $URL->link('sm_vendors_new'), 'id' => 'sm_vendors_new', 'parent_id' => 'sm_vendors']); 
@@ -67,7 +67,7 @@ class HcaVendorsHooks
         return self::getInstance();
     }
 
-    public function ProfileAboutNewAccess()
+    public function ProfileAdminAccess()
     {
         global $access_info;
 
@@ -86,14 +86,14 @@ class HcaVendorsHooks
         {
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title">Vendor Management</h6>
+            <h5 class="h5 card-title mb-0">Vendor Management</h5>
 <?php
             foreach($access_options as $key => $title)
             {
                 if (check_access($access_info, $key, 'hca_vendors'))
-                    echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-success ms-1">'.$title.'</span>';
                 else
-                    echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
             }
             echo '</div>';
         }
@@ -101,4 +101,4 @@ class HcaVendorsHooks
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
-Hook::addAction('ProfileAboutNewAccess', ['HcaVendorsHooks', 'ProfileAboutNewAccess']);
+Hook::addAction('ProfileAdminAccess', ['HcaVendorsHooks', 'ProfileAdminAccess']);

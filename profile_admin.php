@@ -32,9 +32,14 @@ if (!$page_param['own_profile'])
 	$query = array(
 		'SELECT'	=> 'g.g_id, g.g_title',
 		'FROM'		=> 'groups AS g',
-		'WHERE'		=> 'g.g_id!='.USER_GROUP_GUEST,
 		'ORDER BY'	=> 'g.g_title'
 	);
+
+	if (!$User->is_admin())
+		$query['WHERE'] = 'g.g_id!='.USER_GROUP_ADMIN;
+	else if ($User->get('g_moderator') != '1')
+		$query['WHERE'] = 'g.g_id!='.USER_GROUP_ADMIN.' AND g.g_moderator!=1';
+
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	while ($cur_group = $DBLayer->fetch_assoc($result))
 	{
@@ -47,11 +52,106 @@ if (!$page_param['own_profile'])
 					</select>
 				</div>
 				<div class="mb-3">
-					<button type="submit" name="update_group_membership" class="btn btn-sm btn-primary">Update groups</button>
+					<button type="submit" name="update_group_membership" class="btn btn-sm btn-primary">Update group</button>
 				</div>
 			</div>
 		</div>
 	</form>
+
+
+<?php
+	$query = [
+		'SELECT'	=> 'a.*, u.group_id, u.realname',
+		'FROM'		=> 'user_access AS a',
+		'JOINS'		=> [
+			[
+				'INNER JOIN'	=> 'users AS u',
+				'ON'			=> 'u.id=a.a_uid'
+			],
+		],
+		'WHERE'		=> 'a.a_uid='.$id,
+	];
+	$result = $DBLayer->query_build($query) or db_error(__FILE__, __LINE__);
+	$access_info = [];
+	while ($row = $DBLayer->fetch_assoc($result)) {
+		$access_info[] = $row;
+	}
+
+	if (!empty($access_info))
+	{
+?>
+		<div class="card mb-3">
+			<div class="card-header">
+				<h6 class="card-title mb-0">Access to projects and features</h6>
+			</div>
+
+<?php
+	Hook::doAction('ProfileAdminAccess');
+?>
+
+		</div>
+<?php
+	}
+	else
+	{
+	?>
+		<div class="card mb-3">
+			<div class="card-header">
+				<h6 class="card-title mb-0">Access to projects and features</h6>
+			</div>
+			<div class="card-body">
+				<div class="alert alert-warning mb-0" role="alert">No permissions found in projects.</div>
+			</div>
+		</div>
+	<?php
+	}
+
+	$query = [
+		'SELECT'	=> 'n.*, u.group_id, u.realname',
+		'FROM'		=> 'user_notifications AS n',
+		'JOINS'		=> [
+			[
+				'INNER JOIN'	=> 'users AS u',
+				'ON'			=> 'u.id=n.n_uid'
+			],
+		],
+		'WHERE'		=> 'n.n_uid='.$id,
+	];
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	$notifications_info = [];
+	while ($row = $DBLayer->fetch_assoc($result)) {
+		$notifications_info[] = $row;
+	}
+	
+	if (!empty($notifications_info))
+	{
+?>
+			<div class="card mb-3">
+				<div class="card-header">
+					<h6 class="card-title mb-0">Notifications for projects</h6>
+				</div>
+	
+	<?php Hook::doAction('ProfileAdminNotifications'); ?>
+	
+			</div>
+	<?php
+	}
+	else
+	{
+	?>
+		<div class="card mb-3">
+			<div class="card-header">
+				<h6 class="card-title mb-0">Notifications for projects</h6>
+			</div>
+			<div class="card-body">
+				<div class="alert alert-warning mb-0" role="alert">No available project notifications.</div>
+			</div>
+		</div>
+	<?php
+	}
+
+?>
+
 </div>
 
 <?php

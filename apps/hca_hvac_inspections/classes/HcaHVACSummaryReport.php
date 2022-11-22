@@ -194,7 +194,7 @@ class HcaHVACSummaryReport
 				else
 					$this->units_never_inspected[$row['property_id']] = 1;
 
-				++$this->total_units_never_inspected;
+				//++$this->total_units_never_inspected;
 			}	
 		}
 	}

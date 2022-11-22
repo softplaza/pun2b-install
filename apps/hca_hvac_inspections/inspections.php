@@ -16,6 +16,7 @@ $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
 $search_by_unit_number = isset($_GET['unit_number']) ? swift_trim($_GET['unit_number']) : '';
 $search_by_date = isset($_GET['date']) ? swift_trim($_GET['date']) : '';
+$search_by_date_from = isset($_GET['date_from']) ? swift_trim($_GET['date_from']) : '';
 $search_by_status = isset($_GET['status']) ? intval($_GET['status']) : 0;
 $search_by_user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
 $search_by_key_word = isset($_GET['key_word']) ? swift_trim($_GET['key_word']) : '';
@@ -72,33 +73,85 @@ if (isset($_POST['reassign']))
 	}
 }
 
-else if (isset($_POST['send_email']))
+else if (isset($_POST['reassign_more']))
 {
-	$checklist_id = intval($_POST['checklist_id']);
-	$emails = isset($_POST['emails']) ? swift_trim($_POST['emails']) : '';
-	$mail_message = isset($_POST['mail_message']) ? swift_trim($_POST['mail_message']) : '';
+	$user_id = intval($_POST['user_id']);
 	
-	if ($emails == '')
-		$Core->add_error('Email field can not be empty. Insert email of recipient.');
-	
+	if ($user_id == 0)
+		$Core->add_error('Select an user.');
+
+	if (isset($_POST['checklists']) && empty($_POST['checklists']))
+		$Core->add_error('Select units for reassigning.');
+
 	if (empty($Core->errors))
 	{
+		$query = array(
+			'SELECT'	=> 'u.realname, u.email',
+			'FROM'		=> 'users AS u',
+			'WHERE'		=> 'u.id='.$user_id,
+		);
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		$user_info = $DBLayer->fetch_assoc($result);
+
+		if (isset($_POST['checklists']) && !empty($_POST['checklists']))
+		{
+			$ids = array_keys($_POST['checklists']);
+
+			$property_name = '';
+			$query = array(
+				'SELECT'	=> 'ch.*, p.pro_name, un.unit_number',
+				'FROM'		=> 'hca_hvac_inspections_checklist AS ch',
+				'JOINS'		=> [
+					[
+						'INNER JOIN'	=> 'sm_property_db AS p',
+						'ON'			=> 'p.id=ch.property_id'
+					],
+					[
+						'LEFT JOIN'		=> 'sm_property_units AS un',//used for search by // why LEFT?
+						'ON'			=> 'un.id=ch.unit_id'
+					],
+				],
+				'WHERE'		=> 'ch.id IN ('.implode(',', $ids).')'
+			);
+			$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+			$checklist_info = $units = [];
+			while ($row = $DBLayer->fetch_assoc($result)) {
+				$checklist_info[] = $row;
+				$units[] = $row['unit_number'];
+				$property_name = $row['pro_name'];
+			}
+
+			$query = array(
+				'UPDATE'	=> 'hca_hvac_inspections_checklist',
+				'SET'		=> 'owned_by='.$user_id,
+				'WHERE'		=> 'id IN ('.implode(',', $ids).')'
+			);
+			$DBLayer->query_build($query) or error(__FILE__, __LINE__);
+
+			foreach($ids as $checklist_id)
+			{
+				$action_data = [
+					'checklist_id'			=> $checklist_id,
+					'submitted_by'			=> $User->get('id'),
+					'time_submitted'		=> time(),
+					'action'				=> 'Project was reassigned to '.html_encode($user_info['realname'])
+				];
+				$DBLayer->insert_values('hca_hvac_inspections_actions', $action_data);
+			}
+		}
+
 		$SwiftMailer = new SwiftMailer;
 		//$SwiftMailer->isHTML();
-		$SwiftMailer->send($emails, 'Plumbing Inspections', $mail_message);
 
-		$flash_message = 'Email has been sent to: '.$emails;
+		$mail_message = 'Hello '.html_encode($user_info['realname'])."\n\n";
+		$mail_message .= 'You are assigned for following units: '.implode(', ', $units)."\n\n";
+		$mail_message .= 'Property name: '.html_encode($property_name)."\n\n";
+		$mail_message .= 'To manage the projects follow this link: '.get_current_url();
+		$SwiftMailer->send($user_info['email'], 'HVAC Inspections', $mail_message);
 
-		$action_data = [
-			'checklist_id'			=> $checklist_id,
-			'submitted_by'			=> $User->get('id'),
-			'time_submitted'		=> time(),
-			'action'				=> $flash_message
-		];
-		$DBLayer->insert_values('hca_hvac_inspections_actions', $action_data);
-
+		$flash_message = html_encode($user_info['realname']).' has been assigned to the following units: '.implode(', ', $units);
 		$FlashMessenger->add_info($flash_message);
-		redirect('', $flash_message);
+		//redirect('', $flash_message);
 	}
 }
 
@@ -122,6 +175,8 @@ if ($search_by_unit_number != '')
 
 if ($search_by_date != '')
 	$search_query[] = '(DATE(c.datetime_inspection_start)=\''.$DBLayer->escape($search_by_date).'\' OR DATE(c.datetime_completion_end)=\''.$DBLayer->escape($search_by_date).'\')';
+else if ($search_by_date_from != '')
+	$search_query[] = 'DATE(c.datetime_inspection_start) >= \''.$DBLayer->escape($search_by_date_from).'\'';
 
 // owned_by, inspected_by, completed_by, updated_by
 if ($search_by_user_id > 0)
@@ -236,6 +291,9 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	$users_info[] = $row;
 }
 
+if ($search_by_property_id > 0)
+	$SwiftMenu->addNavAction('<li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalWindow2"><i class="fas fa-share fa-1x" aria-hidden="true"></i> Reassign all</a></li>');
+
 // Serch by: 1 -Property 2 - Unit 3 - Status (pending, completed)
 $Core->set_page_id('hca_hvac_inspections_inspections', 'hca_hvac_inspections');
 require SITE_ROOT.'header.php';
@@ -310,6 +368,10 @@ foreach ($work_statuses as $key => $val)
 	</form>
 </nav>
 
+
+<div class="card-header">
+	<h6 class="card-title mb-0">List of HVAC Inspections & Work Orders</h6>
+</div>
 <form method="post" accept-charset="utf-8" action="">
 	<table class="table table-striped table-bordered">
 		<thead>
@@ -354,14 +416,17 @@ if (!empty($main_info))
 		$hca_hvac_inspections_checklist_items[] = $row;
 	}
 
+	$unit_numbers = [];
 	foreach($main_info as $cur_info)
 	{
-		$td1 = [];
-		if ($access11)
-			$Core->add_dropdown_item('<a href="'.$URL->link('hca_hvac_inspections_checklist', $cur_info['id']).'"><i class="fas fa-edit"></i> CheckList</a>');
+		$unit_numbers[$cur_info['id']] = $cur_info['unit_number'];
 
-		if ($access20)
-			$Core->add_dropdown_item('<a href="'.$URL->link('hca_hvac_inspections_checklist2', $cur_info['id']).'"><i class="fas fa-edit"></i> CheckList 2</a>');
+		$td1 = [];
+		//if ($access11)
+		//	$Core->add_dropdown_item('<a href="'.$URL->link('hca_hvac_inspections_checklist', $cur_info['id']).'"><i class="fas fa-edit"></i> CheckList</a>');
+
+		if ($access11)
+			$Core->add_dropdown_item('<a href="'.$URL->link('hca_hvac_inspections_checklist2', $cur_info['id']).'"><i class="fas fa-edit"></i> CheckList</a>');
 
 		if ($access12 && $cur_info['work_order_completed'] > 0) //  && $cur_info['num_problem'] > 0
 			$Core->add_dropdown_item('<a href="'.$URL->link('hca_hvac_inspections_work_order', $cur_info['id']).'"><i class="fas fa-file-alt"></i> Work Order</a>');
@@ -434,7 +499,10 @@ if (!empty($main_info))
 					<p class="fw-bold"><?php echo html_encode($cur_info['completed_name']) ?></p>
 					<p><?php echo format_date($cur_info['datetime_inspection_end'], 'n/j/Y H:i') ?></p>
 				</td>
-				<td class=""><p><?php echo $work_order_comment ?></p></td>
+				<td class="">
+					<p><?php echo $work_order_comment ?></p>
+					<p class="text-muted"><?php echo ($cur_info['owner_name'] != '') ? 'Reassigned to: '.html_encode($cur_info['owner_name']) : '' ?></p>
+				</td>
 			</tr>
 <?php
 	}
@@ -463,6 +531,60 @@ if (empty($main_info))
 				</div>
 				<div class="modal-footer">
 					<!--modal_buttons-->
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modalWindow2" tabindex="-1" aria-labelledby="modalWindowLabel2" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<form method="post" accept-charset="utf-8" action="">
+				<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
+				<div class="modal-header">
+					<h5 class="modal-title">Reassigning Inspections & Work Orders</h5>
+					<button type="button" class="btn-close bg-danger" data-bs-dismiss="modal" aria-label="Close" onclick="closeModalWindow()"></button>
+				</div>
+				<div class="modal-body">
+					<!--modal_fields-->
+
+					<div class="mb-3">
+						<label class="form-label">Reassign to:</label>
+						<select name="user_id" class="form-select form-select-sm">
+							<option value="0">Select one</option>
+<?php
+foreach ($users_info as $user_info)
+{
+	if ($search_by_user_id == $user_info['id'] || $User->get('id') == $user_info['id'])
+		echo '<option value="'.$user_info['id'].'" selected>'.$user_info['realname'].'</option>';
+	else
+		echo '<option value="'.$user_info['id'].'">'.$user_info['realname'].'</option>';
+}
+?>
+						</select>
+					</div>
+					<div class="mb-3">
+						<label for="projects<?=$key?>" class="form-label">Following units</label>
+<?php
+$found_units = [];
+if (!empty($unit_numbers))
+{
+	asort($unit_numbers);
+	foreach($unit_numbers as $key => $val)
+	{
+		$found_units[] = '<span class="badge badge-primary me-2 mb-2"><input type="checkbox" name="checklists['.$key.']" value="1" checked><span class="ps-2">'.$val.'</span></span>';
+	}
+}
+?>
+						<div>
+							<?=implode('', $found_units)?>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<!--modal_buttons-->
+					<button type="submit" name="reassign_more" class="btn btn-primary">Submit</button>
 				</div>
 			</form>
 		</div>
@@ -507,7 +629,7 @@ function getPropertyInfo(id) {
 	});
 }
 function closeModalWindow(){
-	$('.modal .modal-title').empty().html('');
+	//$('.modal .modal-title').empty().html('');
 	$('.modal .modal-body').empty().html('');
 	$('.modal .modal-footer').empty().html('');
 }

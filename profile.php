@@ -788,6 +788,28 @@ require SITE_ROOT.'header.php';
 <?php endif; ?>
 
 		</div>
+
+
+		<?php
+// Private information
+if ($User->is_admin()):
+		$page_param['private'][] = '<p>Login: <strong>'.html_encode($user['username']).'</strong></p>';
+		$page_param['private'][] = '<p>IP: <a href="'.$URL->link('get_host', html_encode($user['registration_ip'])).'">'.html_encode($user['registration_ip']).'</a></p>';
+		$page_param['private'][] = '<p>'.$lang_profile['Registered'].': <strong>'.format_time($user['registered'], 1).'</strong></p>';
+		$page_param['private'][] = '<p>'.$lang_profile['Last visit'].': <strong>'.format_time($user['last_visit']).'</strong></p>';
+		$page_param['private'][] = '<p>View now: <a href="'.$user['prev_url'].'">'.html_encode($user['prev_url']).'</a></p>';
+?>
+		<div class="card mb-3">
+			<div class="card-header">
+				<h6 class="card-title mb-0">Private information</h6>
+			</div>
+			<div class="card-body">
+				<?php echo implode("\n\t\t\t\t\t\t", $page_param['private'])."\n" ?>
+			</div>
+		</div>
+<?php endif; ?>
+
+
 	</div>
 
 <?php

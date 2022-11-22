@@ -29,7 +29,7 @@ if (isset($_POST['create']))
 		'unit_id'					=> isset($_POST['unit_id']) ? intval($_POST['unit_id']) : 0,
 		'inspection_completed'		=> isset($_POST['inspection_completed']) ? intval($_POST['inspection_completed']) : 0,
 		'work_order_comment'		=> isset($_POST['work_order_comment']) ? swift_trim($_POST['work_order_comment']) : '',
-		'owned_by'					=> $User->get('id'),
+		//'owned_by'					=> $User->get('id'),
 		//'created'					=> time(),
 		//'date_inspected'			=> date('Y-m-d'),
 		'inspected_by'				=> $User->get('id'),
@@ -667,10 +667,10 @@ while ($row = $DBLayer->fetch_assoc($result))
 	<h6 class="card-title mb-0">List of never inspected units (<?php echo count($unispected_units) ?>)</h6>
 </div>
 <div class="mb-3">
-	<div class="alert alert-info mb-0 py-2" role="alert">
+	<div class="callout callout-primary">
 		<p class="text-muted">This unit list displays never inspected units of <?=html_encode($main_info['pro_name'])?> property. Click on the link below to start a new inspection.</p>
 	</div>
-	<div class="alert alert-warning" role="alert">
+	<div class="alert alert-warning">
 		<p class="fw-bold"><?php echo implode(' ', $unispected_units) ?></p>
 	</div>
 </div>
@@ -688,7 +688,7 @@ if ($User->checkAccess('hca_hvac_inspections', 17))
 			],
 		],
 		'WHERE'		=> 'a.checklist_id='.$id,
-		'ORDER BY'	=> 'a.time_submitted'
+		'ORDER BY'	=> 'a.time_submitted DESC'
 	];
 	//if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -702,7 +702,7 @@ if ($User->checkAccess('hca_hvac_inspections', 17))
 ?>
 
 <div class="card-header">
-	<h6 class="card-title mb-0">Project's actions</h6>
+	<h6 class="card-title mb-0">Project's tracking</h6>
 </div>
 <table class="table table-striped table-bordered">
 	<thead>

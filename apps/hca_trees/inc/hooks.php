@@ -10,7 +10,7 @@ function hca_trees_co_modify_url_scheme()
     $app_id = 'hca_trees';
 
     $urls['hca_trees_new_project'] = 'apps/'.$app_id.'/new_project.php';
-    $urls['hca_trees_projects'] = 'apps/'.$app_id.'/projects.php?section=$1';
+    $urls['hca_trees_projects'] = 'apps/'.$app_id.'/projects.php';
     $urls['hca_trees_manage_project'] = 'apps/'.$app_id.'/manage_project.php?id=$1';
     $urls['hca_trees_settings'] = 'apps/'.$app_id.'/settings.php';
 
@@ -28,12 +28,7 @@ function hca_trees_IncludeCommon()
         $SwiftMenu->addItem(['title' => '+ New Project', 'link' => $URL->link('hca_trees_new_project'), 'id' => 'hca_trees_new_project', 'parent_id' => 'hca_trees']);
 
     if ($User->checkAccess('hca_trees', 3))
-        $SwiftMenu->addItem(['title' => 'Projects', 'link' => $URL->link('hca_trees_projects', 'active'), 'id' => 'hca_trees_projects', 'parent_id' => 'hca_trees']);
-
-    $SwiftMenu->addItem(['title' => 'Active', 'link' => $URL->link('hca_trees_projects', 'active'), 'id' => 'hca_trees_projects_active', 'parent_id' => 'hca_trees_projects']);
-    $SwiftMenu->addItem(['title' => 'On Hold', 'link' => $URL->link('hca_trees_projects', 'on_hold'), 'id' => 'hca_trees_projects_on_hold', 'parent_id' => 'hca_trees_projects']);
-    $SwiftMenu->addItem(['title' => 'Completed', 'link' => $URL->link('hca_trees_projects', 'completed'), 'id' => 'hca_trees_projects_completed', 'parent_id' => 'hca_trees_projects']);
-    $SwiftMenu->addItem(['title' => 'Recycle', 'link' => $URL->link('hca_trees_projects', 'recycle'), 'id' => 'hca_trees_projects_recycle', 'parent_id' => 'hca_trees_projects']);
+        $SwiftMenu->addItem(['title' => 'Projects', 'link' => $URL->link('hca_trees_projects'), 'id' => 'hca_trees_projects', 'parent_id' => 'hca_trees']);
 
     if ($User->checkAccess('hca_trees', 20))
         $SwiftMenu->addItem(['title' => 'Settings', 'link' => $URL->link('hca_trees_settings'), 'id' => 'sm_pest_control_settings', 'parent_id' => 'hca_trees']);
@@ -67,7 +62,7 @@ class HcaTreesHooks
         return self::getInstance();
     }
 
-    public function ProfileAboutNewAccess()
+    public function ProfileAdminAccess()
     {
         global $access_info;
 
@@ -76,21 +71,20 @@ class HcaTreesHooks
             2 => 'Create project',
             3 => 'List of Projects',
             4 => 'Edit Projects',
-            20 => 'Settings',
         ];
 
         if (check_app_access($access_info, 'hca_trees'))
         {
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title">Trees Projects</h6>
+            <h5 class="h5 card-title mb-0">Trees Projects</h5>
 <?php
             foreach($access_options as $key => $title)
             {
                 if (check_access($access_info, $key, 'hca_trees'))
-                    echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-success ms-1">'.$title.'</span>';
                 else
-                    echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
             }
             echo '</div>';
         }
@@ -115,6 +109,7 @@ class HcaTreesHooks
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
-Hook::addAction('ProfileAboutNewAccess', ['HcaTreesHooks', 'ProfileAboutNewAccess']);
+Hook::addAction('ProfileAdminAccess', ['HcaTreesHooks', 'ProfileAdminAccess']);
+
 Hook::addAction('HcaVendorsEditUpdateValidation', ['HcaTreesHooks', 'HcaVendorsEditUpdateValidation']);
 Hook::addAction('HcaVendorsEditPreSumbit', ['HcaTreesHooks', 'HcaVendorsEditPreSumbit']);

@@ -70,12 +70,7 @@ function hca_fs_IncludeCommon()
         $week_of = isset($_GET['week_of']) ? strtotime($_GET['week_of']) : time();
 
         // Display main menu item
-        if ($User->get('sm_pm_property_id') > 0)
-            $SwiftMenu->addItem(['title' => 'Facility', 'link' =>  $URL->link('hca_fs_requests', ['new', 0]), 'id' => 'hca_fs', 'icon' => '<i class="fas fa-landmark"></i>', 'level' => 11]);
-        else if ($User->get('group_id') == $Config->get('o_hca_fs_painters') || $User->get('group_id') == $Config->get('o_hca_fs_maintenance'))
-            $SwiftMenu->addItem(['title' => 'Facility', 'link' =>  $URL->link('hca_fs_worker_schedule', $User->get('id')), 'id' => 'hca_fs', 'icon' => '<i class="fas fa-landmark"></i>', 'level' => 11]);
-        else
-            $SwiftMenu->addItem(['title' => 'Facility', 'link' =>  $URL->link('hca_fs_weekly_schedule', array($hca_fs_group, date('Y-m-d', time()))), 'id' => 'hca_fs', 'icon' => '<i class="fas fa-landmark"></i>', 'level' => 11]);
+        $SwiftMenu->addItem(['title' => 'Facility', 'link' => '#', 'id' => 'hca_fs', 'icon' => '<i class="fas fa-landmark"></i>', 'level' => 11]);
 
         if ($User->get('sm_pm_property_id') > 0 || $User->checkAccess('hca_fs', 2))
             $SwiftMenu->addItem(['title' => '+ Make Request', 'link' => $URL->link('hca_fs_new_request', 0), 'id' => 'hca_fs_new_request', 'parent_id' => 'hca_fs', 'level' => 0]);
@@ -223,7 +218,7 @@ class HcaFacilityHooks
         return self::getInstance();
     }
 
-    public function ProfileAboutNewAccess()
+    public function ProfileAdminAccess()
     {
         global $access_info;
 
@@ -243,21 +238,21 @@ class HcaFacilityHooks
             12 => 'Approve requests',
             13 => 'Add technician',
 
-            20 => 'Settings'
+            //20 => 'Settings'
         ];
 
         if (check_app_access($access_info, 'hca_fs'))
         {
 ?>
         <div class="card-body pt-1 pb-1">
-            <h6 class="h6 card-title mb-0">Facility</h6>
+            <h5 class="h5 card-title mb-0">Facility</h5>
 <?php
             foreach($access_options as $key => $title)
             {
                 if (check_access($access_info, $key, 'hca_fs'))
-                    echo '<span class="badge bg-success ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-success ms-1">'.$title.'</span>';
                 else
-                    echo '<span class="badge bg-secondary ms-1">'.$title.'</span>';
+                    echo '<span class="badge badge-secondary ms-1">'.$title.'</span>';
             }
             echo '</div>';
         }
@@ -265,7 +260,7 @@ class HcaFacilityHooks
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
-Hook::addAction('ProfileAboutNewAccess', ['HcaFacilityHooks', 'ProfileAboutNewAccess']);
+Hook::addAction('ProfileAdminAccess', ['HcaFacilityHooks', 'ProfileAdminAccess']);
 //Hook::addAction('ProfileAboutNewPermissions', ['HcaFacilityHooks', 'ProfileAboutNewPermissions']);
 //Hook::addAction('ProfileAboutNewNotifications', ['HcaFacilityHooks', 'ProfileAboutNewNotifications']);
 

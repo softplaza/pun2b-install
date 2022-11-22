@@ -2,23 +2,26 @@
 
 /**
  * @author SwiftManager.Org
- * @copyright (C) 2021-22 SwiftManager license GPL
+ * @copyright (C) 2021 SwiftManager license GPL
  * @package SwiftMenu
- * @version 1.01
+ * @version 1.03
 **/
 
 class SwiftMenu
 {
-	public $cur_url = '';
-	public $menu_items = [];
+	var $cur_url = '';
+	var $menu_items = [];
 
-	public $nav_actions = [];
-	public $nav_profile_links = [];
+	var $nav_actions = [];
+	var $nav_profile_links = [];
 
-	public $bread_crumbs = [];
-	public $level_count = 1;
+	var $bread_crumbs = [];
+	var $level_count = 1;
 
-	public $page_actions = true;
+	var $page_actions = true;
+
+	var $nesting_level = 1;
+	var $cur_parent_id = '';
 
 	function __construct()
 	{
@@ -41,6 +44,15 @@ class SwiftMenu
 		global $URL, $User, $Config;
 
 		$profile_links = $actions = [];
+
+		$profile_links[] = '<li class="nav-item dropdown">';
+		//$profile_links[] = '<span class="position-absolute start-50 badge rounded-pill bg-danger">9</span>';
+		$profile_links[] = '<span class="nav-link text-white"><a href="'.BASE_URL.'" class="text-white"><i class="fa-solid fa-bell fa-lg"></i></a></span>';
+		//$profile_links[] = '<ul class="dropdown-menu dropdown-menu-end">';
+		//$profile_links[] = '<li><a class="dropdown-item" href="'.BASE_URL.'"><i class="fa fa-print fa-1x" aria-hidden="true"></i> My projects</a></li>';
+		//$profile_links[] = '</ul>';
+		$profile_links[] = '</li>';
+
 
 		// Profile links
 		$profile_links[] = '<li class="nav-item dropdown">';
@@ -185,15 +197,17 @@ class SwiftMenu
 	    return $array;
 	}
 
-	function buildMenu($menu_array = [], $is_sub = false)
+	function buildMenu($menu_array = [])
 	{
 		$output = '';
 		$menu_array = !empty($menu_array)? $menu_array : $this->menu_items;
 
 		foreach($menu_array as $id => $item)
 		{
+			if ($this->cur_parent_id != $item['parent_id'])
+				$this->nesting_level = 1;
+
 			$active = ($this->cur_url == $item['link'] || $this->isActive($item)) ? 'active' : '';
-			$sub_menu = isset($item['nodes']) ? '<ul class="sub-menu">'.$this->buildMenu($item['nodes'], true).'</ul>' : '';
 			$icon = ($item['icon'] != '') ? $item['icon'] : '<i class="bx bx-grid-alt"></i>';
 
 			if ($item['parent_id'] == '')
@@ -202,13 +216,16 @@ class SwiftMenu
 
 				$output .= "\t\t\t\t\t\t\t".'<li class="'.$show.'">'."\n";
 				$output .= "\t\t\t\t\t\t\t\t".'<div class="icon-link">'."\n";
-				$output .= "\t\t\t\t\t\t\t\t\t".'<a href="'.$item['link'].'" id="menu_item_'.$item['id'].'">'."\n";
+				$output .= "\t\t\t\t\t\t\t\t\t".'<a href="'.$item['link'].'" id="menu_item_'.$item['id'].'" class="flex-fill">'."\n";
 				$output .= "\t\t\t\t\t\t\t\t\t\t".$icon."\n";
 				$output .= "\t\t\t\t\t\t\t\t\t\t".'<span class="link_name">'.$item['title'].'</span>'."\n";
 				$output .= "\t\t\t\t\t\t\t\t\t".'</a>'."\n";
 				$output .= "\t\t\t\t\t\t\t\t\t".'<i class="fas fa-chevron-down arrow"></i>'."\n";
 				$output .= "\t\t\t\t\t\t\t\t".'</div>'."\n";
-				$output .= "\t\t\t\t\t\t\t\t".$sub_menu."\n";
+
+				if (isset($item['nodes']))
+					$output .= "\t\t\t\t\t\t\t\t".'<ul class="sub-menu">'.$this->buildMenu($item['nodes']).'</ul>'."\n";
+
 				$output .= "\t\t\t\t\t\t\t".'</li>'."\n";
 
 				if ($show == 'show' || $active != '')
@@ -216,14 +233,40 @@ class SwiftMenu
 			}
 			else
 			{
-				$output .= "\t\t\t\t\t\t\t".'<li class="'.$active.'">'."\n";
-				$output .= "\t\t\t\t\t\t\t\t".'<a href="'.$item['link'].'" id="menu_item_'.$item['id'].'">'.$item['title'].'</a>'."\n";
-				$output .= "\t\t\t\t\t\t\t\t\t".$sub_menu."\n";
-				$output .= "\t\t\t\t\t\t\t".'</li>'."\n";
+				if (isset($item['nodes']))
+				{	
+					$show = ($this->cur_url == $item['link'] || $this->isActive($item)) ? 'show' : '';
+
+					$output .= "\t\t\t\t\t\t\t".'<li class="'.$show.'">'."\n";
+					$output .= '<div class="sub-arrow d-flex justify-content-between">';
+					$output .= '<a href="#" id="menu_item_'.$item['id'].'" class="flex-fill">';
+					$output .= $item['title'];
+					$output .= '</a>';
+					$output .= '<i class="fas fa-chevron-down fa-lg"></i>';
+					$output .= '</div>';
+
+					$output .= '<ul class="sub-menu-2">'.$this->buildMenu($item['nodes']).'</ul>';
+					$output .= "\t\t\t\t\t\t\t".'</li>'."\n";
+				}
+				else
+				{
+					$output .= "\t\t\t\t\t\t\t".'<li class="'.$active.'">'."\n";
+					$output .= '<div class="d-flex justify-content-between">';
+					
+					$output .= '<a href="'.$item['link'].'" id="menu_item_'.$item['id'].'" class="sub-menu-link flex-fill">';
+					$output .= '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="grey" class="bi bi-arrow-return-right me-2" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.5 1.5A.5.5 0 0 0 1 2v4.8a2.5 2.5 0 0 0 2.5 2.5h9.793l-3.347 3.346a.5.5 0 0 0 .708.708l4.2-4.2a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 8.3H3.5A1.5 1.5 0 0 1 2 6.8V2a.5.5 0 0 0-.5-.5z"/></svg>  ';
+					//$output .= '<i class="bx bx-grid-alt"></i>';
+					$output .= '<span>'.$item['title'].'</span>';
+					$output .= '</a>';
+					$output .= '</div>';
+					$output .= "\t\t\t\t\t\t\t".'</li>'."\n";
+				}
 
 				if ($active != '')
 					$this->bread_crumbs[] = $item['title'];
 			}
+
+			$this->cur_parent_id = $item['parent_id'];
 		}
 
 		return $output;
@@ -281,17 +324,17 @@ class SwiftMenu
 			// Administration section
 			if ($User->is_admin())
 			{
-				$this->addItem(['title' => 'Management', 'link' => $URL->link('admin_index'), 'id' => 'admin', 'icon' => '<i class="fas fa-tachometer-alt"></i>', 'level' => 1]);
+				$this->addItem(['title' => 'Management', 'link' => '#', 'id' => 'admin', 'icon' => '<i class="fas fa-tachometer-alt"></i>', 'level' => 1]);
 
 				$this->addItem(['title' => 'Information', 'link' => $URL->link('admin_index'), 'id' => 'admin_index', 'parent_id' => 'admin']);
-				$this->addItem(['title' => 'Extensions', 'link' => $URL->link('admin_extensions_manage'), 'id' => 'admin_extensions_manage', 'parent_id' => 'admin']);
+				//$this->addItem(['title' => 'Extensions', 'link' => $URL->link('admin_extensions_manage'), 'id' => 'admin_extensions_manage', 'parent_id' => 'admin']);
 				$this->addItem(['title' => 'Applications', 'link' => $URL->link('apps_management'), 'id' => 'apps_management', 'parent_id' => 'admin']);
 			}
 
 			// Settimgs
 			if ($User->is_admin())
 			{
-				$this->addItem(['title' => 'Settings', 'link' => $URL->link('admin_settings_setup'), 'id' => 'settings', 'icon' => '<i class="fas fa-cog"></i>', 'level' => 2]);
+				$this->addItem(['title' => 'Settings', 'link' => '#', 'id' => 'settings', 'icon' => '<i class="fas fa-cog"></i>', 'level' => 2]);
 
 				$this->addItem(['title' => 'Setup', 'link' => $URL->link('admin_settings_setup'), 'id' => 'admin_settings_setup', 'parent_id' => 'settings']);
 				$this->addItem(['title' => 'Features', 'link' => $URL->link('admin_settings_features'), 'id' => 'admin_settings_features', 'parent_id' => 'settings']);
@@ -304,7 +347,7 @@ class SwiftMenu
 			// Users
 			if ($User->get('g_view_users') == '1')
 			{
-				$this->addItem(['title' => 'Users', 'link' => $URL->link('admin_users'), 'id' => 'users', 'icon' => '<i class="fas fa-users-cog"></i>', 'level' => 3]);
+				$this->addItem(['title' => 'Users', 'link' => '#', 'id' => 'users', 'icon' => '<i class="fas fa-users-cog"></i>', 'level' => 3]);
 
 				$this->addItem(['title' => 'Userlist', 'link' => $URL->link('admin_users'), 'id' => 'admin_users', 'parent_id' => 'users']);
 
