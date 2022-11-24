@@ -251,6 +251,14 @@ $apps_info = array (
     'url' => 'https://swiftmanager.localhost/dev/apps/hca_hvac_inspections/',
     'path' => '../apps/hca_hvac_inspections/',
   ),
+  'hca_wom' => 
+  array (
+    'id' => 'hca_wom',
+    'title' => 'Property Work Order Management',
+    'disabled' => '0',
+    'url' => 'https://swiftmanager.localhost/dev/apps/hca_wom/',
+    'path' => '../apps/hca_wom/',
+  ),
 );
 
 ?>

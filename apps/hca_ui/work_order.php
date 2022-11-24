@@ -144,7 +144,7 @@ if (isset($_POST['submit']))
 		$DBLayer->insert_values('hca_ui_actions', $action_data);
 
 		$FlashMessenger->add_info($flash_message);
-		redirect($URL->link('hca_ui_work_order', $id), $flash_message);
+		redirect('', $flash_message);
 	}
 }
 
@@ -169,7 +169,7 @@ else if (isset($_POST['delete']))
 		// Add flash message
 		$flash_message = 'Work Order deleted';
 		$FlashMessenger->add_info($flash_message);
-		redirect($URL->link('hca_ui_inspections', 0), $flash_message);
+		redirect($URL->link('hca_ui_inspections'), $flash_message);
 	}
 }
 

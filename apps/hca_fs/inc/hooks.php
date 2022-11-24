@@ -72,9 +72,10 @@ function hca_fs_IncludeCommon()
         // Display main menu item
         $SwiftMenu->addItem(['title' => 'Facility', 'link' => '#', 'id' => 'hca_fs', 'icon' => '<i class="fas fa-landmark"></i>', 'level' => 11]);
 
-        if ($User->get('sm_pm_property_id') > 0 || $User->checkAccess('hca_fs', 2))
-            $SwiftMenu->addItem(['title' => '+ Make Request', 'link' => $URL->link('hca_fs_new_request', 0), 'id' => 'hca_fs_new_request', 'parent_id' => 'hca_fs', 'level' => 0]);
+        //if ($User->get('sm_pm_property_id') > 0 || $User->checkAccess('hca_fs', 2))
+        //   $SwiftMenu->addItem(['title' => '+ Make Request', 'link' => $URL->link('hca_fs_new_request', 0), 'id' => 'hca_fs_new_request', 'parent_id' => 'hca_fs', 'level' => 0]);
 
+        /*
         // Property Managers & Facility Managers
         if ($User->get('sm_pm_property_id') > 0 || $User->checkAccess('hca_fs', 3))
         {
@@ -93,24 +94,25 @@ function hca_fs_IncludeCommon()
             // Current Schedule $urls['hca_fs_weekly_technician_schedule']
             $SwiftMenu->addItem(['title' => 'Weekly schedule', 'link' => $URL->link('hca_fs_weekly_technician_schedule', [$hca_fs_group, $User->get('id'), date('Y-m-d')]), 'id' => 'hca_fs_weekly_technician_schedule', 'parent_id' => 'hca_fs', 'level' => 3]);
         }
-
+*/
         // For other who has access
         if ($User->checkAccess('hca_fs', 1))
         {
-            $SwiftMenu->addItem(['title' => 'Maintenance schedule', 'link' => $URL->link('hca_fs_weekly_schedule', array($Config->get('o_hca_fs_maintenance'), date('Y-m-d', $week_of))), 'id' => 'hca_fs_weekly_schedule_'.$Config->get('o_hca_fs_maintenance'), 'parent_id' => 'hca_fs', 'level' => 2]);
+            $SwiftMenu->addItem(['title' => 'Maintenance schedule', 'link' => $URL->link('hca_fs_weekly_schedule', array($Config->get('o_hca_fs_maintenance'), date('Y-m-d', $week_of))), 'id' => 'hca_fs_weekly_schedule_'.$Config->get('o_hca_fs_maintenance'), 'parent_id' => 'hca_fs', 'level' => 4]);
 
-            $SwiftMenu->addItem(['title' => 'Painter schedule', 'link' => $URL->link('hca_fs_weekly_schedule', array($Config->get('o_hca_fs_painters'), date('Y-m-d', $week_of))), 'id' => 'hca_fs_weekly_schedule_'.$Config->get('o_hca_fs_painters'), 'parent_id' => 'hca_fs', 'level' => 2]);
+            $SwiftMenu->addItem(['title' => 'Painter schedule', 'link' => $URL->link('hca_fs_weekly_schedule', array($Config->get('o_hca_fs_painters'), date('Y-m-d', $week_of))), 'id' => 'hca_fs_weekly_schedule_'.$Config->get('o_hca_fs_painters'), 'parent_id' => 'hca_fs', 'level' => 4]);
         }
         // For maint manager only
         else if ($User->checkAccess('hca_fs', 4))
-            $SwiftMenu->addItem(['title' => 'Maintenance schedule', 'link' => $URL->link('hca_fs_weekly_schedule', array($Config->get('o_hca_fs_maintenance'), date('Y-m-d', $week_of))), 'id' => 'hca_fs_weekly_schedule_'.$Config->get('o_hca_fs_maintenance'), 'parent_id' => 'hca_fs', 'level' => 2]);
+            $SwiftMenu->addItem(['title' => 'Maintenance schedule', 'link' => $URL->link('hca_fs_weekly_schedule', array($Config->get('o_hca_fs_maintenance'), date('Y-m-d', $week_of))), 'id' => 'hca_fs_weekly_schedule_'.$Config->get('o_hca_fs_maintenance'), 'parent_id' => 'hca_fs', 'level' => 4]);
         // For paint manager only
         else if ($User->checkAccess('hca_fs', 5))
-            $SwiftMenu->addItem(['title' => 'Painter schedule', 'link' => $URL->link('hca_fs_weekly_schedule', array($Config->get('o_hca_fs_painters'), date('Y-m-d', $week_of))), 'id' => 'hca_fs_weekly_schedule_'.$Config->get('o_hca_fs_painters'), 'parent_id' => 'hca_fs', 'level' => 2]);
+            $SwiftMenu->addItem(['title' => 'Painter schedule', 'link' => $URL->link('hca_fs_weekly_schedule', array($Config->get('o_hca_fs_painters'), date('Y-m-d', $week_of))), 'id' => 'hca_fs_weekly_schedule_'.$Config->get('o_hca_fs_painters'), 'parent_id' => 'hca_fs', 'level' => 4]);
+
 
         if ($User->checkAccess('hca_fs', 6))
         {
-            $SwiftMenu->addItem(['title' => 'Monthly emergency schedule', 'link' => $URL->link('hca_fs_emergency_schedule', date('Y-m-d', time())), 'id' => 'hca_fs_emergency', 'parent_id' => 'hca_fs', 'level' => 3]);
+            $SwiftMenu->addItem(['title' => 'Monthly emergency schedule', 'link' => $URL->link('hca_fs_emergency_schedule', date('Y-m-d', time())), 'id' => 'hca_fs_emergency', 'parent_id' => 'hca_fs', 'level' => 5]);
             $SwiftMenu->addItem(['title' => 'Covering weekends', 'link' => $URL->link('hca_fs_emergency_schedule', date('Y-m-d', time())), 'id' => 'hca_fs_emergency_schedule', 'parent_id' => 'hca_fs_emergency']);
             $SwiftMenu->addItem(['title' => 'Covering weekdays', 'link' => $URL->link('hca_fs_emergency_property'), 'id' => 'hca_fs_emergency_property', 'parent_id' => 'hca_fs_emergency']);
             $SwiftMenu->addItem(['title' => 'Zone Assignments', 'link' => $URL->link('hca_fs_emergency_zones'), 'id' => 'hca_fs_emergency_zones', 'parent_id' => 'hca_fs_emergency']);
@@ -150,6 +152,7 @@ function hca_fs_ft_js_include()
     }
 }
 
+/*
 function hca_fs_swift_notify_ajax()
 {
     global $DBLayer, $User, $Config, $SwiftNotify;
@@ -205,6 +208,7 @@ function hca_fs_swift_notify_ajax()
             $SwiftNotify->addInfo('menu_item_hca_fs_requests_active', $notify_counter['hca_fs_requests_active'], 'position-absolute top-50 start-50 translate-middle badge rounded-pill bg-blue');
     }
 }
+*/
 
 class HcaFacilityHooks
 {

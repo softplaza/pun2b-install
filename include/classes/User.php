@@ -594,7 +594,7 @@ class User
 			$query = [
 				'SELECT'	=> 'a.id, a.a_gid, a.a_uid, a.a_to, a.a_key, a.a_value',
 				'FROM'		=> 'user_access AS a',
-				'WHERE'		=> 'a.a_uid='.$this->get('id')	.' OR a.a_gid='.$this->get('group_id')
+				'WHERE'		=> 'a.a_uid='.$this->get('id').' OR a.a_gid='.$this->get('group_id')
 			];
 			$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 			while ($row = $DBLayer->fetch_assoc($result))
