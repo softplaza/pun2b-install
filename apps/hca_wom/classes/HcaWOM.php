@@ -10,6 +10,41 @@ class HcaWOM
 		2 => 'High',
 	];
 
+	var $task_type = [
+		1 => '5840 Moisture Event',
+		2 => 'Appliance',
+		3 => 'Electrical',
+		4 => 'Exterior',
+		5 => 'HVAC',
+		6 => 'Interior',
+		7 => 'Landscape',
+		8 => 'Make Ready',
+		9 => 'Pest Control',
+		10 => 'Plumbing',
+		11 => 'zAdmin',
+	];
+
+	var $task_item = [
+		1 => 'A/C Closet',
+		2 => 'Dining Room',
+		3 => 'Guest Bath 1',
+		4 => 'Guest Bath 2',
+		5 => 'Guest Bedroom 1',
+		6 => 'Guest Bedroom 2',
+		7 => 'Kitchen',
+		8 => 'Living Room',
+		9 => 'Master Bath',
+		10 => 'Master Bedroom',
+		11 => 'Patio',
+		12 => 'Water Heater Storage',
+	];
+
+	var $task_problem = [
+		1 => 'Discoloration',
+		2 => 'Flood',
+		3 => 'Other',
+	];
+
 	function getWorkOrderInfo($id)
 	{
 		global $DBLayer;
@@ -23,7 +58,7 @@ class HcaWOM
 					'ON'			=> 'p.id=w.property_id'
 				],
 				[
-					'INNER JOIN'	=> 'sm_property_units AS pu',
+					'LEFT JOIN'		=> 'sm_property_units AS pu',
 					'ON'			=> 'pu.id=w.unit_id'
 				],
 				[
@@ -39,6 +74,9 @@ class HcaWOM
 		];
 		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 		$this->cur_work_order_info = $DBLayer->fetch_assoc($result);
+
+		if ($this->cur_work_order_info['unit_id'] == 0)
+			$this->cur_work_order_info['unit_number'] = 'Common area';
 
 		return $this->cur_work_order_info;
 	}

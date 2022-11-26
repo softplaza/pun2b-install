@@ -7,6 +7,8 @@ $access = ($User->checkAccess('hca_sb721', 11)) ? true : false;
 if (!$access)
 	message($lang_common['No permission']);
 
+$property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
+
 $SwiftUploader = new SwiftUploader;
 $apt_locations = explode(',', $Config->get('o_hca_5840_locations'));
 
@@ -64,7 +66,6 @@ $Core->set_page_id('hca_sb721_new', 'hca_sb721');
 require SITE_ROOT.'header.php';
 ?>
 
-
 	<form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data" onsubmit="return checkFormSubmit(this)">
 		<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
 		<div class="card">
@@ -79,7 +80,7 @@ require SITE_ROOT.'header.php';
 <?php
 echo '<option value="0" selected="selected" disabled>Select a property</option>'."\n";
 foreach ($property_info as $cur_info) {
-	if(isset($_POST['property_id']) && $_POST['property_id'] == $cur_info['id'])
+	if(isset($_POST['property_id']) && intval($_POST['property_id']) == $cur_info['id'] || $property_id == $cur_info['id'])
 		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'" selected="selected">'.html_encode($cur_info['pro_name']).'</option>'."\n";
 	else
 		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'">'.html_encode($cur_info['pro_name']).'</option>'."\n";
@@ -180,6 +181,9 @@ function addLocationSelect()
 		$("#field_locations").val(em);
 	}
 }
+document.addEventListener("DOMContentLoaded", function() {
+	getUnits();
+});
 </script>
 
 <?php

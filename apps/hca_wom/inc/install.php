@@ -35,8 +35,12 @@ $schema = [
 	'FIELDS'		=> [
 		'id'					=> $DBLayer->dt_serial(),
 		'work_order_id'			=> $DBLayer->dt_int(),
-		'unit_id'				=> $DBLayer->dt_int(),
+
+		'task_type'				=> $DBLayer->dt_int('TINYINT(3)'),
+		'task_item'				=> $DBLayer->dt_int('TINYINT(3)'),
+		'task_problem'			=> $DBLayer->dt_int('TINYINT(3)'),
 		'task_message'			=> $DBLayer->dt_text(),
+		
 		'task_status'			=> $DBLayer->dt_int('TINYINT(1)'),
 	],
 	'PRIMARY KEY'	=> ['id']

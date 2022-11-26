@@ -1497,9 +1497,6 @@ function message($message, $link = '', $heading = '')
 
 	if (!defined('SPM_HEADER'))
 	{
-		if ($heading == '')
-			$heading = $lang_common['Forum message'];
-
 		define('PAGE_ID', 'message');
 		require SITE_ROOT.'header.php';
 	}
@@ -1507,23 +1504,20 @@ function message($message, $link = '', $heading = '')
 	if ($User->is_guest() && $link == '')
 		$link = 'If you are not logged in, <strong><a href="'.BASE_URL.'/login.php">LOG IN</a></strong> with your username and password.';
 
-?>
-	<div class="main-subhead">
-<?php
-
 	if (!empty($page_param['main_head_options']))
 		echo "\n\t\t".'<p class="options">'.implode(' ', $page_param['main_head_options']).'</p>';
 
 ?>
-		<h6 class="hn"><span><?php echo $heading ?></span></h6>
-	</div>
-	<div class="main-content main-message">
-		<div class="ct-box error-box" style="background: #ffe6e6;">
-			<h6 class="warn hn"><strong>Warning!</strong></h6>
+
+	<div class="card">
+		<div class="card-body">
+			<div class="callout callout-danger mb-2">
+				<h6 class="h6">Warning!</h6>
 				<p><?php echo $message ?><?php if ($link != '') echo ' <span>'.$link.'</span>' ?></p>
+			</div>
 		</div>
 	</div>
-	
+
 <?php
 
 	$Hooks->get_hook('IncludeFunctionsMessageOutputEnd');

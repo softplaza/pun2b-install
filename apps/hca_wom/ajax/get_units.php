@@ -1,8 +1,6 @@
 <?php
 
-if (!defined('SITE_ROOT') )
-	define('SITE_ROOT', '../../../');
-
+define('SITE_ROOT', '../../../');
 require SITE_ROOT.'include/common.php';
 
 if ($User->is_guest())

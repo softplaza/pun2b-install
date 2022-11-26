@@ -466,6 +466,7 @@ foreach ($project_managers as $user_info)
 <?php if ($User->checkAccess('hca_sb721', 13)) : ?>
 			<button type="submit" name="remove" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this project?')">Remove project</button>
 <?php endif; ?>
+			<a href="<?=$URL->genLink('hca_sb721_new', ['property_id' => $project_info['property_id']])?>" class="btn btn-outline-success">Create a new project</a>
 		</div>
 
 	</div>

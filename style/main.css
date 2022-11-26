@@ -2020,7 +2020,7 @@ table .tcr{
 button {
     border-style: solid;
     border-width: 1px;
-    border-color: grey;
+    border-color: #cacaca;
 }
 
 .section-header {

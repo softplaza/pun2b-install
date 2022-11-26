@@ -6,6 +6,7 @@ $schema = array(
 	'FIELDS'		=> array(
 		'id'						=> $DBLayer->dt_serial(),
 		'property_id'				=> $DBLayer->dt_int(),
+		'unit_id'					=> $DBLayer->dt_int(),
 		'unit_number'				=> $DBLayer->dt_varchar(),
 		'locations'					=> $DBLayer->dt_varchar(),
 		'project_number'			=> $DBLayer->dt_varchar(),//??
@@ -29,6 +30,7 @@ $schema = array(
 	'PRIMARY KEY'	=> array('id')
 );
 $DBLayer->create_table('hca_sb721_projects', $schema);
+$DBLayer->add_field('hca_sb721_projects', 'unit_id', 'INT(10) UNSIGNED', false, '0');
 
 $schema = array(
 	'FIELDS'		=> array(
@@ -82,12 +84,3 @@ $schema = array(
 $DBLayer->create_table('hca_sb721_checklist', $schema);
 
 $DBLayer->add_field('sm_vendors', 'hca_sb721', 'TINYINT(1)', false, '1');
-
-$DBLayer->add_field('hca_sb721_vendors', 'date_bid', 'DATE', false, '1000-01-01');
-$DBLayer->add_field('hca_sb721_projects', 'date_preinspection_start', 'DATE', false, '1000-01-01');
-$DBLayer->add_field('hca_sb721_projects', 'date_preinspection_end', 'DATE', false, '1000-01-01');
-$DBLayer->add_field('hca_sb721_projects', 'date_city_inspection_start', 'DATE', false, '1000-01-01');
-$DBLayer->add_field('hca_sb721_projects', 'date_city_inspection_end', 'DATE', false, '1000-01-01');
-
-$DBLayer->add_field('hca_sb721_projects', 'city_engineer', 'VARCHAR(255)', false, '');
-$DBLayer->add_field('hca_sb721_projects', 'created', 'INT(10) UNSIGNED', false, '0');
