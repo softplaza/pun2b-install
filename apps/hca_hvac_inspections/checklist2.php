@@ -37,7 +37,10 @@ if (isset($_POST['create']))
 		'datetime_inspection_start' => date('Y-m-d\TH:i:s'),
 		'updated_by'				=> $User->get('id'),
 		'updated_time'				=> time(),
-		'ch_inspection_type'		=> isset($_POST['ch_inspection_type']) ? intval($_POST['ch_inspection_type']) : 0,
+
+		// Temporary requested to hide "Filter Inspection" by Blake
+		//'ch_inspection_type'		=> isset($_POST['ch_inspection_type']) ? intval($_POST['ch_inspection_type']) : 0,
+		'ch_inspection_type'		=> 1
 	];
 
 	if ($form_data['property_id'] == 0)
@@ -267,10 +270,10 @@ foreach ($sm_property_db as $cur_info)
 				<div id="key_number" class="hidden"></div>
 			</div>
 
-			<div class="mb-3">
+			<div class="mb-3 hidden">
 				<label class="form-label">Type of inspection</label>
 				<div class="form-check">
-					<input class="form-check-input" type="radio" name="ch_inspection_type" value="1" id="fld_ch_inspection_type1" required>
+					<input class="form-check-input" type="radio" name="ch_inspection_type" value="1" id="fld_ch_inspection_type1">
 					<label class="form-check-label" for="fld_ch_inspection_type1">Full inspection</label>
 				</div>
 				<div class="form-check">

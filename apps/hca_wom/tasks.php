@@ -37,17 +37,18 @@ $query = [
 			'ON'			=> 'p.id=w.property_id'
 		],
 		[
-			'INNER JOIN'	=> 'sm_property_units AS pu',
+			'LEFT JOIN'		=> 'sm_property_units AS pu',
 			'ON'			=> 'pu.id=w.unit_id'
-		],
-		[
-			'INNER JOIN'	=> 'users AS u1',
-			'ON'			=> 'u1.id=w.assigned_to'
 		],
 		[
 			'INNER JOIN'	=> 'users AS u2',
 			'ON'			=> 'u2.id=w.requested_by'
 		],
+		[
+			'LEFT JOIN'		=> 'users AS u1',
+			'ON'			=> 'u1.id=t.assigned_to'
+		],
+
 	],
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
@@ -67,12 +68,12 @@ $query = [
 			'ON'			=> 'p.id=w.property_id'
 		],
 		[
-			'INNER JOIN'	=> 'sm_property_units AS pu',
+			'LEFT JOIN'		=> 'sm_property_units AS pu',
 			'ON'			=> 'pu.id=w.unit_id'
 		],
 		[
-			'INNER JOIN'	=> 'users AS u1',
-			'ON'			=> 'u1.id=w.assigned_to'
+			'LEFT JOIN'		=> 'users AS u1',
+			'ON'			=> 'u1.id=t.assigned_to'
 		],
 		[
 			'INNER JOIN'	=> 'users AS u2',
@@ -143,9 +144,9 @@ if (!empty($hca_wom_work_orders))
 <table class="table table-striped table-bordered">
 	<thead>
 		<tr>
-			<th>WO#</th>
+			<th>Task#</th>
 			<th>Unit#</th>
-			<th>Task</th>
+			<th>Title</th>
 			<th>Details</th>
 			<th>Submitted</th>
 		</tr>
@@ -157,11 +158,11 @@ if (!empty($hca_wom_work_orders))
 		$unit_number = ($cur_info['unit_id'] > 0) ? html_encode($cur_info['unit_number']) : 'Common area';
 ?>
 		<tr>
-			<td class="fw-bold ta-center"><?php echo $cur_info['work_order_id'] ?></td>
+			<td class="fw-bold ta-center"><a href="<?=$URL->link('hca_wom_task', $cur_info['id'])?>">Task #<?php echo $cur_info['id'] ?></a></td>
 			<td class="ta-center"><?php echo $unit_number ?></td>
 			<td class=""><?php echo html_encode($cur_info['wo_message']) ?></td>
 			<td class=""><?php echo html_encode($cur_info['task_message']) ?></td>
-			<td class="ta-center"></td>
+			<td class="ta-center"><?php echo format_time($cur_info['time_created']) ?></td>
 		</tr>
 <?php
 	}

@@ -11,7 +11,7 @@ class HcaWOM
 	];
 
 	var $item_types = [
-		0 => '',
+		//0 => '',
 		1 => '5840 Moisture Event',
 		2 => 'Appliance',
 		3 => 'Electrical',
@@ -26,7 +26,7 @@ class HcaWOM
 	];
 
 	var $task_actions = [
-		0 => '',
+		//3 => '',
 		1 => 'Discoloration',
 		2 => 'Flood',
 		6 => 'Inspect',
@@ -35,7 +35,7 @@ class HcaWOM
 		7 => 'Replace Bulb',//last one
 		
 
-		3 => 'Other',
+		0 => 'Other',
 	];
 
 	function getActions($ids = '')

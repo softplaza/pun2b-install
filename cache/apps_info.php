@@ -11,6 +11,14 @@ $apps_info = array (
     'url' => 'https://swiftmanager.localhost/dev/apps/swift_events/',
     'path' => '../apps/swift_events/',
   ),
+  'hca_unit_inspections' => 
+  array (
+    'id' => 'hca_unit_inspections',
+    'title' => 'HCA Unit Inspections',
+    'disabled' => '0',
+    'url' => 'https://swiftmanager.localhost/dev/apps/hca_unit_inspections/',
+    'path' => '../apps/hca_unit_inspections/',
+  ),
   'mpdf' => 
   array (
     'id' => 'mpdf',
@@ -234,14 +242,6 @@ $apps_info = array (
     'disabled' => '0',
     'url' => 'https://swiftmanager.localhost/dev/apps/hca_vcr/',
     'path' => '../apps/hca_vcr/',
-  ),
-  'hca_unit_inspections' => 
-  array (
-    'id' => 'hca_unit_inspections',
-    'title' => 'HCA Unit Inspections',
-    'disabled' => '0',
-    'url' => 'https://swiftmanager.localhost/dev/apps/hca_unit_inspections/',
-    'path' => '../apps/hca_unit_inspections/',
   ),
   'hca_hvac_inspections' => 
   array (

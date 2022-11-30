@@ -214,6 +214,7 @@ if (!empty($hca_wom_work_orders))
 			<th>Requested by</th>
 			<th>Priority</th>
 			<th>WO Status</th>
+			<th>Tasks</th>
 			<th></th>
 		</tr>
 	</thead>
@@ -255,6 +256,7 @@ if (!empty($hca_wom_work_orders))
 			<td class="min-100 ta-center"><?php echo html_encode($cur_info['requested_name']) ?></td>
 			<td class="min-100 ta-center"><?php echo $priority ?></td>
 			<td class="min-100 ta-center"><?php echo $status ?></td>
+			<td class="ta-center fw-bold"><?php echo $cur_info['num_tasks'] ?></td>
 			<td class="min-100"><?php echo $edit ?></td>
 		</tr>
 <?php

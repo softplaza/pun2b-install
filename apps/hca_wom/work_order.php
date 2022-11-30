@@ -101,12 +101,13 @@ else if (isset($_POST['cancel_wo']))
 else if (isset($_POST['add_task']))
 {
 	$form_data = array(
+		'work_order_id' => $id,
 		'task_type'		=> isset($_POST['task_type']) ? intval($_POST['task_type']) : 0,
 		'task_item'		=> isset($_POST['task_item']) ? intval($_POST['task_item']) : 0,
 		'task_action'	=> isset($_POST['task_action']) ? intval($_POST['task_action']) : 0,
 		'assigned_to'	=> isset($_POST['assigned_to']) ? intval($_POST['assigned_to']) : 0,
 		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
-		'work_order_id' => $id,
+		'time_created'	=> time()
 	);
 
 	//if ($form_data['assigned_to'] == 0)
@@ -116,6 +117,13 @@ else if (isset($_POST['add_task']))
 	{
 		// Update task of Work Order
 		$DBLayer->insert_values('hca_wom_tasks', $form_data);
+
+		$query = array(
+			'UPDATE'	=> 'hca_wom_work_orders',
+			'SET'		=> 'num_tasks=num_tasks+1',
+			'WHERE'		=> 'id='.$id
+		);
+		$DBLayer->query_build($query) or error(__FILE__, __LINE__);
 
 		// Add flash message
 		$flash_message = 'Task #'.$task_id.' has been updated.';
@@ -142,7 +150,6 @@ else if (isset($_POST['update_task']))
 		// Update task of Work Order
 		$DBLayer->update('hca_wom_tasks', $form_data, $task_id);
 
-
 		// Add flash message
 		$flash_message = 'Task #'.$task_id.' has been updated.';
 		$FlashMessenger->add_info($flash_message);
@@ -156,6 +163,13 @@ else if (isset($_POST['delete_task']))
 	if ($task_id > 0)
 	{
 		$DBLayer->delete('hca_wom_tasks', $task_id);
+
+		$query = array(
+			'UPDATE'	=> 'hca_wom_work_orders',
+			'SET'		=> 'num_tasks=num_tasks-1',
+			'WHERE'		=> 'id='.$id
+		);
+		$DBLayer->query_build($query) or error(__FILE__, __LINE__);
 
 		// Add flash message
 		$flash_message = 'Task #'.$task_id.' has been deleted.';
@@ -477,81 +491,6 @@ foreach ($sm_property_db as $cur_info)
 				</div>
 			</div>
 
-			<div class="row mb-3 hidden">
-				<div class="col-md-3">
-					<label class="form-label" for="fld_date_requested">Date Requested</label>
-					<input type="date" name="date_requested" value="<?php echo isset($_POST['date_requested']) ? format_date($_POST['date_requested'], 'Y-m-d') : '' ?>" class="form-control form-control-sm" id="fld_date_requested">
-				</div>
-
-				<div class="col-md-2">
-					<label class="form-label" for="fld_priority">Priority</label>
-					<select name="priority" id="fld_priority" class="form-select form-select-sm">
-<?php
-foreach ($HcaWOM->priority as $key => $val)
-{
-	if (isset($_POST['priority']) && $_POST['priority'] == $key)
-		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$val.'</option>'."\n";
-	else
-		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$val.'</option>'."\n";
-}
-?>
-					</select>
-				</div>
-			</div>
-
-			<div class="row hidden">
-				<div class="col-md-3">
-					<label class="form-label" for="fld_assigned_to">Technician</label>
-					<select name="assigned_to" id="fld_assigned_to" class="form-select form-select-sm">
-<?php
-	$optgroup = 0;
-	echo "\t\t\t\t\t\t".'<option value="0" selected disabled>Select one</option>'."\n";
-	foreach ($users as $cur_user)
-	{
-		if ($cur_user['group_id'] != $optgroup) {
-			if ($optgroup) {
-				echo '</optgroup>';
-			}
-			echo '<optgroup label="'.html_encode($cur_user['g_title']).'">';
-			$optgroup = $cur_user['group_id'];
-		}
-		
-		if (isset($_POST['assigned_to']) && $_POST['assigned_to'] == $cur_user['id'])
-			echo "\t\t\t\t\t\t\t".'<option value="'.$cur_user['id'].'" selected>'.html_encode($cur_user['realname']).'</option>'."\n";
-		else
-			echo "\t\t\t\t\t\t".'<option value="'.$cur_user['id'].'">'.html_encode($cur_user['realname']).'</option>'."\n";
-	}
-?>
-					</select>
-				</div>
-			</div>
-
-		</div>
-	</div>
-
-	<div class="card hidden">
-		<div class="card-body">	
-			<div class="row mb-3">
-				<div class="col-md-4">
-					<div class="form-check form-check-inline">
-						<input class="form-check-input" type="checkbox" name="has_animal" id="fld_has_animal" value="1" <?php echo (isset($_POST['has_animal']) && $_POST['has_animal'] == 1 ? ' checked' : '') ?>>
-						<label class="form-check-label" for="fld_has_animal">Animal in Unit</label>
-					</div>
-					<div class="form-check form-check-inline">
-						<input class="form-check-input" type="checkbox" name="enter_permission" id="fld_enter_permission" value="1" <?php echo (isset($_POST['enter_permission']) && $_POST['enter_permission'] == 1 ? ' checked' : '') ?>>
-						<label class="form-check-label" for="fld_enter_permission">Permission to Enter</label>
-					</div>
-				</div>
-			</div>
-			<div class="mb-3">
-				<label class="form-label" for="fld_wo_message">Comments</label>
-				<textarea type="text" name="wo_message" class="form-control" id="fld_wo_message" placeholder="Enter any special instructions for entry (example: After 2 pm only please)"><?php echo isset($_POST['wo_message']) ? html_encode($_POST['wo_message']) : '' ?></textarea>
-			</div>
-		</div>
-	</div>
-
-	<div class="card">
-		<div class="card-body">
 			<div class="mb-3">
 				<button type="submit" name="add" class="btn btn-primary">Submit</button>
 			</div>
