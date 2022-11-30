@@ -11,6 +11,19 @@ require SITE_ROOT.'include/common.php';
 if (!$User->is_admmod())
 	message($lang_common['No permission']);
 
+if (isset($_POST['update_cache']))
+{
+	$Cachinger->clear();
+
+	if (empty($Core->errors))
+	{
+		// Add flash message
+		$flash_message = 'Cache files have been updated.';
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
+	}
+}
+
 $query = array(
 	'SELECT'	=> 'o.user_id, o.ident',
 	'FROM'		=> 'online AS o',
@@ -139,6 +152,18 @@ require SITE_ROOT.'header.php';
 <?php endif; ?>
 	</div>
 </div>
+
+<form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data">
+	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
+	<div class="card mb-1">
+		<div class="card-header">
+			<h6 class="card-title mb-0">Maintenance</h6>
+		</div>
+		<div class="card-body">
+			<button type="submit" name="update_cache" class="btn btn-primary">Update cache</button>
+		</div>
+	</div>
+</form>
 
 <?php
 require SITE_ROOT.'footer.php';
