@@ -10,7 +10,8 @@ class HcaWOM
 		2 => 'High',
 	];
 
-	var $task_type = [
+	var $item_types = [
+		0 => '',
 		1 => '5840 Moisture Event',
 		2 => 'Appliance',
 		3 => 'Electrical',
@@ -24,33 +25,65 @@ class HcaWOM
 		11 => 'zAdmin',
 	];
 
-	var $task_item = [
-		1 => 'A/C Closet',
-		2 => 'Dining Room',
-		3 => 'Guest Bath 1',
-		4 => 'Guest Bath 2',
-		5 => 'Guest Bedroom 1',
-		6 => 'Guest Bedroom 2',
-		7 => 'Kitchen',
-		8 => 'Living Room',
-		9 => 'Master Bath',
-		10 => 'Master Bedroom',
-		11 => 'Patio',
-		12 => 'Water Heater Storage',
-	];
-
-	var $task_problem = [
+	var $task_actions = [
+		0 => '',
 		1 => 'Discoloration',
 		2 => 'Flood',
+		6 => 'Inspect',
+		5 => 'Repaire',
+		4 => 'Replace',
+		7 => 'Replace Bulb',//last one
+		
+
 		3 => 'Other',
 	];
+
+	function getActions($ids = '')
+	{
+		$output = [];
+		if ($ids != '')
+		{
+			$array = explode(',', $ids);
+
+			if (!empty($array))
+			{
+				foreach($array as $id)
+				{
+					if (isset($this->task_actions[$id]))
+						$output[] = $this->task_actions[$id];
+				}
+
+				return implode(', ', $output);
+			}
+		}
+	}
+
+	function getTaskActions($ids = '')
+	{
+		$output = [];
+		if ($ids != '')
+		{
+			$array = explode(',', $ids);
+
+			if (!empty($array))
+			{
+				foreach($array as $id)
+				{
+					if (isset($this->item_actions[$id]))
+						$output[] = $this->item_actions[$id];
+				}
+
+				return implode(', ', $output);
+			}
+		}
+	}
 
 	function getWorkOrderInfo($id)
 	{
 		global $DBLayer;
 
 		$query = [
-			'SELECT'	=> 'w.*, p.pro_name, pu.unit_number, u1.realname AS assigned_name, u1.email AS assigned_email, u2.realname AS requested_name, u2.email AS requested_email',
+			'SELECT'	=> 'w.*, p.pro_name, pu.unit_number, u2.realname AS requested_name, u2.email AS requested_email', // , u1.realname AS assigned_name, u1.email AS assigned_email
 			'FROM'		=> 'hca_wom_work_orders AS w',
 			'JOINS'		=> [
 				[
@@ -61,10 +94,12 @@ class HcaWOM
 					'LEFT JOIN'		=> 'sm_property_units AS pu',
 					'ON'			=> 'pu.id=w.unit_id'
 				],
+				/*
 				[
 					'LEFT JOIN'		=> 'users AS u1',
 					'ON'			=> 'u1.id=w.assigned_to'
 				],
+				*/
 				[
 					'LEFT JOIN'		=> 'users AS u2',
 					'ON'			=> 'u2.id=w.requested_by'

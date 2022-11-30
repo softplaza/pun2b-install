@@ -36,8 +36,8 @@ if ($search_by_property_id > 0)
 if ($search_by_unit_number != '')
 	$search_query[] = 'pu.unit_number=\''.$DBLayer->escape($search_by_unit_number).'\'';
 
-if ($search_by_assigned_to > 0)
-	$search_query[] = 'w.assigned_to='.$search_by_assigned_to;
+//if ($search_by_assigned_to > 0)
+//	$search_query[] = 'w.assigned_to='.$search_by_assigned_to;
 
 $query = [
 	'SELECT'	=> 'COUNT(w.id)',
@@ -51,10 +51,12 @@ $query = [
 			'INNER JOIN'	=> 'sm_property_units AS pu',
 			'ON'			=> 'pu.id=w.unit_id'
 		],
+/*
 		[
 			'INNER JOIN'	=> 'users AS u1',
 			'ON'			=> 'u1.id=w.assigned_to'
 		],
+*/
 		[
 			'INNER JOIN'	=> 'users AS u2',
 			'ON'			=> 'u2.id=w.requested_by'
@@ -66,7 +68,7 @@ $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $PagesNavigator->set_total($DBLayer->result($result));
 
 $query = [
-	'SELECT'	=> 'w.*, p.pro_name, pu.unit_number, u1.realname AS assigned_name, u1.email AS assigned_email, u2.realname AS requested_name, u2.email AS requested_email',
+	'SELECT'	=> 'w.*, p.pro_name, pu.unit_number, u2.realname AS requested_name, u2.email AS requested_email', // u1.realname AS assigned_name, u1.email AS assigned_email,
 	'FROM'		=> 'hca_wom_work_orders AS w',
 	'JOINS'		=> [
 		[
@@ -77,10 +79,12 @@ $query = [
 			'INNER JOIN'	=> 'sm_property_units AS pu',
 			'ON'			=> 'pu.id=w.unit_id'
 		],
+/*
 		[
 			'INNER JOIN'	=> 'users AS u1',
 			'ON'			=> 'u1.id=w.assigned_to'
 		],
+*/
 		[
 			'INNER JOIN'	=> 'users AS u2',
 			'ON'			=> 'u2.id=w.requested_by'
@@ -205,9 +209,9 @@ if (!empty($hca_wom_work_orders))
 	<thead>
 		<tr>
 			<th>Property/Unit#</th>
-			<th>Date Requested</th>
+			<th>Date Submitted</th>
 			<th>Comments</th>
-			<th>Assigned to</th>
+			<th>Requested by</th>
 			<th>Priority</th>
 			<th>WO Status</th>
 			<th></th>
@@ -240,15 +244,15 @@ if (!empty($hca_wom_work_orders))
 		if ($is_technician)
 			$edit = '<a href="'.$URL->link('hca_wom_wo_technician', $cur_info['id']).'" class="badge bg-primary text-white"><i class="fas fa-edit"></i> Edit</a>';
 		else if ($is_manager || $User->is_admmod())
-			$edit = '<a href="'.$URL->link('hca_wom_wo_manager', $cur_info['id']).'" class="badge bg-primary text-white"><i class="fas fa-edit"></i> Edit</a>';
+			$edit = '<a href="'.$URL->link('hca_wom_work_order', $cur_info['id']).'" class="badge bg-primary text-white"><i class="fas fa-edit"></i> Edit</a>';
 ?>
 		<tr id="row<?php echo $cur_info['id'] ?>" class="<?php echo ($id == $cur_info['id'] ? ' anchor' : '') ?>">
 			<td>
 				<span class="fw-bold"><?php echo html_encode($cur_info['pro_name']) ?>, <?php echo html_encode($cur_info['unit_number']) ?></span>
 			</td>
-			<td class="min-100 ta-center"><?php echo format_date($cur_info['date_requested'], 'd/m/Y') ?></td>
+			<td class="min-100 ta-center"><?php echo format_date($cur_info['dt_created'], 'd/m/Y') ?></td>
 			<td class="min-100"><?php echo html_encode($cur_info['wo_message']) ?></td>
-			<td class="min-100 ta-center"><?php echo html_encode($cur_info['assigned_name']) ?></td>
+			<td class="min-100 ta-center"><?php echo html_encode($cur_info['requested_name']) ?></td>
 			<td class="min-100 ta-center"><?php echo $priority ?></td>
 			<td class="min-100 ta-center"><?php echo $status ?></td>
 			<td class="min-100"><?php echo $edit ?></td>

@@ -3,7 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_wom', 20)) ? true : false;
+$access = ($User->checkAccess('hca_wom', 100)) ? true : false;
 if (!$access)
 	message($lang_common['No permission']);
 
@@ -14,10 +14,13 @@ $SwiftSettings = new SwiftSettings;
 $SwiftSettings->setId('hca_wom');
 
 // Set User access, permissions and notifications.
-$SwiftSettings->addAccessOption(1, 'Create WO');
+$SwiftSettings->addAccessOption(1, 'Quick Task Entry');
 $SwiftSettings->addAccessOption(2, 'Edit WO');
-$SwiftSettings->addAccessOption(3, 'List of WO');
-$SwiftSettings->addAccessOption(20, 'Settings');
+$SwiftSettings->addAccessOption(3, 'Work Orders');
+$SwiftSettings->addAccessOption(4, 'To-Do List');
+
+$SwiftSettings->addAccessOption(90, 'WO Items');
+$SwiftSettings->addAccessOption(100, 'Settings');
 
 //$SwiftSettings->addPermissionOption(10, 'PermissionOption');
 //$SwiftSettings->addNotifyOption(1, 'NotifyOption');

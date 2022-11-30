@@ -9,6 +9,7 @@ if ($User->is_guest())
 $wo_id = isset($_POST['wo_id']) ? intval($_POST['wo_id']) : 0; // to create
 $task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0; // to delete
 
+// Add a new task
 if ($wo_id > 0 && $task_id == 0)
 {
 	$DBLayer->insert_values('hca_wom_tasks', ['work_order_id' => $wo_id]);
@@ -17,8 +18,14 @@ if ($wo_id > 0 && $task_id == 0)
 	$HcaWOM = new HcaWOM;
 
 	$query = array(
-		'SELECT'	=> 't.*',
+		'SELECT'	=> 't.*, i.item_actions',
 		'FROM'		=> 'hca_wom_tasks AS t',
+		'JOINS'		=> array(
+			array(
+				'LEFT JOIN'		=> 'hca_wom_items AS i',
+				'ON'			=> 'i.id=t.task_item'
+			)
+		),
 		'WHERE'		=> 't.work_order_id='.$wo_id,
 		'ORDER BY'	=> 't.id',
 	);
@@ -28,23 +35,33 @@ if ($wo_id > 0 && $task_id == 0)
 		$tasks_info[] = $row;
 	}
 
+	$query = array(
+		'SELECT'	=> 'i.*',
+		'FROM'		=> 'hca_wom_items AS i',
+		'ORDER BY'	=> 'i.item_name',
+	);
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	$hca_wom_items = [];
+	while ($row = $DBLayer->fetch_assoc($result)) {
+		$hca_wom_items[] = $row;
+	}
+
 	$wo_tasks = [];
 
 	if (!empty($tasks_info))
 	{
-		$i = 1;
 		foreach($tasks_info as $cur_task)
 		{
-			$wo_tasks[] = '<h5 class="h5 mb-0">Task '.$i.'</h5>';
+			$wo_tasks[] = '<h6 class="h6 mb-0">Task '.$cur_task['id'].'</h6>';
 			$wo_tasks[] = '<div class="row mb-2 alert-secondary border">';
-
+			$wo_tasks[] = '<input type="hidden" name="task['.$cur_task['id'].']" value="'.$cur_task['id'].'">';
 			$wo_tasks[] = '<div class="row mb-1">';
 
 			$wo_tasks[] = '<div class="col-md-3">';
 			$wo_tasks[] = '<label class="form-label">Type</label>';
-			$wo_tasks[] = '<select name="task_type['.$cur_task['id'].']" class="form-select form-select-sm">';
-			$wo_tasks[] = '<option value="0" selected>Select one</option>';
-			foreach ($HcaWOM->task_type as $key => $value)
+			$wo_tasks[] = '<select name="task_type['.$cur_task['id'].']" class="form-select form-select-sm" id="fld_task_type_'.$cur_task['id'].'" onchange="getItems('.$cur_task['id'].')">';
+			$wo_tasks[] = '<option value="0" selected disabled>Select one</option>';
+			foreach ($HcaWOM->item_types as $key => $value)
 			{
 				if ($cur_task['task_type'] == $key)
 					$wo_tasks[] = '<option value="'.$key.'" selected>'.$value.'</option>';
@@ -56,29 +73,46 @@ if ($wo_id > 0 && $task_id == 0)
 
 			$wo_tasks[] = '<div class="col-md-3">';
 			$wo_tasks[] = '<label class="form-label">Item</label>';
-			$wo_tasks[] = '<select name="task_item['.$cur_task['id'].']" class="form-select form-select-sm">';
-			$wo_tasks[] = '<option value="0" selected>Select one</option>';
-			foreach ($HcaWOM->task_item as $key => $value)
+			$wo_tasks[] = '<select name="task_item['.$cur_task['id'].']" class="form-select form-select-sm" id="fld_task_item_'.$cur_task['id'].'" onchange="getActions('.$cur_task['id'].')">';
+
+			$wo_tasks[] = '<option value="0" selected disabled>Select one</option>';
+			if (!empty($hca_wom_items) && $cur_task['task_type'] > 0)
 			{
-				if ($cur_task['task_item'] == $key)
-					$wo_tasks[] = '<option value="'.$key.'" selected>'.$value.'</option>';
-				else
-					$wo_tasks[] = '<option value="'.$key.'">'.$value.'</option>';
+				foreach($hca_wom_items as $cur_item)
+				{
+					if ($cur_item['item_type'] == $cur_task['task_type'])
+					{
+						if ($cur_task['task_item'] == $cur_item['id'])
+							$wo_tasks[] = '<option value="'.$cur_item['id'].'" selected>'.html_encode($cur_item['item_name']).'</option>';
+						else
+							$wo_tasks[] = '<option value="'.$cur_item['id'].'">'.html_encode($cur_item['item_name']).'</option>';
+					}
+				}
 			}
+
 			$wo_tasks[] = '</select>';
 			$wo_tasks[] = '</div>';
 
 			$wo_tasks[] = '<div class="col-md-3">';
 			$wo_tasks[] = '<label class="form-label">Problem</label>';
-			$wo_tasks[] = '<select name="task_problem['.$cur_task['id'].']" class="form-select form-select-sm">';
-			$wo_tasks[] = '<option value="0" selected>Select one</option>';
-			foreach ($HcaWOM->task_problem as $key => $value)
+			$wo_tasks[] = '<select name="task_action['.$cur_task['id'].']" class="form-select form-select-sm" id="fld_task_action_'.$cur_task['id'].'">';
+
+			$wo_tasks[] = '<option value="0" selected disabled>Select one</option>';
+			$item_actions = explode(',', $cur_task['item_actions']);
+			if (!empty($item_actions))
 			{
-				if ($cur_task['task_problem'] == $key)
-					$wo_tasks[] = '<option value="'.$key.'" selected>'.$value.'</option>';
-				else
-					$wo_tasks[] = '<option value="'.$key.'">'.$value.'</option>';
+				foreach($HcaWOM->task_actions as $key => $value)
+				{
+					if (in_array($key, $item_actions))
+					{
+						if ($cur_task['task_action'] == $key)
+							$wo_tasks[] = '<option value="'.$key.'" selected>'.$value.'</option>';
+						else
+							$wo_tasks[] = '<option value="'.$key.'">'.$value.'</option>';
+					}
+				}
 			}
+
 			$wo_tasks[] = '</select>';
 			$wo_tasks[] = '</div>';
 
@@ -92,8 +126,6 @@ if ($wo_id > 0 && $task_id == 0)
 			$wo_tasks[] = '</div>';
 
 			$wo_tasks[] = '</div>';
-
-			++$i;
 		}
 	}
 	else
@@ -112,8 +144,14 @@ else if ($wo_id > 0 && $task_id > 0)
 	$HcaWOM = new HcaWOM;
 
 	$query = array(
-		'SELECT'	=> 't.*',
+		'SELECT'	=> 't.*, i.item_actions',
 		'FROM'		=> 'hca_wom_tasks AS t',
+		'JOINS'		=> array(
+			array(
+				'LEFT JOIN'		=> 'hca_wom_items AS i',
+				'ON'			=> 'i.id=t.task_item'
+			)
+		),
 		'WHERE'		=> 't.work_order_id='.$wo_id,
 		'ORDER BY'	=> 't.id',
 	);
@@ -123,22 +161,33 @@ else if ($wo_id > 0 && $task_id > 0)
 		$tasks_info[] = $row;
 	}
 
+	$query = array(
+		'SELECT'	=> 'i.*',
+		'FROM'		=> 'hca_wom_items AS i',
+		'ORDER BY'	=> 'i.item_name',
+	);
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	$hca_wom_items = [];
+	while ($row = $DBLayer->fetch_assoc($result)) {
+		$hca_wom_items[] = $row;
+	}
+
 	$wo_tasks = [];
 
 	if (!empty($tasks_info))
 	{
-		$i = 1;
 		foreach($tasks_info as $cur_task)
 		{
-			$wo_tasks[] = '<h5 class="h5 mb-0">Task '.$i.'</h5>';
+			$wo_tasks[] = '<h6 class="h6 mb-0">Task '.$cur_task['id'].'</h6>';
 			$wo_tasks[] = '<div class="row mb-2 alert-secondary border">';
-
+			$wo_tasks[] = '<input type="hidden" name="task['.$cur_task['id'].']" value="'.$cur_task['id'].'">';
 			$wo_tasks[] = '<div class="row mb-1">';
+
 			$wo_tasks[] = '<div class="col-md-3">';
 			$wo_tasks[] = '<label class="form-label">Type</label>';
-			$wo_tasks[] = '<select name="task_type['.$cur_task['id'].']" class="form-select form-select-sm">';
-			$wo_tasks[] = '<option value="0" selected>Select one</option>';
-			foreach ($HcaWOM->task_type as $key => $value)
+			$wo_tasks[] = '<select name="task_type['.$cur_task['id'].']" class="form-select form-select-sm" id="fld_task_type_'.$cur_task['id'].'" onchange="getItems('.$cur_task['id'].')">';
+			$wo_tasks[] = '<option value="0" selected disabled>Select one</option>';
+			foreach ($HcaWOM->item_types as $key => $value)
 			{
 				if ($cur_task['task_type'] == $key)
 					$wo_tasks[] = '<option value="'.$key.'" selected>'.$value.'</option>';
@@ -150,29 +199,46 @@ else if ($wo_id > 0 && $task_id > 0)
 
 			$wo_tasks[] = '<div class="col-md-3">';
 			$wo_tasks[] = '<label class="form-label">Item</label>';
-			$wo_tasks[] = '<select name="task_item['.$cur_task['id'].']" class="form-select form-select-sm">';
-			$wo_tasks[] = '<option value="0" selected>Select one</option>';
-			foreach ($HcaWOM->task_item as $key => $value)
+			$wo_tasks[] = '<select name="task_item['.$cur_task['id'].']" class="form-select form-select-sm" id="fld_task_item_'.$cur_task['id'].'" onchange="getActions('.$cur_task['id'].')">';
+
+			$wo_tasks[] = '<option value="0" selected disabled>Select one</option>';
+			if (!empty($hca_wom_items) && $cur_task['task_type'] > 0)
 			{
-				if ($cur_task['task_item'] == $key)
-					$wo_tasks[] = '<option value="'.$key.'" selected>'.$value.'</option>';
-				else
-					$wo_tasks[] = '<option value="'.$key.'">'.$value.'</option>';
+				foreach($hca_wom_items as $cur_item)
+				{
+					if ($cur_item['item_type'] == $cur_task['task_type'])
+					{
+						if ($cur_task['task_item'] == $cur_item['id'])
+							$wo_tasks[] = '<option value="'.$cur_item['id'].'" selected>'.html_encode($cur_item['item_name']).'</option>';
+						else
+							$wo_tasks[] = '<option value="'.$cur_item['id'].'">'.html_encode($cur_item['item_name']).'</option>';
+					}
+				}
 			}
+
 			$wo_tasks[] = '</select>';
 			$wo_tasks[] = '</div>';
 
 			$wo_tasks[] = '<div class="col-md-3">';
 			$wo_tasks[] = '<label class="form-label">Problem</label>';
-			$wo_tasks[] = '<select name="task_problem['.$cur_task['id'].']" class="form-select form-select-sm">';
-			$wo_tasks[] = '<option value="0" selected>Select one</option>';
-			foreach ($HcaWOM->task_problem as $key => $value)
+			$wo_tasks[] = '<select name="task_action['.$cur_task['id'].']" class="form-select form-select-sm" id="fld_task_action_'.$cur_task['id'].'">';
+
+			$wo_tasks[] = '<option value="0" selected disabled>Select one</option>';
+			$item_actions = explode(',', $cur_task['item_actions']);
+			if (!empty($item_actions))
 			{
-				if ($cur_task['task_problem'] == $key)
-					$wo_tasks[] = '<option value="'.$key.'" selected>'.$value.'</option>';
-				else
-					$wo_tasks[] = '<option value="'.$key.'">'.$value.'</option>';
+				foreach($HcaWOM->task_actions as $key => $value)
+				{
+					if (in_array($key, $item_actions))
+					{
+						if ($cur_task['task_action'] == $key)
+							$wo_tasks[] = '<option value="'.$key.'" selected>'.$value.'</option>';
+						else
+							$wo_tasks[] = '<option value="'.$key.'">'.$value.'</option>';
+					}
+				}
 			}
+
 			$wo_tasks[] = '</select>';
 			$wo_tasks[] = '</div>';
 
@@ -185,8 +251,6 @@ else if ($wo_id > 0 && $task_id > 0)
 			$wo_tasks[] = '</div>';
 
 			$wo_tasks[] = '</div>';
-
-			++$i;
 		}
 	}
 	else
