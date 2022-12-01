@@ -297,7 +297,7 @@ if ($id > 0)
 				<div class="col-md-4">
 					<div class="form-check form-check-inline">
 						<input class="form-check-input" type="checkbox" name="has_animal" id="fld_has_animal" value="1" <?php echo ($wo_info['has_animal'] == 1 ? ' checked' : '') ?>>
-						<label class="form-check-label" for="fld_has_animal">Animal in Unit</label>
+						<label class="form-check-label" for="fld_has_animal">Pets in Unit</label>
 					</div>
 					<div class="form-check form-check-inline">
 						<input class="form-check-input" type="checkbox" name="enter_permission" id="fld_enter_permission" value="1" <?php echo ($wo_info['enter_permission'] == 1 ? ' checked' : '') ?>>

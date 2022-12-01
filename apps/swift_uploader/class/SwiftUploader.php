@@ -38,6 +38,8 @@ class SwiftUploader
     public $cur_project_files = [];
     public $cur_project_media = [];
 
+    var $uploaded_images = [];
+    
     // Exceptions
     public $errors = [];
     
@@ -159,6 +161,40 @@ class SwiftUploader
 
     }
 
+	function uploadImage($table_name, $table_id)
+	{
+        if ($this->access_upload_files)
+        {
+?>
+        <div id="image_progress" class="mb-2"></div>
+
+        <div class="input-group mb-3">
+            <input type="file" name="image" class="form-control" id="fld_image" onchange="uploadImage('<?=$table_name?>', <?=$table_id?>)">
+            <label class="input-group-text" for="fld_image"><i class="fas fa-camera"></i></label>
+        </div>
+<?php
+        }
+    }
+
+	function getUploadedImages($table_name, $table_id)
+	{
+        global $DBLayer;
+
+        if (!$this->access_view_files)
+            return;
+
+        $query = array(
+            'SELECT'	=> 'f.*',
+            'FROM'		=> 'sm_uploader AS f',
+            'WHERE'		=> 'f.table_name=\''.$DBLayer->escape($table_name).'\' AND f.table_id='.$table_id
+        );
+        $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+        while ($row = $DBLayer->fetch_assoc($result)) {
+            $this->uploaded_images[] = $row;
+        }
+
+        return count($this->uploaded_images);
+    }
 
 	function getCurrentFile($cur_info)
 	{
@@ -202,6 +238,48 @@ class SwiftUploader
 
 ?>
 <script>
+function showToastMessage()
+{
+    const toastLiveExample = document.getElementById('liveToast');
+    const toast = new bootstrap.Toast(toastLiveExample);
+    toast.show();
+}
+
+function uploadImage(table,id)
+{
+    $('#image_progress').empty().html('<div class="progress"><div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100" style="width: 25%"></div></div>');
+
+	var fd = new FormData();
+	fd.append('csrf_token', "<?php echo generate_form_token($URL->link('swift_uploader_ajax_upload_image')) ?>");
+    fd.append('image', $('#fld_image')[0].files[0]);
+    fd.append('table', table);
+	fd.append('id', id);
+	jQuery.ajax({
+		url: "<?php echo $URL->link('swift_uploader_ajax_upload_image') ?>",
+		type: 'POST',
+		dataType: 'json',
+		processData: false,
+		contentType: false,
+		data: fd,
+		success: function(re){
+            $("#toast_container").empty().html(re.toast_container);
+            showToastMessage();
+            $('#fld_image').val('');
+            $('#image_progress').empty().html('');
+            $("#num_images").empty().html(re.num_images);
+		},
+		error: function(re){
+            var msg = '<div id="liveToast" class="toast position-fixed bottom-0 end-0 m-2" role="alert" aria-live="assertive" aria-atomic="true">';
+			msg += '<div class="toast-header toast-danger"><strong class="me-auto">Error</strong></div>';
+			msg += '<div class="toast-body toast-danger">Failed to uploade image.</div>';
+			msg += '</div>';
+			$("#toast_container").empty().html(msg);
+            showToastMessage();
+            $('#fld_image').val('');
+            $('#image_progress_'+table).empty().html('');
+		}
+	});
+}
 function uploadFile(table,id)
 {
     $('#image_progress_'+table).empty().html('<div class="progress"><div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div></div>');
@@ -220,10 +298,13 @@ function uploadFile(table,id)
 		data: fd,
 		success: function(re){
             $('#image_thumbnails_'+table).empty().html(re.image_thumbnails);
-            $('#image_progress_'+table).empty().html(re.result);
+            $('#image_progress_'+table).empty().html('');
+            $('#fld_'+table).val('');
 		},
 		error: function(re){
 			$('.msg-section').empty().html('<div class="alert alert-danger" role="alert">Error: No data received.</div>');
+            $('#image_progress_'+table).empty().html('');
+            $('#fld_'+table).val('');
 		}
 	});
 }
@@ -240,10 +321,13 @@ function deleteFile(table,id)
 		success: function(re){
             //$('#image_progress_'+table).empty().html('<div class="progress"><div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div></div>');
 			$('#image_thumbnails_'+table).empty().html(re.image_thumbnails);
-            $('#image_progress_'+table).empty().html(re.result);
+            $('#image_progress_'+table).empty().html('');
+            $('#fld_'+table).val('');
 		},
 		error: function(re){
 			$('.msg-section').empty().html('<div class="alert alert-danger" role="alert">Error: No data received.</div>');
+            $('#image_progress_'+table).empty().html('');
+            $('#fld_'+table).val('');
 		}
 	});
 }

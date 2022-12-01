@@ -257,7 +257,7 @@ if (!empty($hca_wom_work_orders))
 			<td class="min-100 ta-center"><?php echo $priority ?></td>
 			<td class="min-100 ta-center"><?php echo $status ?></td>
 			<td class="ta-center fw-bold"><?php echo $cur_info['num_tasks'] ?></td>
-			<td class="min-100"><?php echo $edit ?></td>
+			<td class="min-100 ta-center"><?php echo $edit ?></td>
 		</tr>
 <?php
 	}

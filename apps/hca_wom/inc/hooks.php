@@ -20,6 +20,7 @@ function hca_wom_co_modify_url_scheme()
     $urls['hca_wom_ajax_add_task'] = 'apps/hca_wom/ajax/add_task.php';//replaced on manage_task.php
     $urls['hca_wom_ajax_manage_task'] = 'apps/hca_wom/ajax/manage_task.php';
     $urls['hca_wom_ajax_get_items'] = 'apps/hca_wom/ajax/get_items.php';
+    $urls['hca_wom_ajax_get_images'] = 'apps/hca_wom/ajax/get_images.php';
 
     // management
     $urls['hca_wom_items'] = 'apps/hca_wom/items.php?id=$1';

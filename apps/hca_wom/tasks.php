@@ -16,6 +16,20 @@ $is_manager = ($User->get('property_access') != '' && $User->get('property_acces
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
 
+if (isset($_POST['accept_task']))
+{
+	$task_id = isset($_POST['accept_task']) ? intval(key($_POST['accept_task'])) : 0;
+	$form_data = [
+		'task_status'		=> 2,
+	];
+	$DBLayer->update('hca_wom_tasks', $form_data, $task_id);
+
+	// Add flash message
+	$flash_message = 'Task #'.$task_id.' has been accepted by '.$User->get('realname').'.';
+	$FlashMessenger->add_info($flash_message);
+	redirect('', $flash_message);
+}
+
 $search_query = [];
 $search_query[] = 'w.wo_status!=4'; // Exclude completed
 if ($is_technician)
@@ -56,7 +70,7 @@ $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $PagesNavigator->set_total($DBLayer->result($result));
 
 $query = [
-	'SELECT'	=> 't.*, w.property_id, w.unit_id, w.wo_message, p.pro_name, pu.unit_number, u1.realname AS assigned_name, u1.email AS assigned_email, u2.realname AS requested_name, u2.email AS requested_email',
+	'SELECT'	=> 't.*, w.property_id, w.unit_id, w.wo_message, p.pro_name, pu.unit_number, i.item_name, u1.realname AS assigned_name, u1.email AS assigned_email, u2.realname AS requested_name, u2.email AS requested_email',
 	'FROM'		=> 'hca_wom_tasks AS t',
 	'JOINS'		=> [
 		[
@@ -70,6 +84,10 @@ $query = [
 		[
 			'LEFT JOIN'		=> 'sm_property_units AS pu',
 			'ON'			=> 'pu.id=w.unit_id'
+		],
+		[
+			'LEFT JOIN'		=> 'hca_wom_items AS i',
+			'ON'			=> 'i.id=t.task_item'
 		],
 		[
 			'LEFT JOIN'		=> 'users AS u1',
@@ -140,35 +158,38 @@ foreach ($property_info as $val)
 if (!empty($hca_wom_work_orders))
 {
 ?>
-
-<table class="table table-striped table-bordered">
-	<thead>
-		<tr>
-			<th>Task#</th>
-			<th>Unit#</th>
-			<th>Title</th>
-			<th>Details</th>
-			<th>Submitted</th>
-		</tr>
-	</thead>
-	<tbody>
+<form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data">
+	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
+	<table class="table table-striped table-bordered">
+		<thead>
+			<tr>
+				<th class="min-100">WO#</th>
+				<th class="min-100">Unit#</th>
+				<th>Title</th>
+				<th>Details</th>
+				<th>Submitted</th>
+			</tr>
+		</thead>
+		<tbody>
 <?php
 	foreach ($hca_wom_work_orders as $cur_info)
 	{
+		$task_id_number = ($cur_info['task_status'] > 1) ? '<a href="'.$URL->link('hca_wom_task', $cur_info['id']).'" class="badge badge-primary">WO #'.$cur_info['work_order_id'].'-'.$cur_info['id'].'</a>' : '<button type="submit" name="accept_task['.$cur_info['id'].']" class="badge bg-primary">Accept</button>';
 		$unit_number = ($cur_info['unit_id'] > 0) ? html_encode($cur_info['unit_number']) : 'Common area';
 ?>
-		<tr>
-			<td class="fw-bold ta-center"><a href="<?=$URL->link('hca_wom_task', $cur_info['id'])?>">Task #<?php echo $cur_info['id'] ?></a></td>
-			<td class="ta-center"><?php echo $unit_number ?></td>
-			<td class=""><?php echo html_encode($cur_info['wo_message']) ?></td>
-			<td class=""><?php echo html_encode($cur_info['task_message']) ?></td>
-			<td class="ta-center"><?php echo format_time($cur_info['time_created']) ?></td>
-		</tr>
+			<tr>
+				<td class="fw-bold ta-center"><?php echo $task_id_number ?></td>
+				<td class="ta-center"><?php echo $unit_number ?></td>
+				<td class=""><?php echo html_encode($cur_info['item_name']) ?></td>
+				<td class=""><?php echo html_encode($cur_info['task_message']) ?></td>
+				<td class="ta-center"><?php echo format_time($cur_info['time_created']) ?></td>
+			</tr>
 <?php
 	}
 ?>
-	</tbody>
-</table>
+		</tbody>
+	</table>
+</form>
 <?php
 }
 else

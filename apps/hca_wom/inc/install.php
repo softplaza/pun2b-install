@@ -56,6 +56,7 @@ $schema = [
 	'PRIMARY KEY'	=> ['id']
 ];
 $DBLayer->create_table('hca_wom_tasks', $schema);
+
 $DBLayer->add_field('hca_wom_tasks', 'time_created', 'INT(10) UNSIGNED', false, '0');
 $DBLayer->add_field('hca_wom_tasks', 'tech_comment', 'TEXT', false, '');
 $DBLayer->add_field('hca_wom_tasks', 'parts_installed', 'TINYINT(1)', false, '0');

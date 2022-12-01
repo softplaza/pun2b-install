@@ -17,7 +17,6 @@
 		<div class="page-content px-1">
 			<div class="msg-section">
 				<!--announcement-->
-				
 			</div>
 
 			<div class="content-section">
@@ -28,6 +27,8 @@
 			</div>
 		</div>
 		
+		<div class="toast-container" id="toast_container"></div>
+
 		<div class="footer-section">
 			<!--footer_about-->
 			<!--footer_debug-->

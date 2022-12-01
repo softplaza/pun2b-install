@@ -19,8 +19,10 @@ function swift_uploader_co_modify_url_scheme()
     $urls['swift_uploader_viewer'] = 'apps/swift_uploader/viewer.php?type=$1';
     $urls['swift_uploader_settings'] = 'apps/swift_uploader/settings.php';
 
+    // Ajax requests
     $urls['swift_uploader_ajax_upload_file'] = 'apps/swift_uploader/ajax/upload_file.php';
     $urls['swift_uploader_ajax_delete_file'] = 'apps/swift_uploader/ajax/delete_file.php';
+    $urls['swift_uploader_ajax_upload_image'] = 'apps/swift_uploader/ajax/upload_image.php';
 
     $URL->add_urls($urls);
 }
