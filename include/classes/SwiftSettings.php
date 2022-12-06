@@ -189,7 +189,22 @@ class SwiftSettings
 			$FlashMessenger->add_info($flash_message);
 			redirect('', $flash_message);
 		}
+		else if (isset($_POST['delete_group_notifications']))
+		{
+			$gid = intval(key($_POST['delete_group_notifications']));
 		
+			$query = array(
+				'DELETE'	=> 'user_notifications',
+				'WHERE'		=> 'n_to=\''.$DBLayer->escape($this->rules_to).'\' AND n_gid='.$gid,
+			);
+			$DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		
+			// Add flash message
+			$flash_message = 'Group notifications have been deleted.';
+			$FlashMessenger->add_info($flash_message);
+			redirect('', $flash_message);
+		}
+
 		else if (isset($_POST['fix_access']))
 		{
 			$user_id = intval(key($_POST['fix_access']));
@@ -258,6 +273,8 @@ class SwiftSettings
 			$FlashMessenger->add_info($flash_message);
 			redirect('', $flash_message);
 		}
+
+		// Add User Notifications
 		else if (isset($_POST['fix_notifications']))
 		{
 			$user_id = intval(key($_POST['fix_notifications']));
@@ -280,7 +297,32 @@ class SwiftSettings
 			$FlashMessenger->add_info($flash_message);
 			redirect('', $flash_message);
 		}
-		
+
+		// Add Group Notifications
+		else if (isset($_POST['fix_group_notifications']))
+		{
+			$group_id = intval(key($_POST['fix_group_notifications']));
+
+			$notifications_keys = isset($_POST['notifications_keys'][$group_id]) ? $_POST['notifications_keys'][$group_id] : [];
+
+			foreach($this->notifications_options as $key => $title)
+			{
+				$data = [
+					'n_gid'		=> $group_id,
+					'n_to'		=> $this->rules_to,
+					'n_key'		=> $key,
+					'n_value'	=> 0
+				];
+				if (!in_array($key, $notifications_keys))
+					$DBLayer->insert('user_notifications', $data);
+			}
+			
+			// Add flash message
+			$flash_message = 'Group notifications updated.';
+			$FlashMessenger->add_info($flash_message);
+			redirect('', $flash_message);
+		}
+
 		else if (isset($_POST['save_settings']))
 		{
 			$Config->update($_POST['form']);
@@ -339,54 +381,54 @@ class SwiftSettings
 				<div class="row mb-3">
 					<div class="col-md-12">
 	
-						<?php if (!empty($this->access_options)) : ?>
+					<?php if (!empty($this->access_options)) : ?>
 						<div class="form-check form-check-inline">
 							<input class="form-check-input" type="radio" name="type" id="radio1" value="1" required onchange="switchSection(1)">
 							<label class="form-check-label fw-bold" for="radio1">User permissions</label>
 						</div>
-						<?php endif; ?>
+					<?php endif; ?>
 	
-						<?php if (!empty($this->permissions_options)) : ?>
+					<?php if (!empty($this->permissions_options)) : ?>
 						<div class="form-check form-check-inline">
 							<input class="form-check-input" type="radio" name="type" id="radio2" value="2" onchange="switchSection(1)">
 							<label class="form-check-label fw-bold" for="radio2">User Permissions</label>
 						</div>
-						<?php endif; ?>
+					<?php endif; ?>
 	
-						<?php if (!empty($this->notifications_options)) : ?>
+					<?php if (!empty($this->notifications_options)) : ?>
 						<div class="form-check form-check-inline">
 							<input class="form-check-input" type="radio" name="type" id="radio3" value="3" onchange="switchSection(1)">
 							<label class="form-check-label fw-bold" for="radio3">User Notification</label>
 						</div>
-						<?php endif; ?>
+					<?php endif; ?>
 	
-						<?php if (!empty($this->access_options)) : ?>
+					<?php if (!empty($this->access_options)) : ?>
 						<div class="form-check form-check-inline">
 							<input class="form-check-input" type="radio" name="type" id="radio4" value="4" onchange="switchSection(2)">
 							<label class="form-check-label fw-bold" for="radio4">Group permissions</label>
 						</div>
-						<?php endif; ?>
+					<?php endif; ?>
 	
-						<?php if (!empty($this->permissions_options)) : ?>
+					<?php if (!empty($this->permissions_options)) : ?>
 						<div class="form-check form-check-inline">
 							<input class="form-check-input" type="radio" name="type" id="radio5" value="5" onchange="switchSection(2)">
 							<label class="form-check-label fw-bold" for="radio5">Group Permissions</label>
 						</div>
-						<?php endif; ?>
+					<?php endif; ?>
 	
-						<?php if (!empty($this->notifications_options)) : ?>
-						<div class="form-check form-check-inline hidden">
+					<?php if (!empty($this->notifications_options)) : ?>
+						<div class="form-check form-check-inline">
 							<input class="form-check-input" type="radio" name="type" id="radio6" value="6" onchange="switchSection(2)">
 							<label class="form-check-label fw-bold" for="radio6">Group Notification</label>
 						</div>
-						<?php endif; ?>
+					<?php endif; ?>
 	
 					</div>	
 				</div>
 				<div class="row" id="users_list">
 					<div class="col-md-4 mb-3">
 						<select name="user_id" class="form-select form-select-sm">
-	<?php
+<?php
 		$optgroup = 0;
 		echo "\t\t\t\t\t\t".'<option value="" selected="selected" disabled>Select an user</option>'."\n";
 		foreach ($users_info as $cur_user)
@@ -401,14 +443,14 @@ class SwiftSettings
 			
 			echo "\t\t\t\t\t\t".'<option value="'.$cur_user['id'].'">'.html_encode($cur_user['realname']).'</option>'."\n";
 		}
-	?>
+?>
 						</select>
 					</div>
 				</div>
 				<div class="row" id="group_list" style="display:none">
 					<div class="col-md-4 mb-3">
 						<select name="group_id" class="form-select form-select-sm">
-	<?php
+<?php
 		$query = array(
 			'SELECT'	=> 'g.g_id, g.g_title',
 			'FROM'		=> 'groups AS g',
@@ -426,7 +468,7 @@ class SwiftSettings
 		{
 			echo "\t\t\t\t\t\t".'<option value="'.$cur_group['g_id'].'">'.html_encode($cur_group['g_title']).'</option>'."\n";
 		}
-	?>
+?>
 						</select>
 					</div>
 				</div>
@@ -436,7 +478,7 @@ class SwiftSettings
 			</div>
 		</div>
 	</form>
-	<?php
+<?php
 	}
 
 	function getUserAccess()
@@ -466,7 +508,7 @@ class SwiftSettings
 
 		if (!empty($access_for_users))
 		{
-		?>
+?>
 		<div class="card-header">
 			<h6 class="card-title mb-0">Available user permissions</h6>
 		</div>
@@ -477,15 +519,15 @@ class SwiftSettings
 					<tr>
 						<th>Username</th>
 						
-		<?php
+<?php
 			foreach($this->access_options as $key => $title)
 				echo '<th>'.$title.'</th>';
-		?>
+?>
 						<th></th>
 					</tr>
 				</thead>
 				<tbody>
-		<?php
+<?php
 			$num_options = count($this->access_options);
 			foreach($access_for_users as $user_id => $username)
 			{
@@ -495,7 +537,7 @@ class SwiftSettings
 				$a = 0;
 				foreach($this->access_options as $key => $title)
 				{
-					$cur_info = settings_get_access($access_info, $user_id, $key);
+					$cur_info = $this->get_user_access($access_info, $user_id, $key);
 
 					if (!empty($cur_info) && $cur_info['a_key'] == $key)
 					{
@@ -515,11 +557,11 @@ class SwiftSettings
 
 				echo '</tr>';
 			}
-		?>
+?>
 				</tbody>
 			</table>
 		</form>
-		<?php
+<?php
 		}
 	}
 
@@ -550,7 +592,7 @@ class SwiftSettings
 		
 		if (!empty($access_for_groups))
 		{
-		?>
+?>
 		<div class="card-header">
 			<h6 class="card-title mb-0">Available group permissions</h6>
 		</div>
@@ -560,15 +602,15 @@ class SwiftSettings
 				<thead>
 					<tr>
 						<th>Group name</th>
-		<?php
+<?php
 			foreach($this->access_options as $key => $title)
 				echo '<th>'.$title.'</th>';
-		?>
+?>
 						<th></th>
 					</tr>
 				</thead>
 				<tbody>
-		<?php
+<?php
 			$num_options = count($this->access_options);
 			foreach($access_for_groups as $gid => $username)
 			{
@@ -578,7 +620,7 @@ class SwiftSettings
 				$a = 0;
 				foreach($this->access_options as $key => $title)
 				{
-					$cur_info = settings_get_group_access($access_info, $gid, $key);
+					$cur_info = $this->get_group_access($access_info, $gid, $key);
 		
 					if (!empty($cur_info) && $cur_info['a_key'] == $key)
 					{
@@ -598,11 +640,94 @@ class SwiftSettings
 		
 				echo '</tr>';
 			}
-		?>
+?>
 				</tbody>
 			</table>
 		</form>
-		<?php
+<?php
+		}
+	}
+
+	function getGroupNotifications()
+	{
+		global $DBLayer, $URL;
+
+		$query = [
+			'SELECT'	=> 'n.*, g.g_id, g.g_title',
+			'FROM'		=> 'user_notifications AS n',
+			'JOINS'		=> [
+				[
+					'INNER JOIN'	=> 'groups AS g',
+					'ON'			=> 'g.g_id=n.n_gid'
+				],
+			],
+			'WHERE'		=> 'n.n_to=\''.$DBLayer->escape($this->rules_to).'\'',
+			'ORDER BY'	=> 'g.g_title',
+		];
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		$notifications_info = $notifications_for_groups = [];
+		while ($row = $DBLayer->fetch_assoc($result)) {
+			$notifications_info[] = $row;
+		
+			if (!isset($notifications_for_groups[$row['g_id']]))
+				$notifications_for_groups[$row['g_id']] = $row['g_title'];
+		}
+		
+		if (!empty($notifications_for_groups))
+		{
+?>
+		<div class="card-header">
+			<h6 class="card-title mb-0">Available Group notifications</h6>
+		</div>
+		<form method="post" accept-charset="utf-8" action="">
+			<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
+			<table class="table table-sm table-striped">
+				<thead>
+					<tr>
+						<th>Group name</th>
+<?php
+			foreach($this->notifications_options as $key => $title)
+				echo '<th>'.$title.'</th>';
+?>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+<?php
+			$num_options = count($this->notifications_options);
+			foreach($notifications_for_groups as $group_id => $name)
+			{
+				echo '<tr>';
+				echo '<td><h6><a href="'.$URL->link('user', $group_id).'">'.html_encode($name).'</a></h6></td>';
+		
+				$n = 0;
+				foreach($this->notifications_options as $key => $title)
+				{
+					$cur_info = $this->get_group_notification($notifications_info, $group_id, $key);
+		
+					if (!empty($cur_info) && $cur_info['n_key'] == $key)
+					{
+						echo '<input type="hidden" name="notifications_keys['.$group_id.'][]" value="'.$key.'">';
+		
+						$checked = ($cur_info['n_value'] == 1) ? 'checked' : '';
+						echo '<td><div class="form-check form-switch"><input type="checkbox" class="form-check-input start-50" onchange="updateRules(3, '.$cur_info['id'].')" id="notification_'.$cur_info['id'].'" '.$checked.'></div></td>';
+		
+						++$n;
+					}
+				}
+		
+				if ($num_options > $n)
+					echo '<td><button type="submit" name="fix_group_notifications['.$group_id.']" class="badge bg-success ms-1">Update</button></td>';
+		
+				echo '<td><button type="submit" name="delete_group_notifications['.$group_id.']" class="badge bg-danger float-end" onclick="return confirm(\'Are you sure you want to delete all notifications for this user?\')">Delete</button></td>';
+		
+				echo '</tr>';
+			}
+?>
+				</tbody>
+			</table>
+		</form>
+<?php
 		}
 	}
 
@@ -635,7 +760,7 @@ class SwiftSettings
 		{
 		?>
 		<div class="card-header">
-			<h6 class="card-title mb-0">Available user notifications</h6>
+			<h6 class="card-title mb-0">Available User notifications</h6>
 		</div>
 		<form method="post" accept-charset="utf-8" action="">
 			<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
@@ -661,7 +786,7 @@ class SwiftSettings
 				$n = 0;
 				foreach($this->notifications_options as $key => $title)
 				{
-					$cur_info = get_cur_notification($notifications_info, $user_id, $key);
+					$cur_info = $this->get_user_notification($notifications_info, $user_id, $key);
 		
 					if (!empty($cur_info) && $cur_info['n_key'] == $key)
 					{
@@ -753,5 +878,47 @@ class SwiftSettings
 		</script>
 
 <?php
+	}
+
+	// Helpers
+	function get_group_access($access_info, $gid, $key)
+	{
+		$output = [];
+		foreach($access_info as $cur_access)
+		{
+			if ($cur_access['a_gid'] == $gid && $cur_access['a_key'] == $key)
+				$output = $cur_access;
+		}
+		return $output;
+	}
+	function get_user_access($access_info, $user_id, $key)
+	{
+		$output = [];
+		foreach($access_info as $cur_access)
+		{
+			if ($cur_access['a_uid'] == $user_id && $cur_access['a_key'] == $key)
+				$output = $cur_access;
+		}
+		return $output;
+	}
+	function get_group_notification($info, $gid, $key)
+	{
+		$output = [];
+		foreach($info as $cur_access)
+		{
+			if ($cur_access['n_gid'] == $gid && $cur_access['n_key'] == $key)
+				$output = $cur_access;
+		}
+		return $output;
+	}
+	function get_user_notification($notifications_info, $user_id, $key)
+	{
+		$output = [];
+		foreach($notifications_info as $cur_notifications)
+		{
+			if ($cur_notifications['n_uid'] == $user_id && $cur_notifications['n_key'] == $key)
+				$output = $cur_notifications;
+		}
+		return $output;
 	}
 }

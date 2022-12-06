@@ -253,7 +253,7 @@ if ($action == 'pdf')
 			<hr class="my-1">
 			<a href="<?php echo $URL->link('hca_ui_checklist', 0).'&property_id='.$main_info['property_id'] ?>" class="badge bg-light text-primary border border-secondary mb-1">Start New Inspection</a>
 			<a href="<?php echo $URL->link('hca_ui_checklist', $id) ?>" class="badge bg-light text-primary border border-secondary mb-1">Back to Checklist</a>
-			<a href="<?php echo $URL->link('hca_ui_inspections', 0).'&property_id='.$main_info['property_id'] ?>" class="badge bg-light text-primary border border-secondary mb-1">Work Orders of <?php echo html_encode($main_info['pro_name']) ?></a>
+			<a href="<?php echo $URL->genLink('hca_ui_inspections', ['property_id' => $main_info['property_id']]) ?>" class="badge bg-light text-primary border border-secondary mb-1">Work Orders of <?php echo html_encode($main_info['pro_name']) ?></a>
 		</div>
 <?php else: ?>
 		<div class="alert alert-warning mb-3" role="alert">
@@ -261,7 +261,7 @@ if ($action == 'pdf')
 			<hr class="my-1">
 			<a href="<?php echo $URL->link('hca_ui_checklist', 0).'&property_id='.$main_info['property_id'] ?>" class="badge bg-light text-primary border border-secondary mb-1">Start New Inspection</a>
 			<a href="<?php echo $URL->link('hca_ui_checklist', $id) ?>" class="badge bg-light text-primary border border-secondary mb-1">Back to Checklist</a>
-			<a href="<?php echo $URL->link('hca_ui_inspections', 0).'&property_id='.$main_info['property_id'] ?>" class="badge bg-light text-primary border border-secondary mb-1">Work Orders of <?php echo html_encode($main_info['pro_name']) ?></a>
+			<a href="<?php echo $URL->genLink('hca_ui_inspections', ['property_id' => $main_info['property_id']]) ?>" class="badge bg-light text-primary border border-secondary mb-1">Work Orders of <?php echo html_encode($main_info['pro_name']) ?></a>
 		</div>
 <?php endif; ?>
 
@@ -506,7 +506,7 @@ if ($User->checkAccess('hca_ui', 17))
 			],
 		],
 		'WHERE'		=> 'a.checklist_id='.$id,
-		'ORDER BY'	=> 'a.time_submitted'
+		'ORDER BY'	=> 'a.time_submitted DESC'
 	];
 	if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);

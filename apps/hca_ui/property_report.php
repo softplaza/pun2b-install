@@ -29,6 +29,7 @@ if ($search_by_property_id > 0)
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	$cur_property_info = $DBLayer->fetch_assoc($result);
 
+	// Get all items found in inspections
 	$HcaUIPropertyReport->genItemsData();
 
 	// Generate parameters for Printing List of Items
@@ -156,26 +157,102 @@ if ($search_by_property_id > 0)
 </div>	
 
 
-<?php if ($search_by_job_type == 0): ?>
+<?php
+$total_items_pending = $total_items_replaced = $total_items_repaired = 0;
+if ($search_by_job_type == 1)
+{
+?>
+
 <div class="card-header">
-	<h6 class="card-title mb-0 text-primary">List of Pending items</h6>
+	<h6 class="card-title mb-0 text-primary">List of Replaced & Repaired items</h6>
 </div>	
 <table class="table table-striped table-bordered">
 	<thead>
 		<tr>
 			<th>Part #</th>
 			<th>Location - Item name</th>
-			<th class="<?=($search_by_job_type == 1 ? 'bg-success' : 'bg-danger')?> text-white"><?=($search_by_job_type == 1 ? 'Replaced' : 'Pending')?></th>
+			<th class="bg-primary">Replaced</th>
+			<th class="bg-info">Repaired</th>
 		</tr>
 	</thead>
 	<tbody>
-<?php
 
-	$total_pending = 0;
+<?php
 	foreach($HcaUIPropertyReport->hca_ui_items as $cur_info)
 	{
-		if ($cur_info['location_id'] < 3 || $cur_info['location_id'] == 100 || ($HcaUIPropertyReport->has_mbath && $cur_info['location_id'] == 3) || ($HcaUIPropertyReport->has_hbath && $cur_info['location_id'] == 4))
-		{
+		//if ($cur_info['location_id'] < 3 || $cur_info['location_id'] == 100 || ($HcaUIPropertyReport->has_mbath && $cur_info['location_id'] == 3) || ($HcaUIPropertyReport->has_hbath && $cur_info['location_id'] == 4))
+		//{
+			$num_items_replaced = isset($HcaUIPropertyReport->num_items_replaced[$cur_info['item_id']]) ? $HcaUIPropertyReport->num_items_replaced[$cur_info['item_id']] : 0;
+
+			$num_items_repaired = isset($HcaUIPropertyReport->num_items_repaired[$cur_info['item_id']]) ? $HcaUIPropertyReport->num_items_repaired[$cur_info['item_id']] : 0;
+
+			if ($num_items_replaced > 0 || $num_items_repaired > 0)
+			{
+				$item_name = $HcaUnitInspection->getLocation($cur_info['location_id']).' -> '.$HcaUnitInspection->getEquipment($cur_info['equipment_id']).' -> '.html_encode($cur_info['item_name']);
+				
+				$sub_link_args = [
+					'property_id'		=> $search_by_property_id,
+					'inspection_type'	=> $search_by_inspection_type,
+					'item_id'			=> $cur_info['id'],
+					'job_type'			=> $search_by_job_type,
+				];
+?>
+		<tr>
+			<td class="fw-bold"><?=html_encode($cur_info['part_number'])?></td>
+			<td class="fw-bold"><a href="<?=$URL->genLink('hca_ui_property_report', $sub_link_args)?>"><?=$item_name?></a></td>
+			<td class="ta-center fw-bold"><?=$num_items_replaced?></td>
+			<td class="ta-center fw-bold"><?=$num_items_repaired?></td>
+		</tr>
+<?php
+				$total_items_replaced = $total_items_replaced + $num_items_replaced;
+				$total_items_repaired = $total_items_repaired + $num_items_repaired;
+			}
+		//}
+	}
+?>
+	</tbody>
+	<tfoot>
+		<tr>
+			<td></td>
+			<td class="ta-right fw-bold">Total: </td>
+			<td class="ta-center fw-bold"><?php echo $total_items_replaced ?></td>
+			<td class="ta-center fw-bold"><?php echo $total_items_repaired ?></td>
+		</tr>
+	</tfoot>
+</table>
+<?php 
+}
+else
+{
+	$sub_link_args = [
+		'section'			=> 'pending_items',
+		'property_id'		=> $search_by_property_id,
+		'inspection_type'	=> $search_by_inspection_type,
+		'job_type'			=> $search_by_job_type,
+		'date_inspected'	=> $search_by_date_inspected,
+		'year'				=> $search_by_year
+	];
+?>
+
+<div class="card-header d-flex justify-content-between">
+	<h6 class="card-title mb-0">List of pending items</h6>
+	<a href="<?=$URL->genLink('hca_ui_print', $sub_link_args)?>" target="_blank"><i class="fas fa-print fa-lg"></i></a>
+</div>	
+<table class="table table-striped table-bordered">
+	<thead>
+		<tr>
+			<th>Part #</th>
+			<th>Location - Item name</th>
+			<th class="bg-danger">Pending</th>
+		</tr>
+	</thead>
+	<tbody>
+
+<?php
+	foreach($HcaUIPropertyReport->hca_ui_items as $cur_info)
+	{
+		//if ($cur_info['location_id'] < 3 || $cur_info['location_id'] == 100 || ($HcaUIPropertyReport->has_mbath && $cur_info['location_id'] == 3) || ($HcaUIPropertyReport->has_hbath && $cur_info['location_id'] == 4))
+		//{
 			if (isset($HcaUIPropertyReport->num_items_pending[$cur_info['item_id']]))
 			{
 				$item_name = $HcaUnitInspection->getLocation($cur_info['location_id']).' -> '.$HcaUnitInspection->getEquipment($cur_info['equipment_id']).' -> '.html_encode($cur_info['item_name']);
@@ -193,9 +270,9 @@ if ($search_by_property_id > 0)
 			<td class="ta-center fw-bold"><?=$HcaUIPropertyReport->num_items_pending[$cur_info['item_id']]?></td>
 		</tr>
 <?php
-				$total_pending = $total_pending + $HcaUIPropertyReport->num_items_pending[$cur_info['item_id']];
+				$total_items_pending = $total_items_pending + $HcaUIPropertyReport->num_items_pending[$cur_info['item_id']];
 			}
-		}
+		//}
 	}
 ?>
 	</tbody>
@@ -203,16 +280,21 @@ if ($search_by_property_id > 0)
 		<tr>
 			<td></td>
 			<td class="ta-right fw-bold">Total: </td>
-			<td class="ta-center fw-bold"><?php echo $total_pending ?></td>
+			<td class="ta-center fw-bold"><?php echo $total_items_pending ?></td>
 		</tr>
 	</tfoot>
 </table>
-<?php endif; ?>
+<?php 
+}
+	// 1. Get all Inspections & WO first
+	$HcaUIPropertyReport->getInspectionsData();
+	// 2. Get WO by ids
+	$HcaUIPropertyReport->getWorkOrderData();
 
 
-<?php
 
-	$HcaUIPropertyReport->getChecklistData();
+	//$HcaUIPropertyReport->getChecklistData();
+
 	$number_work_orders = $wo_total_pending = $wo_total_replaced = $wo_total_repaired = 0;
 
 	if (!empty($HcaUIPropertyReport->work_orders_info))
@@ -247,14 +329,14 @@ if ($search_by_property_id > 0)
 		{
 			$num_pending = $num_replaced = $num_repaired = 0;
 
-			if ($cur_info['num_problem'] > 0 && $cur_info['work_order_completed'] == 2)
-				$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['id']).'" class="badge bg-success text-white">Completed</a>';
-			else if ($cur_info['num_problem'] == 0 && $cur_info['inspection_completed'] == 2)
-				$status = '<a href="'.$URL->link('hca_ui_checklist', $cur_info['id']).'" class="badge bg-success text-white">Completed</a>';
-			else if ($cur_info['num_problem'] > 0 && $cur_info['work_order_completed'] == 1)
-				$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['id']).'" class="badge bg-primary text-white">Pending</a>';
+			if ($cur_info['work_order_completed'] == 2)
+				$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['id']).'" class="badge badge-success">Completed</a>';
+			//else if ($cur_info['num_problem'] == 0 && $cur_info['inspection_completed'] == 2)
+			//	$status = '<a href="'.$URL->link('hca_ui_checklist', $cur_info['id']).'" class="badge badge-success text-white">Completed</a>';
+			//else if ($cur_info['num_problem'] > 0 && $cur_info['work_order_completed'] == 1)
+			//	$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['id']).'" class="badge badge-primary text-white">Pending</a>';
 			else
-				$status = '<a href="'.$URL->link('hca_ui_checklist', $cur_info['id']).'" class="badge bg-primary text-white">Pending</a>';
+				$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['id']).'" class="badge badge-primary">Pending</a>';
 
 			$list_of_problems = [];
 			if (!empty($HcaUIPropertyReport->hca_ui_checklist_items))
@@ -342,7 +424,7 @@ if ($search_by_property_id > 0)
 <?php
 	}
 
-
+	
 	if (!empty($HcaUIPropertyReport->inspections_info))
 	{
 ?>
@@ -372,14 +454,14 @@ if ($search_by_property_id > 0)
 		{
 			$num_pending = 0;
 
-			if ($cur_info['num_problem'] > 0 && $cur_info['work_order_completed'] == 2)
-				$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['id']).'" class="badge bg-success text-white">Completed</a>';
-			else if ($cur_info['num_problem'] == 0 && $cur_info['inspection_completed'] == 2)
-				$status = '<a href="'.$URL->link('hca_ui_checklist', $cur_info['id']).'" class="badge bg-success text-white">Completed</a>';
-			else if ($cur_info['num_problem'] > 0 && $cur_info['work_order_completed'] == 1)
-				$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['id']).'" class="badge bg-primary text-white">Pending</a>';
+			//if ($cur_info['num_problem'] > 0 && $cur_info['work_order_completed'] == 2)
+			//	$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['id']).'" class="badge badge-success">Completed WO</a>';
+			if ($cur_info['inspection_completed'] == 2)
+				$status = '<a href="'.$URL->link('hca_ui_checklist', $cur_info['id']).'" class="badge badge-success">Completed</a>';
+			//else if ($cur_info['num_problem'] > 0 && $cur_info['work_order_completed'] == 1)
+			//	$status = '<a href="'.$URL->link('hca_ui_work_order', $cur_info['id']).'" class="badge badge-primary">Pending WO</a>';
 			else
-				$status = '<a href="'.$URL->link('hca_ui_checklist', $cur_info['id']).'" class="badge bg-primary text-white">Pending</a>';
+				$status = '<a href="'.$URL->link('hca_ui_checklist', $cur_info['id']).'" class="badge badge-warning">Pending</a>';
 
 			$list_of_problems = [];
 			if (!empty($HcaUIPropertyReport->hca_ui_checklist_items))
@@ -461,12 +543,16 @@ if ($search_by_property_id > 0)
 	<h6 class="card-title mb-0 text-primary">List of never inspected units (<?php echo $HcaUIPropertyReport->num_never_inspected ?>)</h6>
 </div>
 <div class="mb-3">
-	<div class="callout callout-primary">
-		<p class="text-muted">This unit list displays never inspected units for the selected period. This takes into all Plumbing Inspections and any Work Order statuses.</p>
+<?php if (!empty($HcaUIPropertyReport->unispected_units)): ?>
+	<div class="callout callout-info">
+		<h6 class="text-muted">List of never inspected units for the selected period. To check Unit History click on the links below.</h6>
+		<p class="fw-bold"><?php echo implode(' ', $HcaUIPropertyReport->unispected_units) ?></p>
 	</div>
-	<div class="alert alert-warning" role="alert">
-		<p class="fw-bold"><?php echo implode(', ', $HcaUIPropertyReport->unispected_units) ?></p>
+<?php else: ?>
+	<div class="alert alert-warning py-2" role="alert">
+		<p>The property does not have any units that have never been inspected for selected period.</p>
 	</div>
+<?php endif; ?>
 </div>
 
 <?php
@@ -495,7 +581,7 @@ if ($search_by_property_id > 0)
 		$chart_column_label_3 = '"Never inspected units"';
 
 		$chart_column_total_1 = $number_work_orders;
-		$chart_column_total_2 = $total_pending;
+		$chart_column_total_2 = $total_items_pending;
 		$chart_column_total_3 = $HcaUIPropertyReport->num_never_inspected;
 
 		$chart_column_color_1 = 'window.theme.warning';

@@ -68,6 +68,89 @@ if (isset($_POST['reassign']))
 		$DBLayer->insert_values('hca_ui_actions', $action_data);
 
 		$FlashMessenger->add_info($flash_message);
+		//redirect(add_url_args(['id' => $checklist_id]), $flash_message);
+		redirect('', $flash_message);
+	}
+}
+
+else if (isset($_POST['reassign_more']))
+{
+	$user_id = intval($_POST['user_id']);
+	
+	if ($user_id == 0)
+		$Core->add_error('Select an user.');
+
+	if (isset($_POST['checklists']) && empty($_POST['checklists']))
+		$Core->add_error('Select units for reassigning.');
+
+	if (empty($Core->errors))
+	{
+		$query = array(
+			'SELECT'	=> 'u.realname, u.email',
+			'FROM'		=> 'users AS u',
+			'WHERE'		=> 'u.id='.$user_id,
+		);
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		$user_info = $DBLayer->fetch_assoc($result);
+
+		if (isset($_POST['checklists']) && !empty($_POST['checklists']))
+		{
+			$ids = array_keys($_POST['checklists']);
+
+			$property_name = '';
+			$query = array(
+				'SELECT'	=> 'ch.*, p.pro_name, un.unit_number',
+				'FROM'		=> 'hca_ui_checklist AS ch',
+				'JOINS'		=> [
+					[
+						'INNER JOIN'	=> 'sm_property_db AS p',
+						'ON'			=> 'p.id=ch.property_id'
+					],
+					[
+						'LEFT JOIN'		=> 'sm_property_units AS un',
+						'ON'			=> 'un.id=ch.unit_id'
+					],
+				],
+				'WHERE'		=> 'ch.id IN ('.implode(',', $ids).')'
+			);
+			$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+			$checklist_info = $units = [];
+			while ($row = $DBLayer->fetch_assoc($result)) {
+				$checklist_info[] = $row;
+				$units[] = $row['unit_number'];
+				$property_name = $row['pro_name'];
+			}
+
+			$query = array(
+				'UPDATE'	=> 'hca_ui_checklist',
+				'SET'		=> 'owned_by='.$user_id,
+				'WHERE'		=> 'id IN ('.implode(',', $ids).')'
+			);
+			$DBLayer->query_build($query) or error(__FILE__, __LINE__);
+
+			foreach($ids as $checklist_id)
+			{
+				$action_data = [
+					'checklist_id'			=> $checklist_id,
+					'submitted_by'			=> $User->get('id'),
+					'time_submitted'		=> time(),
+					'action'				=> 'Project was reassigned to '.html_encode($user_info['realname'])
+				];
+				$DBLayer->insert_values('hca_ui_actions', $action_data);
+			}
+		}
+
+		$SwiftMailer = new SwiftMailer;
+		//$SwiftMailer->isHTML();
+
+		$mail_message = 'Hello '.html_encode($user_info['realname'])."\n\n";
+		$mail_message .= 'You are assigned for following units: '.implode(', ', $units)."\n\n";
+		$mail_message .= 'Property name: '.html_encode($property_name)."\n\n";
+		$mail_message .= 'To manage the projects follow this link: '.get_current_url();
+		$SwiftMailer->send($user_info['email'], 'HCA: Plumbing Inspections', $mail_message);
+
+		$flash_message = html_encode($user_info['realname']).' has been assigned to the following units: '.implode(', ', $units);
+		$FlashMessenger->add_info($flash_message);
 		redirect('', $flash_message);
 	}
 }
@@ -98,6 +181,7 @@ else if (isset($_POST['send_email']))
 		$DBLayer->insert_values('hca_ui_actions', $action_data);
 
 		$FlashMessenger->add_info($flash_message);
+		//redirect(add_url_args(['id' => $checklist_id]), $flash_message);
 		redirect('', $flash_message);
 	}
 }
@@ -129,15 +213,14 @@ else if ($search_by_date_from != '')
 if ($search_by_user_id > 0)
 	$search_query[] = '(c.owned_by='.$search_by_user_id.' OR c.inspected_by='.$search_by_user_id.' OR c.completed_by='.$search_by_user_id.' OR c.updated_by='.$search_by_user_id.')';
 
-if ($search_by_status > 0)
-{
-	if ($search_by_status == 1) // pending inspections
-		$search_query[] = 'c.inspection_completed=1';
-	else if ($search_by_status == 2) // pending WO
-		$search_query[] = 'c.work_order_completed=1 AND c.inspection_completed=2 AND c.num_problem > 0'; // AND c.num_problem > 0
-	else if ($search_by_status == 3)
-		$search_query[] = 'c.inspection_completed=2 AND c.work_order_completed=2';
-}
+if ($search_by_status == 1) // pending inspections
+	$search_query[] = 'c.inspection_completed=1';
+else if ($search_by_status == 2) // pending WO
+	$search_query[] = 'c.work_order_completed=1 AND c.inspection_completed=2 AND c.num_problem > 0'; // AND c.num_problem > 0
+else if ($search_by_status == 3)
+	$search_query[] = 'c.work_order_completed=1 AND c.inspection_completed=2 AND c.num_problem > 0'; // Emergency WO
+else if ($search_by_status == 4)
+	$search_query[] = 'c.inspection_completed=2 AND c.work_order_completed=2';
 
 if ($search_by_key_word != '') {
 	$search_by_key_word2 = '%'.$search_by_key_word.'%';
@@ -238,6 +321,9 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	$users_info[] = $row;
 }
 
+if ($search_by_property_id > 0)
+	$SwiftMenu->addNavAction('<li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalWindow2"><i class="fas fa-share fa-1x" aria-hidden="true"></i> Reassign all</a></li>');
+
 // Serch by: 1 -Property 2 - Unit 3 - Status (pending, completed)
 $Core->set_page_id('hca_ui_inspections', 'hca_ui');
 require SITE_ROOT.'header.php';
@@ -271,7 +357,7 @@ foreach ($property_info as $val)
 					<select name="status" class="form-select-sm">
 						<option value="0">All Statuses</option>
 <?php
-$work_statuses = [1 => 'Pending Inspections', 2 => 'Pending Work Orders', 3 => 'Completed'];
+$work_statuses = [1 => 'Pending Inspections', 2 => 'Pending Work Orders', 3 => 'Emergency Work Orders', 4 => 'Completed'];
 foreach ($work_statuses as $key => $val)
 {
 	if ($search_by_status == $key) {
@@ -369,12 +455,17 @@ if (!empty($main_info))
 		$hca_ui_checklist_items[] = $row;
 	}
 
+	$unit_numbers = [];
 	foreach($main_info as $cur_info)
 	{
+		$unit_numbers[$cur_info['id']] = $cur_info['unit_number'];
+
 		$tr_css = [];
 		if ($cur_info['id'] == $id) $tr_css[] = 'anchor';
 
 		$td1 = [];
+		$td1[] = '<p class="fw-bold">'.html_encode($cur_info['pro_name']).'</p>';
+
 		if ($access11)
 			$Core->add_dropdown_item('<a href="'.$URL->link('hca_ui_checklist', $cur_info['id']).'"><i class="fas fa-edit"></i> CheckList</a>');
 
@@ -391,18 +482,18 @@ if (!empty($main_info))
 		}
 
 		if ($cur_info['inspection_completed'] == 2 && $cur_info['work_order_completed'] == 2 || $cur_info['inspection_completed'] == 2 && $cur_info['num_problem'] == 0)
-			$td1[] = '<p class="badge badge-success mb-1">Completed</p>';
+			$td1['status'] = '<p class="badge badge-success mb-1">Completed</p>';
 		else if ($cur_info['inspection_completed'] == 1)
-			$td1[] = '<p class="badge badge-warning mb-1">Pending inspection</p>';
+			$td1['status'] = '<p class="badge badge-warning mb-1">Pending inspection</p>';
 		else if ($cur_info['work_order_completed'] == 1 && $cur_info['num_problem'] > 0)
-			$td1[] = '<p class="badge badge-primary mb-1">Pending Work Order</p>';	
+			$td1['status'] = '<p class="badge badge-primary mb-1">Pending Work Order</p>';	
 
 		if (in_array($cur_info['id'], $uploader_info))
 			$td1[] = '<p><a href="'.$URL->link('hca_ui_files', $cur_info['id']).'" class="btn btn-sm btn-outline-success">Files</a></p>';
 
-
 		$list_of_problems = [];
 		$req_appendixb = false;
+		$has_problem = false;
 		if (!empty($hca_ui_checklist_items))
 		{
 			foreach($hca_ui_checklist_items as $checklist_items)
@@ -425,8 +516,16 @@ if (!empty($main_info))
 					if ($checklist_items['job_type'] == 0 && ($cur_info['inspection_completed'] == 1 || $cur_info['work_order_completed'] == 1 && $cur_info['num_problem'] > 0))
 					{
 						$problem_ids_arr = explode(',', $checklist_items['problem_ids']);
-						if (in_array(8, $problem_ids_arr)) $tr_css[] = 'table-danger';
-						else if (in_array(22, $problem_ids_arr)) $tr_css[] = 'table-danger';
+						if (in_array(8, $problem_ids_arr))
+						{
+							$td1['status'] = '<p class="badge badge-danger mb-1">Emergency WO</p>';
+							$has_problem = true;
+						}
+						else if (in_array(22, $problem_ids_arr))
+						{
+							$td1['status'] = '<p class="badge badge-danger mb-1">Emergency WO</p>';
+							$has_problem = true;
+						}
 					}
 				}
 			}
@@ -437,6 +536,10 @@ if (!empty($main_info))
 					$Core->add_dropdown_item('<a href="'.$URL->link('hca_ui_appendixb', $cur_info['id']).'"><i class="fas fa-file-pdf"></i> Add Appendix-B</a>');
 			}
 		}
+		$td1[] = '<span class="float-end">'.$Core->get_dropdown_menu($cur_info['id']).'</span>';
+
+		if (!$has_problem && $search_by_status == 3)
+			continue;
 
 		$time_inspection_start = ($cur_info['time_inspection_start'] != '00:00:00') ? ' at '.format_date($cur_info['time_inspection_start'], 'g:i a') : '';
 		$time_completion_end = (format_date($cur_info['date_completed']) != '') ? ' at '.format_date($cur_info['time_completion_end'], 'g:i a') : '';
@@ -450,11 +553,7 @@ if (!empty($main_info))
 		$work_order_comment = ($search_by_key_word != '') ? preg_replace('/'.$search_by_key_word.'/i', $search_str, $cur_info['work_order_comment']) : html_encode($cur_info['work_order_comment']);
 ?>
 			<tr id="row<?php echo $cur_info['id'] ?>" class="<?php echo implode(' ', $tr_css) ?>">
-				<td>
-					<p class="fw-bold"><?php echo html_encode($cur_info['pro_name']) ?></p>
-					<span class="float-start"><?php echo implode("\n", $td1) ?></span>
-					<span class="float-end"><?php echo $Core->get_dropdown_menu($cur_info['id']) ?></span>
-				</td>
+				<td><?php echo implode("\n", $td1) ?></td>
 				<td class="fw-bold ta-center"><?php echo $cur_info['unit_number'] ?></td>
 				<td><?php echo implode("\n", $list_of_problems) ?></td>
 				<td class="ta-center">
@@ -496,7 +595,7 @@ if (empty($main_info))
 				<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 				<div class="modal-header">
 					<h5 class="modal-title">Send Email</h5>
-					<button type="button" class="btn-close bg-danger" data-bs-dismiss="modal" aria-label="Close" onclick="closeModalWindow()"></button>
+					<button type="button" class="btn-close bg-danger" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
 					<!--modal_fields-->
@@ -509,7 +608,72 @@ if (empty($main_info))
 	</div>
 </div>
 
+<div class="modal fade" id="modalWindow2" tabindex="-1" aria-labelledby="modalWindowLabel2" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<form method="post" accept-charset="utf-8" action="">
+				<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
+				<div class="modal-header">
+					<h5 class="modal-title">Reassigning Inspections & Work Orders</h5>
+					<button type="button" class="btn-close bg-danger" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<!--modal_fields-->
+
+					<div class="mb-3">
+						<label class="form-label">Reassign to:</label>
+						<select name="user_id" class="form-select form-select-sm" required>
+							<option value="" selected disabled>Select one</option>
+<?php
+foreach ($users_info as $user_info)
+{
+	if ($search_by_user_id == $user_info['id'] || $User->get('id') == $user_info['id'])
+		echo '<option value="'.$user_info['id'].'" selected>'.$user_info['realname'].'</option>';
+	else
+		echo '<option value="'.$user_info['id'].'">'.$user_info['realname'].'</option>';
+}
+?>
+						</select>
+					</div>
+					<div class="mb-3">
+						<div class="mb-2">
+							<span class="ms-2"><input type="checkbox" id="fld_uncheck" checked onclick="checkUncheckCheckbox();"><label class="form-label ms-2" for="fld_uncheck">Check/Uncheck</label></span>
+						</div>
+
+<?php
+$found_units = [];
+if (!empty($unit_numbers))
+{
+	asort($unit_numbers);
+	foreach($unit_numbers as $key => $val)
+	{
+		$found_units[] = '<span class="badge badge-primary me-2 mb-2 checklists-units"><input type="checkbox" name="checklists['.$key.']" value="1" id="checklists'.$key.'" checked><label class="ps-2" for="checklists'.$key.'">'.$val.'</label></span>';
+	}
+}
+?>
+						<div>
+							<?=implode('', $found_units)?>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<!--modal_buttons-->
+					<button type="submit" name="reassign_more" class="btn btn-primary">Submit</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <script>
+function checkUncheckCheckbox(){
+	if($('#fld_uncheck').is(':checked')){
+		$('.checklists-units input').prop("checked", true);
+	} else {
+		$('.checklists-units input').prop("checked", false);
+	}
+}
+
 function reassignProject(id) {
 	var csrf_token = "<?php echo generate_form_token($URL->link('hca_ui_ajax_reassign_project')) ?>";
 	jQuery.ajax({
@@ -554,4 +718,8 @@ function closeModalWindow(){
 </script>
 
 <?php
+
+add_url_args(['id' => 35]);
+
+
 require SITE_ROOT.'footer.php';

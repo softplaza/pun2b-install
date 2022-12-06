@@ -35,6 +35,28 @@ if (isset($_POST['complete']))
 	];
 	$DBLayer->update('hca_wom_tasks', $form_data, $id);
 
+	$task_info = $HcaWOM->getTaskInfo($id);
+	if (isset($task_info['requested_email']) && $form_data['completed'] == 1 && $task_info['completed'] == 0)
+	{
+		$SwiftMailer = new SwiftMailer;
+		//$SwiftMailer->isHTML();
+
+		$mail_subject = 'Property Work Order #'.$task_info['work_order_id'];
+		$mail_message = [];
+		$mail_message[] = 'Hello '.$task_info['requested_name'];
+		$mail_message[] = 'Work Order #'.$task_info['work_order_id'].' is ready for review.';
+		$mail_message[] = 'Property: '.$task_info['pro_name'];
+		$mail_message[] = 'Unit: '.$task_info['unit_number'];
+		
+		if ($task_info['tech_comment'] != '')
+			$mail_message[] = 'Comment: '.$task_info['tech_comment'];
+
+		$mail_message[] = 'To view follow this link:';
+		$mail_message[] = $URL->link('hca_wom_work_order', $task_info['work_order_id']);
+
+		$SwiftMailer->send($task_info['requested_email'], $mail_subject, implode("\n", $mail_message));
+	}
+
 	// Add flash message
 	$flash_message = 'Task #'.$id.' has been completed.';
 	$FlashMessenger->add_info($flash_message);
@@ -110,7 +132,7 @@ $task_info = $DBLayer->fetch_assoc($result);
 
 			<div class="card">
 				<div class="card-body">
-					<h5 class="mb-0"><?php echo $task_info['enter_permission'] == 1 ? '<i class="fa-solid fa-circle-exclamation text-warning"></i> Permission to Enter' : '<i class="fa-solid fa-circle-check text-primary"></i> OK to Enter' ?> </h5>
+					<h5 class="mb-1"><?php echo $task_info['enter_permission'] == 1 ? '<i class="fa-solid fa-circle-exclamation text-warning"></i> Permission to Enter' : '<i class="fa-solid fa-circle-check text-primary"></i> OK to Enter' ?> </h5>
 					<h5 class="mb-0"><?php echo $task_info['has_animal'] == 1 ? '<i class="fa-solid fa-circle-exclamation text-warning"></i> Pets in Unit' : '<i class="fa-solid fa-circle-check text-primary"></i> NO Pets' ?></h5>
 				</div>
 			</div>
@@ -122,10 +144,10 @@ $task_action = isset($HcaWOM->task_actions[$task_info['task_action']]) ? $HcaWOM
 				<div class="card-body">
 					<div class="d-flex justify-content-between mb-2">
 						<h6 class="mb-0"><?php echo html_encode($task_info['item_name']).' ('.$task_action ?>)</h6>
-						<h6 class="mb-0">Priority: <?php echo $HcaWOM->priority[$task_info['priority']] ?></h6>
+						<h6 class="mb-0">Priority: <?php echo (isset($HcaWOM->priority[$task_info['priority']]) ? $HcaWOM->priority[$task_info['priority']] : 'Low') ?></h6>
 					</div>
-					<div class="mb-1">
-						<div class="border p-1">
+					<div class="mb-0">
+						<div class="border bg-light p-1">
 							<?php echo html_encode($task_info['wo_message']) ?>
 						</div>
 					</div>
@@ -135,11 +157,11 @@ $task_action = isset($HcaWOM->task_actions[$task_info['task_action']]) ? $HcaWOM
 			<div class="card">
 				<div class="card-body">
 					<div class="input-group mb-2">
-						<span class="input-group-text">Start</span>
+						<span class="input-group-text w-25">Start</span>
 						<input class="form-control" type="time" name="time_start" id="fld_time_start" value="<?php echo ($task_info['time_start'] != '00:00:00') ? format_date($task_info['time_start'], 'H:i') : date('H:i') ?>" required>
 					</div>
 					<div class="input-group">
-						<span class="input-group-text">End&nbsp;</span>
+						<span class="input-group-text w-25">End&nbsp;</span>
 						<input class="form-control" type="time" name="time_end" id="fld_time_end" value="<?php echo ($task_info['time_end'] != '00:00:00') ? format_date($task_info['time_end'], 'H:i') : '' ?>" required>
 					</div>
 				</div>
@@ -147,23 +169,32 @@ $task_action = isset($HcaWOM->task_actions[$task_info['task_action']]) ? $HcaWOM
 
 			<div class="card">
 				<div class="card-body">
-					<?php $SwiftUploader->uploadImage('hca_wom_tasks', $id); ?>
+<?php
+if ($task_info['task_status'] < 4)
+{
+	$SwiftUploader->uploadImage('hca_wom_tasks', $id);
+}
+?>
 					<h6 class="mb-0"><strong id="num_images"><?=$SwiftUploader->getUploadedImages('hca_wom_tasks', $id)?></strong> uploaded images</h6>
 				</div>
 			</div>
 
 			<div class="card">
 				<div class="card-body">
-					<div class="input-group mb-3">
-						<div class="input-group-text">
+					<div class="row row-cols-2 mb-2 bg-light border p-2">
+						<div class="col-1">
 							<input class="form-check-input" type="checkbox" name="parts_installed" id="fld_parts_installed" value="1" <?php echo ($task_info['parts_installed'] == 1 ? ' checked' : '') ?>>
-							<label class="form-check-label fw-bold ms-1" for="fld_parts_installed">Replacement Parts Installed</label>
+						</div>
+						<div class="col-10">
+							<label class="form-check-label fw-bold float-start" for="fld_parts_installed">Replacement Parts Installed</label>
 						</div>
 					</div>
-					<div class="input-group mb-3">
-						<div class="input-group-text">
+					<div class="row row-cols-2 bg-light border p-2">
+						<div class="col-1">
 							<input class="form-check-input" type="checkbox" name="completed" id="fld_completed" value="1" <?php echo ($task_info['completed'] == 1 ? ' checked' : '') ?> onclick="checkCompletion()">
-							<label class="form-check-label fw-bold ms-1" for="fld_completed">Task Completed</label>
+						</div>
+						<div class="col-10">
+							<label class="form-check-label fw-bold float-start" for="fld_completed">Task Completed</label>
 						</div>
 					</div>
 				</div>
@@ -177,9 +208,13 @@ $task_action = isset($HcaWOM->task_actions[$task_info['task_action']]) ? $HcaWOM
 			</div>
 
 			<div class="card">
-				<div class="card-body">
-					<button type="submit" name="complete" class="btn btn-primary"><i class="fa-solid fa-circle-check"></i> Save and Close Task</button>
-					<a href="<?php echo $URL->link('hca_wom_tasks') ?>" class="btn btn-secondary text-white"><i class="fa-solid fa-circle-xmark"></i> Cancel</a>
+				<div class="card-body d-flex justify-content-between">
+<?php if ($task_info['task_status'] < 4): ?>
+					<button type="submit" name="complete" class="btn btn-primary"><i class="fa-solid fa-circle-check"></i> Save and Close</button>
+					<a href="<?php echo $URL->link('hca_wom_tasks') ?>" class="btn btn-secondary text-white"><i class="fa-solid fa-circle-xmark"></i> My Tasks</a>
+<?php else: ?>
+					<div class="callout callout-success mb-2">The task has been closed by property manager.</div>
+<?php endif; ?>
 				</div>
 			</div>
 

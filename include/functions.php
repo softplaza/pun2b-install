@@ -5,6 +5,41 @@
  * @package SwiftManager
  */
 
+ // if empty return current url. Example: add_url_args(['user_id' => $user_id])
+function add_url_args($args = [])
+{
+	$protocol = (empty($_SERVER['HTTPS']) || strtolower($_SERVER['HTTPS']) == 'off') ? 'http://' : 'https://';
+	$port = (isset($_SERVER['SERVER_PORT']) && (($_SERVER['SERVER_PORT'] != '80' && $protocol == 'http://') || ($_SERVER['SERVER_PORT'] != '443' && $protocol == 'https://')) && strpos($_SERVER['HTTP_HOST'], ':') === false) ? ':'.$_SERVER['SERVER_PORT'] : '';
+	$url = $protocol.$_SERVER['HTTP_HOST'].$port.$_SERVER['REQUEST_URI'];
+
+	$url_components = parse_url($url);
+
+	if (isset($url_components['query']) && isset($url_components['path']))
+	{
+		parse_str($url_components['query'], $params);
+		$new_args = array_merge($params, $args);
+
+		$output = $protocol.$_SERVER['HTTP_HOST'].$port.$url_components['path'];
+	
+		$first_arg = true;
+		if (!empty($new_args))
+		{
+			foreach($new_args as $k => $v)
+			{
+				if ($first_arg)
+				{
+					$output .= '?'.$k.'='.$v;
+					$first_arg = false;
+				}
+				else
+					$output .='&'.$k.'='.$v;
+			}
+		}
+	
+		return $output;
+	}
+}
+
 // Generate a hyperlink with parameters and anchor and a subsection such as a subpage
 // $args = is array of args
 function sublink($link, $sublink, $subarg, $args = null)
@@ -104,6 +139,7 @@ function format_date($date, $format = 'Y-m-d\TH:i:s')
 	return $output;
 }
 
+// Used in Hooks of Apps
 function check_app_access($access_info, $app_id = '')
 {
 	foreach($access_info as $cur_info)
@@ -158,6 +194,7 @@ function check_notification($notifications_info, $key, $app_id = '')
 	return false;
 }
 
+// moved - in progress - sterted
 function settings_get_access($access_info, $user_id, $key)
 {
 	$output = [];
@@ -168,6 +205,7 @@ function settings_get_access($access_info, $user_id, $key)
 	}
 	return $output;
 }
+// moved - in progress - sterted
 function settings_get_group_access($access_info, $gid, $key)
 {
 	$output = [];
@@ -188,6 +226,7 @@ function settings_get_permission($permissions_info, $user_id, $key)
 	}
 	return $output;
 }
+// moved - in progress - sterted
 function get_cur_notification($notifications_info, $user_id, $key)
 {
 	$output = [];
@@ -198,6 +237,9 @@ function get_cur_notification($notifications_info, $user_id, $key)
 	}
 	return $output;
 }
+// End SwiftSettings
+
+
 
 // Autoloading classes of current application
 function load_apps_classes($class_name)
@@ -1120,7 +1162,7 @@ function get_cur_url($params = '', $max_length = 0)
 	$port = (isset($_SERVER['SERVER_PORT']) && (($_SERVER['SERVER_PORT'] != '80' && $protocol == 'http://') || ($_SERVER['SERVER_PORT'] != '443' && $protocol == 'https://')) && strpos($_SERVER['HTTP_HOST'], ':') === false) ? ':'.$_SERVER['SERVER_PORT'] : '';
 
 	$url = $protocol.$_SERVER['HTTP_HOST'].$port.$_SERVER['REQUEST_URI'];
-	
+
 	if ($params != '' && (strpos($url, $params) === false))
 		$url .= ((strpos($url, '?') === false) ? '?' : '&').$params;
 	

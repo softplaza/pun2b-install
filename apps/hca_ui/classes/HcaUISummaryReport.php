@@ -10,7 +10,9 @@ class HcaUISummaryReport
 	var $hca_ui_checklist_items = [];
 	var $hca_ui_checklist = [];
 	var $hca_ui_checklist_ids = [];
+
 	// Found units for Never Inspected Units
+	var $found_property_ids = [];
 	var $found_units_ids = [];
 
 	var $wo_pending = [];
@@ -172,6 +174,7 @@ class HcaUISummaryReport
 			}
 
 			// if found any created inspections
+			$this->found_property_ids[$row['property_id']] = $row['property_id'];
 			$this->found_units_ids[$row['unit_id']] = $row['unit_id'];
 
 			if (strtotime($row['date_inspected']) > 0)
@@ -181,6 +184,7 @@ class HcaUISummaryReport
 		$query = array(
 			'SELECT'	=> 'un.id, un.unit_number, un.property_id',
 			'FROM'		=> 'sm_property_units AS un',
+			'WHERE'		=> 'un.property_id IN ('.implode(',', $this->found_property_ids).')',
 		);
 		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 		while ($row = $DBLayer->fetch_assoc($result))

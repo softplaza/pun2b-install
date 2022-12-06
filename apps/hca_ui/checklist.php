@@ -742,7 +742,7 @@ if ($User->checkAccess('hca_ui', 17))
 			],
 		],
 		'WHERE'		=> 'a.checklist_id='.$id,
-		'ORDER BY'	=> 'a.time_submitted'
+		'ORDER BY'	=> 'a.time_submitted DESC'
 	];
 	if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);

@@ -16,6 +16,9 @@ if (isset($_POST['add']))
 	$form_data = array(
 		'property_id'		=> isset($_POST['property_id']) ? intval($_POST['property_id']) : 0,
 		'unit_id'			=> isset($_POST['unit_id']) ? intval($_POST['unit_id']) : 0,
+		'priority'			=> isset($_POST['priority']) ? intval($_POST['priority']) : 1,
+		//'has_animal'		=> isset($_POST['has_animal']) ? intval($_POST['has_animal']) : 0,
+		//'enter_permission'	=> isset($_POST['enter_permission']) ? intval($_POST['enter_permission']) : 0,
 
 		'dt_created'		=> date('Y-m-d\TH:i:s'),
 		'requested_by'		=> $User->get('id'),
@@ -39,47 +42,41 @@ if (isset($_POST['add']))
 	}
 }
 
-else if (isset($_POST['update']) || isset($_POST['complete']))
+else if (isset($_POST['complete']))
 {
 	$form_data = array(
-		//'date_requested'	=> isset($_POST['date_requested']) ? swift_trim($_POST['date_requested']) : '',
 		'priority'			=> isset($_POST['priority']) ? intval($_POST['priority']) : 0,
-		//'assigned_to'		=> isset($_POST['assigned_to']) ? intval($_POST['assigned_to']) : 0,
-
 		'has_animal'		=> isset($_POST['has_animal']) ? intval($_POST['has_animal']) : 0,
 		'enter_permission'	=> isset($_POST['enter_permission']) ? intval($_POST['enter_permission']) : 0,
-		'wo_message'		=> isset($_POST['wo_message']) ? swift_trim($_POST['wo_message']) : '',
+		'wo_message'		=> isset($_POST['wo_message']) ? swift_trim($_POST['wo_message']) : 0,
+		'wo_status'			=> 4
 	);
-
-	$wo_info = $HcaWOM->getWorkOrderInfo($id);
-
-	if (isset($_POST['complete']))
-		$form_data['wo_status'] = 4;
-
-	if ($form_data['assigned_to'] > 0 && $wo_info['assigned_to'] == 0)
-		$form_data['wo_status'] = 1;
-
-	if (strtotime($form_data['date_requested']) < 0)
-		$Core->add_error('Set the "Requested Date".');
 
 	if (empty($Core->errors))
 	{
 		// Update Work Order
 		$DBLayer->update('hca_wom_work_orders', $form_data, $id);
 
-		if (isset($_POST['task']) & !empty($_POST['task']))
-		{
-			foreach($_POST['task'] as $task_id => $value)
-			{
-				$task_form = [
-					'task_type'		=> isset($_POST['task_type'][$task_id]) ? intval($_POST['task_type'][$task_id]) : 0,
-					'task_item'		=> isset($_POST['task_item'][$task_id]) ? intval($_POST['task_item'][$task_id]) : 0,
-					'task_action'	=> isset($_POST['task_action'][$task_id]) ? intval($_POST['task_action'][$task_id]) : 0,
-					'task_message'	=> isset($_POST['task_message'][$task_id]) ? swift_trim($_POST['task_message'][$task_id]) : '',
-				];
-				$DBLayer->update('hca_wom_tasks', $task_form, $task_id);
-			}
-		}
+		// Add flash message
+		$flash_message = 'Work Order #'.$id.' has been closed.';
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
+	}
+}
+
+else if (isset($_POST['update_wo']))
+{
+	$form_data = array(
+		'priority'			=> isset($_POST['priority']) ? intval($_POST['priority']) : 0,
+		'has_animal'		=> isset($_POST['has_animal']) ? intval($_POST['has_animal']) : 0,
+		'enter_permission'	=> isset($_POST['enter_permission']) ? intval($_POST['enter_permission']) : 0,
+		'wo_message'		=> isset($_POST['wo_message']) ? swift_trim($_POST['wo_message']) : 0,
+	);
+
+	if (empty($Core->errors))
+	{
+		// Update Work Order
+		$DBLayer->update('hca_wom_work_orders', $form_data, $id);
 
 		// Add flash message
 		$flash_message = 'Work Order #'.$id.' has been updated.';
@@ -88,9 +85,23 @@ else if (isset($_POST['update']) || isset($_POST['complete']))
 	}
 }
 
+else if (isset($_POST['reopen_wo']))
+{
+	$DBLayer->update('hca_wom_work_orders', ['wo_status' => 1], $id);
+
+	//$DBLayer->update('hca_wom_tasks', ['task_status' => 1], 'work_order_id='.$id);
+
+	// Add flash message
+	$flash_message = 'Work Order #'.$id.' has been reopened.';
+	$FlashMessenger->add_info($flash_message);
+	redirect('', $flash_message);
+}
+
 else if (isset($_POST['cancel_wo']))
 {
-	$DBLayer->update('hca_wom_work_orders', ['wo_status' => 0, 'assigned_to' => 0], $id);
+	$DBLayer->update('hca_wom_work_orders', ['wo_status' => 0], $id);
+
+	$DBLayer->update('hca_wom_tasks', ['task_status' => 0], 'work_order_id='.$id);
 
 	// Add flash message
 	$flash_message = 'Work Order #'.$id.' has been canceled.';
@@ -107,7 +118,8 @@ else if (isset($_POST['add_task']))
 		'task_action'	=> isset($_POST['task_action']) ? intval($_POST['task_action']) : 0,
 		'assigned_to'	=> isset($_POST['assigned_to']) ? intval($_POST['assigned_to']) : 0,
 		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
-		'time_created'	=> time()
+		'time_created'	=> time(),
+		'task_status'	=> 1
 	);
 
 	//if ($form_data['assigned_to'] == 0)
@@ -116,7 +128,7 @@ else if (isset($_POST['add_task']))
 	if (empty($Core->errors))
 	{
 		// Update task of Work Order
-		$DBLayer->insert_values('hca_wom_tasks', $form_data);
+		$new_tid = $DBLayer->insert_values('hca_wom_tasks', $form_data);
 
 		$query = array(
 			'UPDATE'	=> 'hca_wom_work_orders',
@@ -125,8 +137,34 @@ else if (isset($_POST['add_task']))
 		);
 		$DBLayer->query_build($query) or error(__FILE__, __LINE__);
 
+		// notify when task assigned
+		if ($form_data['assigned_to'] > 0)
+		{
+			$task_info = $HcaWOM->getTaskInfo($new_tid);
+			if (isset($task_info['assigned_email']))
+			{
+				$SwiftMailer = new SwiftMailer;
+				//$SwiftMailer->isHTML();
+
+				$mail_subject = 'Property Task #'.$task_info['id'];
+				$mail_message = [];
+				$mail_message[] = 'Hello '.$task_info['assigned_name'];
+				$mail_message[] = 'You have been assigned to a new task.';
+				$mail_message[] = 'Property: '.$task_info['pro_name'];
+				$mail_message[] = 'Unit: '.$task_info['unit_number'];
+				
+				if ($task_info['task_message'] != '')
+					$mail_message[] = 'Details: '.$task_info['task_message'];
+
+				$mail_message[] = 'To accept the task follow the link:';
+				$mail_message[] = $URL->link('hca_wom_task', $task_info['id']);
+
+				$SwiftMailer->send($task_info['assigned_email'], $mail_subject, implode("\n", $mail_message));
+			}
+		}
+
 		// Add flash message
-		$flash_message = 'Task #'.$task_id.' has been updated.';
+		$flash_message = 'Task #'.$new_tid.' has been updated.';
 		$FlashMessenger->add_info($flash_message);
 		redirect('', $flash_message);
 	}
@@ -134,13 +172,19 @@ else if (isset($_POST['add_task']))
 else if (isset($_POST['update_task']))
 {
 	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
-	$form_data = array(
-		'task_type'		=> isset($_POST['task_type']) ? intval($_POST['task_type']) : 0,
-		'task_item'		=> isset($_POST['task_item']) ? intval($_POST['task_item']) : 0,
-		'task_action'	=> isset($_POST['task_action']) ? intval($_POST['task_action']) : 0,
-		'assigned_to'	=> isset($_POST['assigned_to']) ? intval($_POST['assigned_to']) : 0,
+	
+	$form_data = [
 		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
-	);
+	];
+
+	if (isset($_POST['task_type']))
+		$form_data['task_type'] = intval($_POST['task_type']);
+	if (isset($_POST['task_item']))
+		$form_data['task_item'] = intval($_POST['task_item']);
+	if (isset($_POST['task_action']))
+		$form_data['task_action'] = intval($_POST['task_action']);
+	if (isset($_POST['assigned_to']))
+		$form_data['assigned_to'] = intval($_POST['assigned_to']);
 
 	//if ($form_data['assigned_to'] == 0)
 	//	$Core->add_error('Select technician.');
@@ -156,6 +200,46 @@ else if (isset($_POST['update_task']))
 		redirect('', $flash_message);
 	}
 }
+
+else if (isset($_POST['close_task']))
+{
+	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
+	$form_data = [
+		//'task_type'		=> isset($_POST['task_type']) ? intval($_POST['task_type']) : 0,
+		//'task_item'		=> isset($_POST['task_item']) ? intval($_POST['task_item']) : 0,
+		//'task_action'	=> isset($_POST['task_action']) ? intval($_POST['task_action']) : 0,
+		//'assigned_to'	=> isset($_POST['assigned_to']) ? intval($_POST['assigned_to']) : 0,
+		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
+		'task_status'	=> 4,
+	];
+
+	if (empty($Core->errors) && $task_id > 0)
+	{
+		// Update task of Work Order
+		$DBLayer->update('hca_wom_tasks', $form_data, $task_id);
+
+		// Add flash message
+		$flash_message = 'Task #'.$task_id.' has been closed.';
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
+	}
+}
+
+else if (isset($_POST['reopen_task']))
+{
+	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
+	if ($task_id > 0)
+	{
+		// Update task of Work Order
+		$DBLayer->update('hca_wom_tasks', ['task_status' => 1], $task_id);
+
+		// Add flash message
+		$flash_message = 'Task #'.$task_id.' has been reopened.';
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
+	}
+}
+
 else if (isset($_POST['delete_task']))
 {
 	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
@@ -238,7 +322,7 @@ if ($id > 0)
 			],
 		],
 		'WHERE'		=> 't.work_order_id='.$id,
-		'ORDER BY'	=> 't.id',
+		'ORDER BY'	=> 't.task_status',
 	];
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	$tasks_info = [];
@@ -247,11 +331,11 @@ if ($id > 0)
 	}
 ?>
 
-<form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data">
+<form method="post" accept-charset="utf-8" action="" id="form_main">
 	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 
-	<div class="card">
-		<div class="card-header">
+	<div class="card mb-3">
+		<div class="card-header d-flex justify-content-between">
 			<h6 class="card-title mb-0">Work Order #<?php echo $wo_info['id'] ?></h6>
 		</div>
 		<div class="card-body">
@@ -263,16 +347,9 @@ if ($id > 0)
 					<label class="form-label">Property</label>
 					<h5 class="mb-0"><?php echo html_encode($wo_info['pro_name']) ?></h5>
 				</div>
-				<div class="col-md-3">
+				<div class="col-md-2">
 					<label class="form-label">Unit #</label>
 					<h5 class="mb-0"><?php echo html_encode($wo_info['unit_number']) ?></h5>
-				</div>
-			</div>
-
-			<div class="row mb-3">
-				<div class="col-md-3">
-					<label class="form-label">Submit Date & Time</label>
-					<h5 class="mb-0"><?php echo format_date($wo_info['dt_created'], 'm/d/Y H:i') ?></h5>
 				</div>
 			</div>
 
@@ -291,9 +368,14 @@ if ($id > 0)
 ?>
 					</select>
 				</div>
+				<div class="col-md-3">
+					<label class="form-label">Submit Date & Time</label>
+					<h5 class="mb-0"><?php echo format_date($wo_info['dt_created'], 'm/d/Y H:i') ?></h5>
+				</div>
 			</div>
 
-			<div class="row mb-3">
+<?php if($wo_info['unit_id'] > 0): ?>
+			<div class="row mb-2">
 				<div class="col-md-4">
 					<div class="form-check form-check-inline">
 						<input class="form-check-input" type="checkbox" name="has_animal" id="fld_has_animal" value="1" <?php echo ($wo_info['has_animal'] == 1 ? ' checked' : '') ?>>
@@ -305,28 +387,28 @@ if ($id > 0)
 					</div>
 				</div>
 			</div>
-			<div class="mb-3">
-				<label class="form-label" for="fld_wo_message">Comments</label>
-				<textarea type="text" name="wo_message" class="form-control" id="fld_wo_message" placeholder="Enter any special instructions for entry (example: After 2 pm only please)"><?php echo html_encode($wo_info['wo_message']) ?></textarea>
-			</div>
+			<!--Instruction-->
 
-			<div class="mb-3">
-<?php if ($wo_info['wo_status'] == 3): ?>
-				<button type="submit" name="complete" class="btn btn-success">Complete</button>
-<?php else: ?>
-				<button type="submit" name="update" class="btn btn-primary">Update</button>
 <?php endif; ?>
 
+			<div class="mb-2">
+				<textarea type="text" name="wo_message" class="form-control" placeholder="Enter any special instructions for entry (example: After 2 pm only please)"><?php echo html_encode($wo_info['wo_message']) ?></textarea>
+			</div>
+
+			<div class="mb-1">
 <?php if ($wo_info['wo_status'] < 3): ?>
-				<button type="submit" name="cancel_wo" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel it?')">Cancel</button>
+				<button type="submit" name="update_wo" class="btn btn-sm btn-primary">Update</button>
+
+				<button type="submit" name="cancel_wo" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel it? All tasks will be closed.')">Cancel</button>
 <?php endif; ?>
 			</div>
+
 		</div>
 	</div>
 </form>
 
 <div class="card-header d-flex justify-content-between">
-	<h5 class="card-title mb-0">Tasks</h5>
+	<h6 class="card-title mb-0">Tasks</h6>
 	<span class="badge bg-primary" role="button" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="manageTask(0)"><i class="fas fa-plus"></i> new task</span>
 </div>
 <?php
@@ -336,29 +418,47 @@ if ($id > 0)
 <table class="table table-sm table-striped table-bordered">
 	<thead>
 		<tr>
+			<th>#</th>
 			<th>Type</th>
 			<th>Item</th>
 			<th>Action</th>
 			<th>Details</th>
 			<th>Assigned to</th>
+			<th>Status</th>
 			<th></th>
 		</tr>
 	</thead>
 	<tbody>
 <?php
+		$i = 1;
 		foreach ($tasks_info as $cur_info)
 		{
+			$task_status = '';
+			if ($cur_info['task_status'] == 4)
+				$task_status = '<span class="badge badge-success">Closed by Manager</span>';
+			else if ($cur_info['task_status'] == 3)
+				$task_status = '<span class="badge badge-primary">Ready for review</span>';
+			else if ($cur_info['task_status'] == 2)
+				$task_status = '<span class="badge badge-info">Accepted by Technician</span>';
+			else if ($cur_info['task_status'] == 1)
+				$task_status = '<span class="badge badge-warning">Assigned</span>';
+			else if ($cur_info['task_status'] == 0)
+				$task_status = '<span class="badge badge-danger">Canceled</span>';
+
 			$edit = ($User->is_admmod()) ? '<span class="badge bg-primary" role="button" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="manageTask('.$cur_info['id'].')"><i class="fas fa-edit"></i> edit</span>' : '';
 ?>
 		<tr>
+			<td class="ta-center">#<?=$cur_info['id']?></td>
 			<td class="min-100 ta-center"><?php echo $HcaWOM->item_types[$cur_info['task_type']] ?></td>
 			<td class="min-100 ta-center"><?php echo html_encode($cur_info['item_name']) ?></td>
 			<td class="min-100 ta-center"><?php echo $HcaWOM->task_actions[$cur_info['task_action']] ?></td>
 			<td class="min-100 ta-center"><?php echo html_encode($cur_info['task_message']) ?></td>
 			<td class="min-100 ta-center"><?php echo html_encode($cur_info['assigned_name']) ?></td>
+			<td class="min-100 ta-center"><?php echo $task_status ?></td>
 			<td class="min-100 ta-center"><?php echo $edit ?></td>
 		</tr>
 <?php
+		++$i;
 	}
 ?>
 	</tbody>
@@ -384,7 +484,7 @@ if ($id > 0)
 				<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 				<div class="modal-header">
 					<h5 class="modal-title">Edit information</h5>
-					<button type="button" class="btn-close bg-danger" data-bs-dismiss="modal" aria-label="Close" onclick="closeModalWindow()"></button>
+					<button type="button" class="btn-close bg-danger" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
 					<!--modal_fields-->
@@ -398,6 +498,38 @@ if ($id > 0)
 </div>
 
 <script>
+/*
+function showToastMessage()
+{
+    const toastLiveExample = document.getElementById('liveToast');
+    const toast = new bootstrap.Toast(toastLiveExample);
+    toast.show();
+}
+let form = document.querySelector('#form_main');
+form.addEventListener('change', ()=>{
+	jQuery.ajax({
+		type: 'POST',
+        url: $('#form_main').attr('action'),
+        data: $('#form_main').serialize(),
+		success: function(re){
+            var msg = '<div id="liveToast" class="toast position-fixed bottom-0 end-0 m-2" role="alert" aria-live="assertive" aria-atomic="true">';
+			msg += '<div class="toast-header toast-success"><strong class="me-auto">Message</strong></div>';
+			msg += '<div class="toast-body toast-success">Form has been updated.</div>';
+			msg += '</div>';
+			$("#toast_container").empty().html(msg);
+            showToastMessage();
+		},
+		error: function(re){
+			var msg = '<div id="liveToast" class="toast position-fixed bottom-0 end-0 m-2" role="alert" aria-live="assertive" aria-atomic="true">';
+			msg += '<div class="toast-header toast-danger"><strong class="me-auto">Error</strong></div>';
+			msg += '<div class="toast-body toast-danger">Failed to update form.</div>';
+			msg += '</div>';
+			$("#toast_container").empty().html(msg);
+            showToastMessage();
+		}
+	});
+})
+*/
 function manageTask(task_id)
 {
 	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_manage_task')) ?>";
@@ -488,6 +620,28 @@ foreach ($sm_property_db as $cur_info)
 					<div id="unit_list">
 						<input type="text" name="unit_id" value="" class="form-control form-control-sm" id="fld_unit_number" disabled>
 					</div>
+				</div>
+			</div>
+
+			<div class="row mb-3">
+				<div class="col-md-3">
+					<label class="form-label" for="fld_priority">Priority</label>
+					<select name="priority" id="fld_priority" class="form-select form-select-sm" required>
+						<option value="" selected disabled>Select one</option>
+<?php
+	foreach ($HcaWOM->priority as $key => $val)
+	{
+		if (isset($_POST['priority']) && intval($_POST['priority']) == $key)
+			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$val.'</option>'."\n";
+		else
+			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$val.'</option>'."\n";
+	}
+?>
+					</select>
+				</div>
+				<div class="col-md-3">
+					<label class="form-label">Submit Date</label>
+					<h5 class="mb-0"><?php echo date('m/d/Y \a\t H:i') ?></h5>
 				</div>
 			</div>
 

@@ -31,7 +31,7 @@ if (isset($_POST['accept_task']))
 }
 
 $search_query = [];
-$search_query[] = 'w.wo_status!=4'; // Exclude completed
+$search_query[] = 't.task_status < 3'; // Exclude completed
 if ($is_technician)
 	$search_query[] = 'w.assigned_to='.$User->get('id');
 
@@ -62,13 +62,13 @@ $query = [
 			'LEFT JOIN'		=> 'users AS u1',
 			'ON'			=> 'u1.id=t.assigned_to'
 		],
-
 	],
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $PagesNavigator->set_total($DBLayer->result($result));
 
+$property_ids = [];
 $query = [
 	'SELECT'	=> 't.*, w.property_id, w.unit_id, w.wo_message, p.pro_name, pu.unit_number, i.item_name, u1.realname AS assigned_name, u1.email AS assigned_email, u2.realname AS requested_name, u2.email AS requested_email',
 	'FROM'		=> 'hca_wom_tasks AS t',
@@ -99,7 +99,7 @@ $query = [
 		],
 	],
 	'LIMIT'		=> $PagesNavigator->limit(),
-	'ORDER BY'	=> 'w.wo_status DESC, p.pro_name, LENGTH(pu.unit_number), pu.unit_number',
+	'ORDER BY'	=> 'p.pro_name, t.task_status, LENGTH(pu.unit_number), pu.unit_number',
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -111,9 +111,8 @@ while ($row = $DBLayer->fetch_assoc($result))
 }
 $PagesNavigator->num_items($hca_wom_work_orders);
 
-$Core->set_page_id('hca_wom_tasks', 'hca_wom');
+$Core->set_page_id('hca_wom_tasks_active', 'hca_wom');
 require SITE_ROOT.'header.php';
-
 
 $query = array(
 	'SELECT'	=> 'p.*',
@@ -158,31 +157,44 @@ foreach ($property_info as $val)
 if (!empty($hca_wom_work_orders))
 {
 ?>
-<form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data">
+
+<div class="card-header">
+	<h6 class="card-title mb-0">List of Active Tasks</h6>
+</div>
+<form method="post" accept-charset="utf-8" action="">
 	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 	<table class="table table-striped table-bordered">
 		<thead>
 			<tr>
-				<th class="min-100">WO#</th>
-				<th class="min-100">Unit#</th>
-				<th>Title</th>
+				<th class="min-100">Unit</th>
 				<th>Details</th>
-				<th>Submitted</th>
 			</tr>
 		</thead>
 		<tbody>
 <?php
+	$property_id = 0;
 	foreach ($hca_wom_work_orders as $cur_info)
 	{
-		$task_id_number = ($cur_info['task_status'] > 1) ? '<a href="'.$URL->link('hca_wom_task', $cur_info['id']).'" class="badge badge-primary">WO #'.$cur_info['work_order_id'].'-'.$cur_info['id'].'</a>' : '<button type="submit" name="accept_task['.$cur_info['id'].']" class="badge bg-primary">Accept</button>';
+		$task_id_number = ($cur_info['task_status'] > 1) ? '<a href="'.$URL->link('hca_wom_task', $cur_info['id']).'" class="badge bg-info">Task #'.$cur_info['id'].'</a>' : '<button type="submit" name="accept_task['.$cur_info['id'].']" class="badge bg-primary">Accept</button>';
+		
 		$unit_number = ($cur_info['unit_id'] > 0) ? html_encode($cur_info['unit_number']) : 'Common area';
+
+		if ($property_id != $cur_info['property_id'])
+		{
+			echo '<tr class="table-warning"><td colspan="2" class="fw-bold">'.html_encode($cur_info['pro_name']).'</td></tr>';
+			$property_id = $cur_info['property_id'];
+		}
 ?>
 			<tr>
-				<td class="fw-bold ta-center"><?php echo $task_id_number ?></td>
-				<td class="ta-center"><?php echo $unit_number ?></td>
-				<td class=""><?php echo html_encode($cur_info['item_name']) ?></td>
-				<td class=""><?php echo html_encode($cur_info['task_message']) ?></td>
-				<td class="ta-center"><?php echo format_time($cur_info['time_created']) ?></td>
+				<td class="ta-center">
+					<p class="fw-bold"><?php echo $unit_number ?></p>
+					<p class="fw-bold"><?php echo $task_id_number ?></p>
+				</td>
+				<td>
+					<p class="fw-bold"><?php echo html_encode($cur_info['item_name']) ?></p>
+					<p class=""><?php echo html_encode($cur_info['task_message']) ?></p>
+					<p class="float-end text-muted fst-italic"><?php echo format_time($cur_info['time_created']) ?></p>
+				</td>
 			</tr>
 <?php
 	}

@@ -12,8 +12,9 @@ function hca_wom_co_modify_url_scheme()
     $urls['hca_wom_work_order'] = 'apps/hca_wom/work_order.php?id=$1';
 
     // for technician
-    $urls['hca_wom_tasks'] = 'apps/hca_wom/tasks.php';
     $urls['hca_wom_task'] = 'apps/hca_wom/task.php?id=$1';
+    $urls['hca_wom_tasks_active'] = 'apps/hca_wom/tasks_active.php';
+    $urls['hca_wom_tasks_completed'] = 'apps/hca_wom/tasks_completed.php';
 
     // ajax updates
     $urls['hca_wom_ajax_get_units'] = 'apps/hca_wom/ajax/get_units.php';
@@ -46,7 +47,11 @@ function hca_wom_IncludeCommon()
 
         // Technician
         if ($User->checkAccess('hca_wom', 4))
-            $SwiftMenu->addItem(['title' => 'To-Do List', 'link' => $URL->link('hca_wom_tasks'), 'id' => 'hca_wom_tasks', 'parent_id' => 'hca_fs', 'level' => 3]);
+        {
+            $SwiftMenu->addItem(['title' => 'To-Do List', 'link' => $URL->link('hca_wom_tasks_active'), 'id' => 'hca_wom_tasks_active', 'parent_id' => 'hca_fs', 'level' => 3]);
+            
+            $SwiftMenu->addItem(['title' => 'Completed Tasks', 'link' => $URL->link('hca_wom_tasks_completed'), 'id' => 'hca_wom_tasks_completed', 'parent_id' => 'hca_fs', 'level' => 3]);
+        }
 
         if ($User->checkAccess('hca_wom', 90) || $User->checkAccess('hca_wom', 100))
         {

@@ -667,12 +667,31 @@ class User
 			return $output;
 	}
 
-	// types: 1 - UID or 2 - GID
+	function checkNotification($to, $key, $uid)
+	{
+		global $DBLayer;
+
+		$query = [
+			'SELECT'	=> 'n.id, n.n_gid, n.n_uid, n.n_to, n.n_key, n.n_value, u.realname, u.email',
+			'FROM'		=> 'user_notifications AS n',
+			'JOINS'		=> [
+				[
+					'INNER JOIN'	=> 'users AS u',
+					'ON'			=> 'u.id=n.n_uid'
+				]
+			],
+			'WHERE'		=> 'n.n_to=\''.$DBLayer->escape($to).'\' AND n.n_key='.$key.' AND n.n_uid='.$uid
+		];
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		return $DBLayer->fetch_assoc($result);
+	}
+
+	// types: 1 - UID - Check by User ID only one person
+	// or 2 - GID ???
 	function checkNotifications($to, $key = 0, $uid = 0, $type = 1)
 	{
 		global $DBLayer;
 
-		$output = false;
 		if (empty($this->user_notifications) && !$this->is_guest())
 		{
 			$query = [
@@ -740,12 +759,12 @@ class User
 		return $users;
 	}
 
-	function getNotifyEmails($project_id, $key)
+	function getNotifyEmails($app_id, $key)
 	{
 		global $DBLayer;
 
 		$where = [];
-		$where[] = 'n.n_to=\''.$DBLayer->escape($project_id).'\'';
+		$where[] = 'n.n_to=\''.$DBLayer->escape($app_id).'\'';
 		$where[] = 'n.n_key='.$key;
 		$where[] = 'n.n_value=1';
 

@@ -95,15 +95,34 @@ $query = [
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$hca_wom_work_orders = [];
+$hca_wom_work_orders = $hca_wom_wo_ids = [];
 while ($row = $DBLayer->fetch_assoc($result)) {
 	$hca_wom_work_orders[] = $row;
+	$hca_wom_wo_ids[] = $row['id'];
 }
 $PagesNavigator->num_items($hca_wom_work_orders);
 
-$Core->set_page_id('hca_wom_work_orders', 'hca_wom');
-require SITE_ROOT.'header.php';
 
+$hca_wom_tasks = [];
+if (!empty($hca_wom_wo_ids))
+{
+	$query = [
+		'SELECT'	=> 't.*, i.item_name',
+		'FROM'		=> 'hca_wom_tasks AS t',
+		'JOINS'		=> [
+			[
+				'LEFT JOIN'		=> 'hca_wom_items AS i',
+				'ON'			=> 'i.id=t.task_item'
+			],
+		],
+		'WHERE'		=> 't.work_order_id IN ('.implode(',', $hca_wom_wo_ids).')',
+	];
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	while ($row = $DBLayer->fetch_assoc($result))
+	{
+		$hca_wom_tasks[] = $row;
+	}
+}
 
 $query = array(
 	'SELECT'	=> 'p.*',
@@ -139,6 +158,9 @@ $users = [];
 while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
 	$users[] = $fetch_assoc;
 }
+
+$Core->set_page_id('hca_wom_work_orders', 'hca_wom');
+require SITE_ROOT.'header.php';
 ?>
 <nav class="navbar search-bar">
 	<form method="get" accept-charset="utf-8" action="" class="d-flex">
@@ -208,14 +230,13 @@ if (!empty($hca_wom_work_orders))
 <table class="table table-striped table-bordered">
 	<thead>
 		<tr>
-			<th>Property/Unit#</th>
-			<th>Date Submitted</th>
-			<th>Comments</th>
-			<th>Requested by</th>
+			<th>WO #</th>
+			<th>Property/Unit</th>
+			<th>Details</th>
 			<th>Priority</th>
-			<th>WO Status</th>
+			<th>Status</th>
+			<th>Submitted on</th>
 			<th>Tasks</th>
-			<th></th>
 		</tr>
 	</thead>
 	<tbody>
@@ -231,33 +252,41 @@ if (!empty($hca_wom_work_orders))
 
 		$status = '';
 		if ($cur_info['wo_status'] == 4)
-			$status = '<span class="badge bg-success text-white">Completed</span>';
-		else if ($cur_info['wo_status'] == 3)
-			$status = '<span class="badge bg-primary text-white">Waiting to review</span>';
-		else if ($cur_info['wo_status'] == 2)
-			$status = '<span class="badge bg-info text-white">Accepted by technician</span>';
-		else if ($cur_info['wo_status'] == 1)
-			$status = '<span class="badge bg-warning text-white">Assigned</span>';
+			$status = '<a href="'.$URL->link('hca_wom_work_order', $cur_info['id']).'" class="badge bg-success text-white">Closed</a>';
 		else if ($cur_info['wo_status'] == 0)
-			$status = '<span class="badge bg-danger text-white">Canceled</span>';
+			$status = '<a href="'.$URL->link('hca_wom_work_order', $cur_info['id']).'" class="badge bg-danger text-white">Canceled</a>';
+		else
+			$status = '<a href="'.$URL->link('hca_wom_work_order', $cur_info['id']).'" class="badge bg-warning text-white">Open</a>';
 
-		$edit = '';
-		if ($is_technician)
-			$edit = '<a href="'.$URL->link('hca_wom_wo_technician', $cur_info['id']).'" class="badge bg-primary text-white"><i class="fas fa-edit"></i> Edit</a>';
-		else if ($is_manager || $User->is_admmod())
-			$edit = '<a href="'.$URL->link('hca_wom_work_order', $cur_info['id']).'" class="badge bg-primary text-white"><i class="fas fa-edit"></i> Edit</a>';
+		$task_title = [];
+		if (!empty($hca_wom_tasks))
+		{
+			$i = 1;
+			foreach($hca_wom_tasks as $cur_task)
+			{
+				if ($cur_info['id'] == $cur_task['work_order_id'])
+				{
+					$task_action = isset($HcaWOM->task_actions[$cur_task['task_action']]) ? ' ('.$HcaWOM->task_actions[$cur_task['task_action']].')' : '';
+					$task_title[] = '<p>#'.$i.' '.html_encode($cur_task['item_name']).$task_action.'</p>';
+
+					if ($cur_task['task_status'] == 3)
+						$status = '<a href="'.$URL->link('hca_wom_work_order', $cur_info['id']).'" class="badge bg-primary text-white">Ready for review</a>';
+
+					++$i;
+				}
+			}
+		}
+		
+
 ?>
 		<tr id="row<?php echo $cur_info['id'] ?>" class="<?php echo ($id == $cur_info['id'] ? ' anchor' : '') ?>">
-			<td>
-				<span class="fw-bold"><?php echo html_encode($cur_info['pro_name']) ?>, <?php echo html_encode($cur_info['unit_number']) ?></span>
-			</td>
-			<td class="min-100 ta-center"><?php echo format_date($cur_info['dt_created'], 'd/m/Y') ?></td>
-			<td class="min-100"><?php echo html_encode($cur_info['wo_message']) ?></td>
-			<td class="min-100 ta-center"><?php echo html_encode($cur_info['requested_name']) ?></td>
+			<td class="ta-center">#<?php echo $cur_info['id'] ?></td>
+			<td><a href="<?php echo $URL->link('hca_wom_work_order', $cur_info['id']) ?>" class="fw-bold"><?php echo html_encode($cur_info['pro_name']) ?>, <?php echo html_encode($cur_info['unit_number']) ?></span></td>
+			<td class="min-100"><?php echo implode("\n", $task_title) ?></td>
 			<td class="min-100 ta-center"><?php echo $priority ?></td>
 			<td class="min-100 ta-center"><?php echo $status ?></td>
-			<td class="ta-center fw-bold"><?php echo $cur_info['num_tasks'] ?></td>
-			<td class="min-100 ta-center"><?php echo $edit ?></td>
+			<td class="min-100 ta-center"><?php echo format_date($cur_info['dt_created'], 'm/d/Y') ?></td>
+			<td class="ta-center"><?php echo $cur_info['num_tasks'] ?></td>
 		</tr>
 <?php
 	}

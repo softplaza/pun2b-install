@@ -26,7 +26,7 @@ if ($type_id > 0)
 	$task_items = [];
 	if (!empty($hca_wom_items))
 	{
-		$task_items[] = '<option value="0">Select one</option>';
+		//$task_items[] = '<option value="0">Select one</option>';
 		foreach($hca_wom_items as $cur_info)
 		{
 			$task_items[] = '<option value="'.$cur_info['id'].'">'.html_encode($cur_info['item_name']).'</option>';
@@ -55,7 +55,7 @@ if ($item_id > 0)
 	if (!empty($hca_wom_items))
 	{
 		$item_actions = explode(',', $hca_wom_items['item_actions']);
-		$task_items[] = '<option value="0">Select one</option>';
+		//$task_items[] = '<option value="0">Select one</option>';
 		foreach ($HcaWOM->task_actions as $key => $value)
 		{
 			if (in_array($key, $item_actions))

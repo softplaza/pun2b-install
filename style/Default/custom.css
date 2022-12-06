@@ -342,8 +342,8 @@
   position: sticky;
   top: 40px;
   z-index: 250;
-  background: #2076b8;
-  color: #fff;
+  background: #57a0d9;
+  color: rgb(255, 255, 255);
 }
 .table>tfoot {background: #e1e1e1;}
 .table .th1{
