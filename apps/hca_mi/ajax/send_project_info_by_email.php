@@ -28,20 +28,6 @@ if ($pid > 0)
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	$cur_info = $DBLayer->fetch_assoc($result);
 
-	$hca_5840_mailing_fields_details = $Moisture->get_email_details();
-	$o_hca_5840_mailing_fields = explode(',', $Config->get('o_hca_5840_mailing_fields'));
-
-	$hca_5840_mailing_fields = array();
-	foreach($hca_5840_mailing_fields_details as $key => $value)
-	{
-		if (in_array($key, $o_hca_5840_mailing_fields))
-			$hca_5840_mailing_fields[] = '<p><input type="checkbox" value="1" checked="checked" name="hca_5840_mailing_fields['.$key.']"> '.$value.'</p>';
-		else
-			$hca_5840_mailing_fields[] = '<p><input type="checkbox" value="0" name="hca_5840_mailing_fields['.$key.']"> '.$value.'</p>';
-	}
-
-	//$cur_info = $DBLayer->select('hca_5840_projects', 'id='.$pid);
-	
 	$mailing_list = $Config->get('o_hca_5840_mailing_list') . ($cur_info['manager_email'] != '' ? ','.$cur_info['manager_email'] : '');
 
 	$modal_body[] = '<input type="hidden" name="project_id" value="'.$pid.'">';
@@ -60,11 +46,6 @@ if ($pid > 0)
 	$modal_body[] = '<div class="mb-3">';
 	$modal_body[] = '<label class="form-label">Message</label>';
 	$modal_body[] = '<textarea name="message" class="form-control" rows="5">This is Moisture Inspection information.</textarea>';
-	$modal_body[] = '</div>';
-
-	$modal_body[] = '<div class="mb-3" style="columns: 2;">';
-	$modal_body[] = '<label class="form-label">Additional information</label>';
-	$modal_body[] = implode(' ', $hca_5840_mailing_fields);
 	$modal_body[] = '</div>';
 
 	echo json_encode(array(

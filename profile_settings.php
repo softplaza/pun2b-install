@@ -62,7 +62,7 @@ $Core->set_page_title($page_title);
 		}
 ?>
 				<div class="mb-3">
-					<label class="form-label" for="input_time_format"><?php echo $lang_profile['Language'] ?></label>
+					<label class="form-label" for="input_time_format">Time format</label>
 					<select id="input_time_format" name="form[time_format]" class="form-select">
 <?php
 
@@ -81,7 +81,7 @@ $Core->set_page_title($page_title);
 				</div>
 
 				<div class="mb-3">
-					<label class="form-label" for="input_date_format"><?php echo $lang_profile['Date format'] ?></label>
+					<label class="form-label" for="input_date_format">Date format</label>
 					<select id="input_date_format" name="form[date_format]" class="form-select">
 <?php
 		foreach (array_unique($FormatDateTime->get_date_formats()) as $key => $date_format)

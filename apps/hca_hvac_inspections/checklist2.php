@@ -39,8 +39,8 @@ if (isset($_POST['create']))
 		'updated_time'				=> time(),
 
 		// Temporary requested to hide "Filter Inspection" by Blake
-		//'ch_inspection_type'		=> isset($_POST['ch_inspection_type']) ? intval($_POST['ch_inspection_type']) : 0,
-		'ch_inspection_type'		=> 1
+		'ch_inspection_type'		=> isset($_POST['ch_inspection_type']) ? intval($_POST['ch_inspection_type']) : 0,
+		//'ch_inspection_type'		=> 1
 	];
 
 	if ($form_data['property_id'] == 0)
@@ -242,7 +242,7 @@ if ($id == 0)
 		</div>
 		<div class="card-body">
 	
-			<div class="mb-3">
+			<div class="col-md-4 mb-3">
 				<label class="form-label" for="property_id">Property</label>
 				<select id="property_id" class="form-select form-select-sm" name="property_id" onchange="getUnits()" required>
 <?php
@@ -257,7 +257,7 @@ foreach ($sm_property_db as $cur_info)
 ?>
 				</select>
 			</div>
-			<div class="mb-3">
+			<div class="col-md-4 mb-3">
 				<label class="form-label" for="fld_unit_number">Unit number</label>
 				<div id="unit_number">
 					<input type="text" value="" class="form-control" id="fld_unit_number" disabled>
@@ -270,16 +270,26 @@ foreach ($sm_property_db as $cur_info)
 				<div id="key_number" class="hidden"></div>
 			</div>
 
-			<div class="mb-3 hidden">
+			<div class="mb-3">
 				<label class="form-label">Type of inspection</label>
 				<div class="form-check">
-					<input class="form-check-input" type="radio" name="ch_inspection_type" value="1" id="fld_ch_inspection_type1">
-					<label class="form-check-label" for="fld_ch_inspection_type1">Full inspection</label>
+					<?php if ($User->checkPermissions('hca_hvac_inspections', 1)): ?>
+					<input class="form-check-input" type="radio" name="ch_inspection_type" value="1" id="fld_ch_inspection_type1" required>
+					<?php else: ?>
+					<input class="form-check-input" type="radio" disabled>
+					<?php endif; ?>
+					<label class="form-check-label" for="fld_ch_inspection_type1">Full Inspection</label>
 				</div>
+
 				<div class="form-check">
-					<input class="form-check-input" type="radio" name="ch_inspection_type" value="2" id="fld_ch_inspection_type2">
+					<?php if ($User->checkPermissions('hca_hvac_inspections', 2)): ?>
+					<input class="form-check-input" type="radio" name="ch_inspection_type" value="2" id="fld_ch_inspection_type2" required>
+					<?php else: ?>
+					<input class="form-check-input" type="radio" disabled>
+					<?php endif; ?>
 					<label class="form-check-label" for="fld_ch_inspection_type2">Filter Replacement Only</label>
 				</div>
+
 			</div>
 
 			<label class="form-label mb-1">Did you get into the unit?</label>
@@ -517,7 +527,7 @@ foreach($checked_items as $cur_info)
 	if ($cur_info['item_id'] == 1 && in_array($main_info['property_id'], [100, 111]) || $cur_info['item_id'] > 1)
 	{
 		$filter_sizes = [];
-		if (!empty($hca_hvac_inspections_filters) && $cur_info['item_id'] == 10)
+		if (!empty($hca_hvac_inspections_filters) && $cur_info['item_id'] == 10) //AC Filter - Filter Changed?
 		{
 			$filter_sizes[] = '<div class="d-flex mb-1 pt-2">';
 			$filter_sizes[] = '<span class="fw-bold">Size:</span>&nbsp;';

@@ -41,25 +41,31 @@ class HcaMi
 		7 => 'Drain Pipe Cracked',
 		8 => 'Drain Pipe Leak',
 		9 => 'Exterior Line Leak',
+		27 => 'Exterior Rain Affected Unit/Rain Penetration',
 		24 => 'Exterior Stucco Cracked',
 		10 => 'Fire Sprinkler Leak',
 		11 => 'Garbage Disposal Leak',
 		12 => 'Irrigation Leak',
 		13 => 'Roof Leak',
+		28 => 'Sink Faucet Leak',
 		14 => 'Sink Overflow',
 		15 => 'Slab Leak',
 		16 => 'Shower Arm Leak/Broken',
+		29 => 'Shower Cartridge Leak/Broken',
+		30 => 'Shower Head Leak',
 		25 => 'Shower Tile Cracked',
 		17 => 'Supply Line Leak',
 		18 => 'Toilet Leak',
 		19 => 'Toilet Overflow',
 		20 => 'Tub Cracked',
+		31 => 'Tub Diverter Leak',
 		21 => 'Tub Overflow',
+		32 => 'Tub Overflow Plate',
+		33 => 'Tub Spout Leak',
 		23 => 'Unventilated Household',
 		22 => 'Washing Machine Leak',
 		26 => 'Water Heater Leak',
-		// last ID - 26
-		
+		// last ID - 33
 	];
 
 	var $symptoms = [
@@ -69,4 +75,26 @@ class HcaMi
 		4 => 'Wet Subfloor',
 		5 => 'Wet Carpet'
 	];
+
+	var $default_services = [
+		1 => 'Services',
+		2 => 'Scope of Work/Asbestos',
+		3 => 'Remediation',
+		4 => 'Construction',
+	];
+
+
+	function check_vendor($default_vendors, $vendor_id, $key)
+{
+	if (!empty($default_vendors))
+	{
+		foreach($default_vendors as $cur_info)
+		{
+			if ($vendor_id == $cur_info['vendor_id'] && $key == $cur_info['group_id'])
+				return $cur_info;
+		}
+		return [];
+	}
+	return [];
+}
 }

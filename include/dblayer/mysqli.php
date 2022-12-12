@@ -505,7 +505,7 @@ class DBLayer
 			foreach($data as $key => $val)
 			{
 				$keys[] = $key;
-				$values[] = '\''.$this->escape($val).'\'';
+				$values[] = (is_numeric($val) ? $val : '\''.$this->escape($val).'\'');
 			}
 			
 			if (!empty($keys) && !empty($values))
@@ -523,6 +523,7 @@ class DBLayer
 			return $new_id;
 	}
 
+	// Deprecated  insert_values
 	function insert_values($table_name, $data)
 	{
 		$new_id = 0;
@@ -631,7 +632,23 @@ class DBLayer
 		}
 	}
 	
-	// DATATYPES 
+	// Heplpers
+	function getNumRows($table_name, $where = '')
+	{
+		$query = array(
+			'SELECT'	=> '*',
+			'FROM'		=> $table_name,
+		);
+		if ($where != '' && is_numeric($where))
+			$query['WHERE'] = 'id='.$where;
+		else
+			$query['WHERE'] = $where;
+		
+		$result = $this->query_build($query) or error(__FILE__, __LINE__);
+		return $this->num_rows($result);
+	}
+
+	// DATA TYPES 
 	function dt_serial($null = false)
 	{
 		$array = array(

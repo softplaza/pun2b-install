@@ -43,6 +43,7 @@ if ($search_by_property_id == 0)
 				'INNER JOIN'	=> 'sm_property_db AS pt',
 				'ON'			=> 'pt.id=m.property_id'
 			],
+
 		],
 		'ORDER BY'	=> 'pt.pro_name',
 	];
@@ -179,12 +180,16 @@ if ($search_by_year > 0)
 	$hca_5840_projects_search_query[] = 'pj.mois_report_date > '.strtotime($search_by_year.'-01-01').' AND pj.mois_report_date < '.strtotime($search_by_year.'-12-31');
 
 $query = array(
-	'SELECT'	=> 'pj.*, pt.pro_name, u1.realname AS project_manager',
+	'SELECT'	=> 'pj.*, pj.unit_number AS unit, pt.pro_name, un.unit_number, u1.realname AS project_manager',
 	'FROM'		=> 'hca_5840_projects AS pj',
 	'JOINS'		=> [
 		[
 			'INNER JOIN'	=> 'sm_property_db AS pt',
 			'ON'			=> 'pt.id=pj.property_id'
+		],
+		[
+			'LEFT JOIN'		=> 'sm_property_units AS un',
+			'ON'			=> 'un.id=pj.unit_id'
 		],
 		[
 			'LEFT JOIN'		=> 'users AS u1',
@@ -196,7 +201,9 @@ $query = array(
 if (!empty($hca_5840_projects_search_query)) $query['WHERE'] = implode(' AND ', $hca_5840_projects_search_query);
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $hca_5840_projects = [];
-while ($row = $DBLayer->fetch_assoc($result)) {
+while ($row = $DBLayer->fetch_assoc($result))
+{
+	$row['unit_number'] = ($row['unit_number'] != '') ? $row['unit_number'] : $row['unit'];
 	$hca_5840_projects[] = $row;
 }
 

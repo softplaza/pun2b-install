@@ -8,12 +8,12 @@ $access6 = ($User->checkAccess('hca_hvac_inspections', 6)) ? true : false;
 //if (!$access6)
 //	message($lang_common['No permission']);
 
-$search_by_inspection_type = isset($_GET['inspection_type']) ? intval($_GET['inspection_type']) : 0; // 0 all, 1 audit, 2 flapper
-$search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
-$search_by_item_id  = isset($_GET['item_id']) ? intval($_GET['item_id']) : 0;
-$search_by_job_type  = isset($_GET['job_type']) ? intval($_GET['job_type']) : 0; // 0 - pending, 1 - completed
 $search_by_year = isset($_GET['year']) ? intval($_GET['year']) : 12;
+$search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
+$search_by_job_type  = isset($_GET['job_type']) ? intval($_GET['job_type']) : 0; // 0 - pending, 1 - completed
 $search_by_datetime_inspection_start = isset($_GET['datetime_inspection_start']) ? swift_trim($_GET['datetime_inspection_start']) : '';
+//$search_by_item_id  = isset($_GET['item_id']) ? intval($_GET['item_id']) : 0;
+//$search_by_filter_id  = isset($_GET['filter_id']) ? intval($_GET['filter_id']) : 0;
 
 $HcaHVACInspections = new HcaHVACInspections;
 $HcaHVACPropertyReport = new HcaHVACPropertyReport;
@@ -29,30 +29,7 @@ if ($search_by_property_id > 0)
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	$cur_property_info = $DBLayer->fetch_assoc($result);
 
-	$HcaHVACPropertyReport->genItemsData();
-
-	// Generate parameters for Printing List of Items
-	$sub_link_args = [
-		'section'			=> 'pending_items',
-		'property_id'		=> $search_by_property_id,
-		//'inspection_type'	=> $search_by_inspection_type,
-		'job_type'			=> $search_by_job_type,
-		'datetime_inspection_start'	=> $search_by_datetime_inspection_start,
-		'year'				=> $search_by_year
-	];
-	if ($search_by_job_type == 0)
-		$SwiftMenu->addNavAction('<li><a class="dropdown-item" href="'.$URL->genLink('hca_hvac_inspections_print', $sub_link_args).'" target="_blank"><i class="fa fa-file-pdf-o fa-1x" aria-hidden="true"></i> Print as PDF</a></li>');
-
-	$email_param = [];
-	$email_param[] = 'mailto:'.html_encode($cur_property_info['manager_email']);
-	$email_param[] = '?subject=HCA: Plumbing Inspections - Summary Report';
-	$email_param[] = '&amp;body=Hello,';
-	$email_param[] = '%0D%0A%0D%0A'; // 2 lines spaces
-	$email_param[] = 'This email contains a link to Plumbing Inspections of '.html_encode($cur_property_info['pro_name']).'. To view the report, follow the link below:';
-	$email_param[] = '%0D%0A%0D%0A'; // 2 lines spaces
-	$email_param[] = str_replace('&', '%26', $URL->genLink('hca_hvac_inspections_property_report', $sub_link_args));
-
-	$SwiftMenu->addNavAction('<li><a class="dropdown-item" href="'.implode('', $email_param).'" target="_blank"><i class="fa fa-at" aria-hidden="true"></i> Send Email</a></li>');
+	$HcaHVACPropertyReport->genChecklistData();
 
 	$Core->set_page_id('hca_hvac_inspections_property_report', 'hca_hvac_inspections');
 	require SITE_ROOT.'header.php';
@@ -76,7 +53,7 @@ if ($search_by_property_id > 0)
 					</select>
 					<p class="text-muted">Period</p>
 				</div>
-				<div class="col-md-auto pe-0 mb-1">
+				<div class="col-md-auto pe-0 mb-1 hidden">
 					<select name="property_id" class="form-select-sm" id="fld_property_id">
 <?php
 	foreach ($HcaHVACInspections->getProperties() as $property)
@@ -114,7 +91,7 @@ if ($search_by_property_id > 0)
 	<div class="col-12">
 		<div class="card">
 			<div class="card-header">
-				<h6 class="card-title mb-0 text-primary">Summary Report</h6>
+				<h6 class="card-title mb-0 text-primary"><?php echo html_encode($cur_property_info['pro_name']) ?> Property Report</h6>
 			</div>
 			<div class="card-body py-3">
 				<div class="chart chart-sm">
@@ -135,42 +112,48 @@ if ($search_by_property_id > 0)
 </div>	
 
 
-<?php if ($search_by_job_type == 0): ?>
+<?php
+	//if ($search_by_job_type == 1)
+	//{
+		//print_dump()
+		$HcaHVACPropertyReport->genFiltersData();
+
+		$hca_hvac_inspections_filters = [];
+		$query = [
+			'SELECT'	=> 'f.*',
+			'FROM'		=> 'hca_hvac_inspections_filters AS f',
+			'WHERE'		=> 'f.property_id='.$search_by_property_id
+		];
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		while($row = $DBLayer->fetch_assoc($result))
+		{
+			$hca_hvac_inspections_filters[] = $row;
+		}
+
+?>
 <div class="card-header">
-	<h6 class="card-title mb-0 text-primary">List of inspected items</h6>
+	<h6 class="card-title mb-0 text-primary">AC Filters</h6>
 </div>	
 <table class="table table-striped table-bordered">
 	<thead>
 		<tr>
-			<th>P.O. Number</th>
-			<th>Item name</th>
-			<th class="<?=($search_by_job_type == 1 ? 'bg-success' : 'bg-danger')?> text-white"><?=($search_by_job_type == 1 ? 'Replaced' : 'Pending')?></th>
+			<th>Filter Size</th>
+			<th class="">Total</th>
 		</tr>
 	</thead>
 	<tbody>
 <?php
-
-	$total_pending = 0;
-	$query = [
-		'SELECT'	=> 'i.*',
-		'FROM'		=> 'hca_hvac_inspections_items AS i',
-		'WHERE'		=> 'i.summary_report=1'
-	];
-	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-	while($cur_info = $DBLayer->fetch_assoc($result))
+	foreach($hca_hvac_inspections_filters as $cur_info)
 	{
-		$num_items_pending = isset($HcaHVACPropertyReport->num_items_pending[$cur_info['id']]) ? $HcaHVACPropertyReport->num_items_pending[$cur_info['id']] : 0;
-
-		if ($num_items_pending > 0)
+		$num_replaced = isset($HcaHVACPropertyReport->replaced_filters[$cur_info['filter_size']]) ? $HcaHVACPropertyReport->replaced_filters[$cur_info['filter_size']] : 0;
+		if ($num_replaced > 0)
 		{
 ?>
 		<tr>
-			<td class="ta-center fw-bold"><?=$cur_info['po_number']?></td>
-			<td class="fw-bold"><?=$HcaHVACInspections->getEquipment($cur_info['equipment_id'])?></td>
-			<td class="ta-center fw-bold"><?=$num_items_pending?></td>
+			<td class="ta-center fw-bold"><?php echo html_encode($cur_info['filter_size']) ?></td>
+			<td class="ta-center fw-bold"><?=$num_replaced?></td>
 		</tr>
 <?php
-			++$total_pending;
 		}
 	}
 ?>
@@ -178,272 +161,193 @@ if ($search_by_property_id > 0)
 	<tfoot>
 		<tr>
 			<td class="ta-center fw-bold"></td>
-			<td class="ta-right fw-bold">Total: </td>
-			<td class="ta-center fw-bold"><?=$total_pending?></td>
+			<td class="ta-center fw-bold"><?=$HcaHVACPropertyReport->num_filters_replaced?></td>
 		</tr>
 	</tfoot>
 </table>
-<?php endif; ?>
-
-
 <?php
+	//}
 
-	$HcaHVACPropertyReport->getChecklistData();
-	$number_work_orders = $wo_total_pending = $wo_total_replaced = $wo_total_repaired = 0;
 
-	if (!empty($HcaHVACPropertyReport->work_orders_info))
+	if (!empty($HcaHVACPropertyReport->pending_work_orders_info) && $search_by_job_type == 0)
 	{
 ?>
 
 <div class="card-header">
-	<h6 class="card-title mb-0 text-primary">List of Work Orders (<?php echo count($HcaHVACPropertyReport->work_orders_info) ?>)</h6>
+	<h6 class="card-title mb-0 text-primary">Pending Work Orders (<?php echo count($HcaHVACPropertyReport->pending_work_orders_info) ?>)</h6>
 </div>
 <table class="table table-striped table-bordered">
 	<thead>
 		<tr>
-			<th>Property name</th>
-			<th>Unit#</th>
-			<th>Identified Problems</th>
-			<th>Current Owner</th>
+			<th>Property, Unit#</th>
+			<th>Owner</th>
 			<th>Comment</th>
-<?php if ($search_by_job_type == 0): ?>
-			<th class="bg-danger text-white">Pending</th>
-<?php endif; ?>
-<?php if ($search_by_job_type == 1): ?>
-			<th class="bg-primary text-white">Replaced</th>
-			<th class="bg-info text-white">Repaired</th>
-<?php endif; ?>
+			<th>Filter size</th>
 		</tr>
 	</thead>
 	<tbody>
 
 <?php
-
-		foreach($HcaHVACPropertyReport->work_orders_info as $cur_info)
+		foreach($HcaHVACPropertyReport->pending_work_orders_info as $cur_info)
 		{
-			$num_pending = $num_replaced = $num_repaired = 0;
 
-			if ($cur_info['inspection_completed'] == 2 && $cur_info['work_order_completed'] == 2)
-				$status = '<a href="'.$URL->link('hca_hvac_inspections_work_order', $cur_info['id']).'" class="badge badge-success">Completed</a>';
-			else if ($cur_info['inspection_completed'] == 2 && $cur_info['work_order_completed'] == 1)
-				$status = '<a href="'.$URL->link('hca_hvac_inspections_work_order', $cur_info['id']).'" class="badge badge-primary">Pending WO</a>';
-			else
-				$status = '<a href="'.$URL->link('hca_hvac_inspections_checklist', $cur_info['id']).'" class="badge badge-warning">Pending Inspection</a>';
 
-			$list_of_problems = [];
-			if (!empty($HcaHVACPropertyReport->hca_hvac_inspections_checklist_items))
-			{
-				foreach($HcaHVACPropertyReport->hca_hvac_inspections_checklist_items as $checklist_items)
-				{
-					if ($cur_info['id'] == $checklist_items['checklist_id'])
-					{
-						//$status_OR_problems = ($checklist_items['job_type'] > 0) ? ' (<span class="text-success">'.$HcaHVACInspections->getJobType($checklist_items['job_type']).'</span>)' : ' (<span class="text-danger">'.$HcaHVACInspections->getItemProblems($checklist_items['problem_ids']).'</span>)';
-	
-						$item_status = ($checklist_items['check_type'] == 2) ? ' (<span class="text-danger">YES</span>)' : ' (<span class="text-danger">NO</span>)';
 
-						$item_title = [
-							//$HcaHVACInspections->getLocation($checklist_items['location_id']),
-							'<span class="fw-bold">'.$HcaHVACInspections->getEquipment($checklist_items['equipment_id']).'</span>',
-							'<span class="text-primary">'.$checklist_items['item_name'].'</span>',
-						];
-
-						if ($checklist_items['check_type'] == 1 && $checklist_items['item_type'] == 2 || $checklist_items['check_type'] == 2 && $checklist_items['item_type'] == 1)
-							$list_of_problems[] = '<p>'.implode(' -> ', $item_title) . $item_status . '</p>';
-
-						if ($checklist_items['job_type'] == 0)
-							++$num_pending;
-						else if ($checklist_items['job_type'] == 1)
-							++$num_replaced;
-						else if ($checklist_items['job_type'] == 2)
-							++$num_repaired;
-					}
-				}
-			}
-
-			//if ($search_by_job_type == 1 && $cur_info['work_order_completed'] == 2 || $search_by_job_type == 0 && $num_pending > 0)
-			//{
 ?>
 		<tr>
 			<td class="fw-bold">
-				<?php echo html_encode($cur_info['pro_name']) ?>
-				<p class=""><?php echo $status ?></p>
+				<p><?php echo html_encode($cur_info['pro_name']) ?>, <?php echo html_encode($cur_info['unit_number']) ?></p>
+				<p><a href="<?=$URL->link('hca_hvac_inspections_work_order', $cur_info['id'])?>" class="badge badge-primary">Pending WO</a></p>
 			</td>
-			<td class="ta-center fw-bold"><?php echo html_encode($cur_info['unit_number']) ?></td>
-			<td><?php echo implode("\n", $list_of_problems) ?></td>
-			<td class="ta-center fw-bold"><?php echo html_encode($cur_info['owner_name']) ?></td>
-			<td class=""><?php echo html_encode($cur_info['work_order_comment']) ?></td>
-<?php if ($search_by_job_type == 0): ?>
-			<td class="ta-center fw-bold"><?php echo $num_pending ?></td>
-<?php endif; ?>
-
-<?php if ($search_by_job_type == 1): ?>
-			<td class="ta-center fw-bold"><?php echo $num_replaced ?></td>
-			<td class="ta-center fw-bold"><?php echo $num_repaired ?></td>
-<?php endif; ?>
-		</tr>
-<?php
-				++$number_work_orders;
-			//}
-
-			$wo_total_pending = $wo_total_pending + $num_pending;
-			$wo_total_repaired = $wo_total_repaired + $num_repaired;
-			$wo_total_replaced = $wo_total_replaced + $num_replaced;
-		}
-?>
-	</tbody>
-	<tfoot>
-		<tr>
-			<td class="ta-center fw-bold"><?php echo $number_work_orders ?></td>
-			<td class="ta-right fw-bold" colspan="4"></td>
-<?php if ($search_by_job_type == 0): ?>
-			<td class="ta-center fw-bold"><?php echo $wo_total_pending ?></td>
-<?php endif; ?>
-
-<?php if ($search_by_job_type == 1): ?>
-			<td class="ta-center fw-bold"><?php echo $wo_total_replaced ?></td>
-			<td class="ta-center fw-bold"><?php echo $wo_total_repaired ?></td>
-<?php endif; ?>
-		</tr>
-	</tfoot>
-</table>
-<?php
-	}
-	else
-	{
-?>
-<div class="card-header">
-	<h6 class="card-title mb-0 text-primary">List of Work Orders</h6>
-</div>
-<div class="mb-3">
-	<div class="alert alert-warning py-2" role="alert">No Work Orders found.</div>
-</div>
-<?php
-	}
-
-
-	if (!empty($HcaHVACPropertyReport->inspections_info))
-	{
-?>
-
-<div class="card-header">
-	<h6 class="card-title mb-0 text-primary">List of Pending Inspections (<?php echo count($HcaHVACPropertyReport->inspections_info) ?>)</h6>
-</div>
-<table class="table table-striped table-bordered">
-	<thead>
-		<tr>
-			<th>Property name</th>
-			<th>Unit#</th>
-			<th>Inspected by</th>
-			<th>Comment</th>
-		</tr>
-	</thead>
-	<tbody>
-
-<?php
-
-		$i = $inspection_items_pending = 0;
-		foreach($HcaHVACPropertyReport->inspections_info as $cur_info)
-		{
-			$num_pending = 0;
-
-			if ($cur_info['inspection_completed'] == 2 && $cur_info['work_order_completed'] == 2)
-				$status = '<a href="'.$URL->link('hca_hvac_inspections_work_order', $cur_info['id']).'" class="badge badge-success">Completed</a>';
-			else if ($cur_info['inspection_completed'] == 2 && $cur_info['work_order_completed'] == 1)
-				$status = '<a href="'.$URL->link('hca_hvac_inspections_work_order', $cur_info['id']).'" class="badge badge-primary">Pending WO</a>';
-			else
-				$status = '<a href="'.$URL->link('hca_hvac_inspections_checklist', $cur_info['id']).'" class="badge badge-warning">Pending Inspection</a>';
-
-			//if ($search_by_job_type == 1 && $cur_info['work_order_completed'] == 2 || $search_by_job_type == 0 && $num_pending > 0)
-			//{
-?>
-		<tr>
-			<td class="fw-bold">
-				<p><?php echo html_encode($cur_info['pro_name']) ?></p>
-				<p><?php echo $status ?></p>
-			</td>
-			<td class="ta-center fw-bold"><?php echo html_encode($cur_info['unit_number']) ?></td>
 			<td class="ta-center fw-bold"><?php echo html_encode($cur_info['inspected_name']) ?></td>
 			<td class=""><?php echo html_encode($cur_info['work_order_comment']) ?></td>
+			<td class="ta-center"><?php echo html_encode($cur_info['filter_size']) ?></td>
 		</tr>
 <?php
-				++$i;
-				$inspection_items_pending = $inspection_items_pending + $num_pending;
-			//}
-
 		}
 ?>
 	</tbody>
 </table>
 <?php
 	}
-	else if ($search_by_job_type == 0)
+	else if (!empty($HcaHVACPropertyReport->completed_work_orders_info) && $search_by_job_type == 1)
 	{
 ?>
+
 <div class="card-header">
-	<h6 class="card-title mb-0 text-primary">Inspections</h6>
+	<h6 class="card-title mb-0 text-primary">Completed Work Orders (<?php echo count($HcaHVACPropertyReport->completed_work_orders_info) ?>)</h6>
 </div>
-<div class="mb-3">
-	<div class="alert alert-warning py-2" role="alert">No Pending Inspections found.</div>
-</div>
+<table class="table table-striped table-bordered">
+	<thead>
+		<tr>
+			<th>Property, Unit#</th>
+			<th>Owner</th>
+			<th>Comment</th>
+			<th>Filter size</th>
+		</tr>
+	</thead>
+	<tbody>
+
+<?php
+
+		foreach($HcaHVACPropertyReport->completed_work_orders_info as $cur_info)
+		{
+
+
+
+?>
+		<tr>
+			<td class="fw-bold">
+				<p><?php echo html_encode($cur_info['pro_name']) ?>, <?php echo html_encode($cur_info['unit_number']) ?></p>
+				<p><a href="<?=$URL->link('hca_hvac_inspections_work_order', $cur_info['id'])?>" class="badge badge-success">Completed WO</a></p>
+			</td>
+			<td class="ta-center fw-bold"><?php echo html_encode($cur_info['inspected_name']) ?></td>
+			<td class=""><?php echo html_encode($cur_info['work_order_comment']) ?></td>
+			<td class="ta-center"><?php echo html_encode($cur_info['filter_size']) ?></td>
+		</tr>
+<?php
+		}
+?>
+	</tbody>
+</table>
 <?php
 	}
 
+
+	if (!empty($HcaHVACPropertyReport->pending_inspections_info) && $search_by_job_type == 0)
+	{
+?>
+
+<div class="card-header">
+	<h6 class="card-title mb-0 text-primary">List of Pending Inspections (<?php echo count($HcaHVACPropertyReport->pending_inspections_info) ?>)</h6>
+</div>
+<table class="table table-striped table-bordered">
+	<thead>
+		<tr>
+			<th>Property, unit#</th>
+			<th>Inspected by</th>
+			<th>Comment</th>
+			<th>Filter size</th>
+		</tr>
+	</thead>
+	<tbody>
+
+<?php
+
+		foreach($HcaHVACPropertyReport->pending_inspections_info as $cur_info)
+		{
+?>
+		<tr>
+			<td class="fw-bold">
+				<p><?php echo html_encode($cur_info['pro_name']) ?>, <?php echo html_encode($cur_info['unit_number']) ?></p>
+				<p><a href="<?=$URL->link('hca_hvac_inspections_checklist2', $cur_info['id'])?>" class="badge badge-warning">Pending Inspection</a></p>
+			</td>
+			<td class="ta-center fw-bold"><?php echo html_encode($cur_info['inspected_name']) ?></td>
+			<td class=""><?php echo html_encode($cur_info['work_order_comment']) ?></td>
+			<td class="ta-center"><?php echo html_encode($cur_info['filter_size']) ?></td>
+		</tr>
+<?php
+		}
+?>
+	</tbody>
+</table>
+<?php
+	}
 
 	if ($search_by_job_type == 0)
 	{
-		$HcaHVACPropertyReport->getNeverInspectedUnits();
+		$HcaHVACPropertyReport->genNeverInspected();
 ?>
 <div class="card-header">
 	<h6 class="card-title mb-0 text-primary">List of never inspected units (<?php echo $HcaHVACPropertyReport->num_never_inspected ?>)</h6>
 </div>
 <div class="mb-3">
-	<div class="callout callout-primary">
+	<div class="callout callout-info">
 		<p class="">This unit list displays never inspected units for the selected period. This takes into all Plumbing Inspections and any Work Order statuses.</p>
 	</div>
 	<div class="alert alert-warning" role="alert">
-		<p class="fw-bold"><?php echo implode(', ', $HcaHVACPropertyReport->unispected_units) ?></p>
+		<p class="fw-bold"><?php echo implode(' ', $HcaHVACPropertyReport->never_ispected_units) ?></p>
 	</div>
 </div>
 
 <?php
 	}
 
-
+	$chart_labels = $chart_numbers = $chart_colors = [];
 	// Completed: WO, items, repaired
 	if ($search_by_job_type == 1)
 	{
-		$chart_column_label_1 = '"Completed Work Orders"';
-		$chart_column_label_2 = '"Replaced items"';
-		$chart_column_label_3 = '"Repaired items"';
+		$chart_labels[] = '"Completed Work Orders"';
+		$chart_labels[] = '"Replaced Filters"';
 
-		$chart_column_total_1 = $number_work_orders;
-		$chart_column_total_2 = $wo_total_replaced;
-		$chart_column_total_3 = $wo_total_repaired;
+		$chart_numbers[] = $HcaHVACPropertyReport->num_completed_work_orders;
+		$chart_numbers[] = $HcaHVACPropertyReport->num_filters_replaced;
 
-		$chart_column_color_1 = 'window.theme.success';
-		$chart_column_color_2 = 'window.theme.primary';
-		$chart_column_color_3 = 'window.theme.info';
+		$chart_colors[] = 'window.theme.success';
+		$chart_colors[] = 'window.theme.primary';
 	}
 	else // Pending WO, items, never inspected units
 	{
-		$chart_column_label_1 = '"Pending Work Orders"';
-		$chart_column_label_2 = '"Pending items"';
-		$chart_column_label_3 = '"Never inspected units"';
+		$chart_labels[] = '"Pending Inspections"';
+		$chart_labels[] = '"Pending Work Orders"';
+		$chart_labels[] = '"Not Replaced Filters"';
+		$chart_labels[] = '"Never inspected units"';
 
-		$chart_column_total_1 = $number_work_orders;
-		$chart_column_total_2 = $total_pending;
-		$chart_column_total_3 = $HcaHVACPropertyReport->num_never_inspected;
+		$chart_numbers[] = $HcaHVACPropertyReport->num_pending_inspections;
+		$chart_numbers[] = $HcaHVACPropertyReport->num_pending_work_orders;
+		$chart_numbers[] = $HcaHVACPropertyReport->num_filters_replaced;
+		$chart_numbers[] = $HcaHVACPropertyReport->num_never_inspected;
 
-		$chart_column_color_1 = 'window.theme.warning';
-		$chart_column_color_2 = 'window.theme.danger';
-		$chart_column_color_3 = 'window.theme.secondary';
+		$chart_colors[] = 'window.theme.coral';
+		$chart_colors[] = 'window.theme.warning';
+		$chart_colors[] = 'window.theme.danger';
+		$chart_colors[] = 'window.theme.secondary';
 	}
-
 
 ?>
 
-<script src="<?=BASE_URL?>/vendor/chartjs/dist/chart.js"></script>
-<script src="<?=BASE_URL?>/vendor/app.js"></script>
+<script src="<?=BASE_URL?>/vendor/chartjs/dist/chart.js?v=<?=time()?>"></script>
+<script src="<?=BASE_URL?>/vendor/app.js?v=<?=time()?>"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -451,10 +355,10 @@ document.addEventListener("DOMContentLoaded", function() {
 	new Chart(document.getElementById("chartjs-dashboard-pie-pillars"), {
 		type: "bar",
 		data: {
-			labels: [<?=$chart_column_label_1?>, <?=$chart_column_label_2?>, <?=$chart_column_label_3?>],
+			labels: [<?php echo implode(',', $chart_labels) ?>],
 			datasets: [{
-				data: [<?=$chart_column_total_1?>, <?=$chart_column_total_2?>, <?=$chart_column_total_3?>],
-				backgroundColor: [<?=$chart_column_color_1?>, <?=$chart_column_color_2?>, <?=$chart_column_color_3?>],
+				data: [<?php echo implode(',', $chart_numbers) ?>],
+				backgroundColor: [<?php echo implode(',', $chart_colors) ?>],
 				borderWidth: 5
 			}]
 		},

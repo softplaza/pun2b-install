@@ -3,8 +3,8 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access2 = ($User->checkAccess('hca_wom', 2)) ? true : false;
-if (!$access2)
+$access11 = ($User->checkAccess('hca_wom', 11)) ? true : false;
+if (!$access11)
 	message($lang_common['No permission']);
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -17,10 +17,14 @@ $SwiftUploader = new SwiftUploader;
 
 // Set permissions to view, download and delete files
 $SwiftUploader->access_view_files = true;
-if ($User->checkAccess('hca_ui', 18))
+if ($User->checkPermissions('hca_wom', 10))
 	$SwiftUploader->access_upload_files = true;
-if ($User->checkAccess('hca_ui', 19))
-	$SwiftUploader->access_delete_files = true;
+
+// Get current task info
+$task_info = $HcaWOM->getTaskInfo($id);
+
+if (empty($task_info))
+	message('The task does not exist or has been deleted.');
 
 if (isset($_POST['complete']))
 {
@@ -33,84 +37,53 @@ if (isset($_POST['complete']))
 		'dt_completed'		=> date('Y-m-d\TH:i:s'),
 		'task_status'		=> 3,
 	];
-	$DBLayer->update('hca_wom_tasks', $form_data, $id);
 
-	$task_info = $HcaWOM->getTaskInfo($id);
-	if (isset($task_info['requested_email']) && $form_data['completed'] == 1 && $task_info['completed'] == 0)
+	if ($form_data['time_start'] == $form_data['time_end'])
+		$Core->add_error('The start time of the task cannot be the same as the end time.');
+	else if (strtotime($form_data['time_start']) > strtotime($form_data['time_end']))
+		$Core->add_error('The end time of the task must be later than the start time.');
+
+	if ($task_info['task_status'] == 4)
+		$Core->add_error('This task has been already closed by the property manager, you cannot make any changes.');
+
+	if (empty($Core->errors))
 	{
-		$SwiftMailer = new SwiftMailer;
-		//$SwiftMailer->isHTML();
+		$DBLayer->update('hca_wom_tasks', $form_data, $id);
 
-		$mail_subject = 'Property Work Order #'.$task_info['work_order_id'];
-		$mail_message = [];
-		$mail_message[] = 'Hello '.$task_info['requested_name'];
-		$mail_message[] = 'Work Order #'.$task_info['work_order_id'].' is ready for review.';
-		$mail_message[] = 'Property: '.$task_info['pro_name'];
-		$mail_message[] = 'Unit: '.$task_info['unit_number'];
-		
-		if ($task_info['tech_comment'] != '')
-			$mail_message[] = 'Comment: '.$task_info['tech_comment'];
+		// !!! CHECK ALL COMPLETED TASKS BEFORE SENT EMAIL
+		$wo_tasks = $HcaWOM->getWOTasks($task_info['work_order_id']);
+		$are_tasks_closed = $HcaWOM->areTasksClosed($wo_tasks);
 
-		$mail_message[] = 'To view follow this link:';
-		$mail_message[] = $URL->link('hca_wom_work_order', $task_info['work_order_id']);
+		if (isset($task_info['requested_email']) && $are_tasks_closed)
+		{
+			$SwiftMailer = new SwiftMailer;
+			//$SwiftMailer->isHTML();
 
-		$SwiftMailer->send($task_info['requested_email'], $mail_subject, implode("\n", $mail_message));
+			$mail_subject = 'Property Work Order #'.$task_info['work_order_id'];
+			$mail_message = [];
+			$mail_message[] = 'Hello '.$task_info['requested_name'];
+			$mail_message[] = 'Work Order #'.$task_info['work_order_id'].' is ready for review.';
+			$mail_message[] = 'Property: '.$task_info['pro_name'];
+			$mail_message[] = 'Location: '.$task_info['unit_number'];
+			
+			if ($form_data['tech_comment'] != '')
+				$mail_message[] = 'Comment: '.$form_data['tech_comment'];
+
+			$mail_message[] = 'To view follow this link:';
+			$mail_message[] = $URL->link('hca_wom_work_order', $task_info['work_order_id']);
+
+			$SwiftMailer->send($task_info['requested_email'], $mail_subject, implode("\n", $mail_message));
+		}
+
+		// Add flash message
+		$flash_message = 'Task #'.$id.' has been completed.';
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
 	}
-
-	// Add flash message
-	$flash_message = 'Task #'.$id.' has been completed.';
-	$FlashMessenger->add_info($flash_message);
-	redirect('', $flash_message);
-}
-
-$query = array(
-	'SELECT'	=> 'p.*',
-	'FROM'		=> 'sm_property_db AS p',
-	'ORDER BY'	=> 'p.display_position',
-	'WHERE'		=> 'p.id!=105 AND p.id!=113 AND p.id!=115 AND p.id!=116',
-);
-$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$sm_property_db = [];
-while ($row = $DBLayer->fetch_assoc($result)) {
-	$sm_property_db[] = $row;
 }
 
 $Core->set_page_id('hca_wom_task', 'hca_wom');
 require SITE_ROOT.'header.php';
-
-$query = [
-	'SELECT'	=> 't.*, w.*, w.id AS wid, p.pro_name, pu.unit_number, i.item_name, u1.realname AS assigned_name, u1.email AS assigned_email, u2.realname AS requested_name, u2.email AS requested_email',
-	'FROM'		=> 'hca_wom_tasks AS t',
-	'JOINS'		=> [
-		[
-			'INNER JOIN'	=> 'hca_wom_work_orders AS w',
-			'ON'			=> 'w.id=t.work_order_id'
-		],
-		[
-			'INNER JOIN'	=> 'sm_property_db AS p',
-			'ON'			=> 'p.id=w.property_id'
-		],
-		[
-			'LEFT JOIN'		=> 'sm_property_units AS pu',
-			'ON'			=> 'pu.id=w.unit_id'
-		],
-		[
-			'LEFT JOIN'		=> 'hca_wom_items AS i',
-			'ON'			=> 'i.id=t.task_item'
-		],
-		[
-			'LEFT JOIN'		=> 'users AS u1',
-			'ON'			=> 'u1.id=t.assigned_to'
-		],
-		[
-			'INNER JOIN'	=> 'users AS u2',
-			'ON'			=> 'u2.id=w.requested_by'
-		],
-	],
-	'WHERE'		=> 't.id='.$id,
-];
-$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$task_info = $DBLayer->fetch_assoc($result);
 ?>
 
 <form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data">
@@ -118,22 +91,41 @@ $task_info = $DBLayer->fetch_assoc($result);
 	<div class="row">
 		<div class="col-md-4">
 
-			<div class="card-header d-flex justify-content-between">
-				<h6 class="card-title mb-0">Work Order #<?php echo $task_info['work_order_id'] ?></h6>
+			<div class="card-header">
 				<h6 class="card-title mb-0">Task # <?php echo $task_info['id'] ?></h6>
+				<h6 class="card-title mb-0 hidden">Work Order #<?php echo $task_info['work_order_id'] ?></h6>
 			</div>
 
 			<div class="card">
-				<div class="card-body d-flex justify-content-between">
-					<h5 class="mb-0"><?php echo html_encode($task_info['pro_name']) ?></h5>
-					<h5 class="mb-0">Unit: <?php echo html_encode($task_info['unit_number']) ?></h5>
+				<div class="card-body">
+					<div class="mb-2 d-flex justify-content-between">
+						<h5 class="mb-0"><?php echo html_encode($task_info['pro_name']) ?></h5>
+						<h5 class="mb-0">Unit: <?php echo ($task_info['unit_id'] > 0) ? html_encode($task_info['unit_number']) : 'Common area'; ?></h5>
+					</div>
+
+				<?php if ($task_info['task_status'] == 4): ?>
+					<div class="callout callout-success mb-2">The task has been closed by property manager.</div>
+				<?php elseif ($task_info['task_status'] == 3): ?>
+					<div class="callout callout-warning mb-2">The task sent for review by property manager.</div>
+				<?php endif; ?>
+
 				</div>
 			</div>
 
 			<div class="card">
 				<div class="card-body">
-					<h5 class="mb-1"><?php echo $task_info['enter_permission'] == 1 ? '<i class="fa-solid fa-circle-exclamation text-warning"></i> Permission to Enter' : '<i class="fa-solid fa-circle-check text-primary"></i> OK to Enter' ?> </h5>
-					<h5 class="mb-0"><?php echo $task_info['has_animal'] == 1 ? '<i class="fa-solid fa-circle-exclamation text-warning"></i> Pets in Unit' : '<i class="fa-solid fa-circle-check text-primary"></i> NO Pets' ?></h5>
+					<div class="d-flex justify-content-between mb-2">
+						<h5 class="mb-1"><?php echo $task_info['enter_permission'] == 1 ? '<i class="fa-solid fa-circle-exclamation text-warning"></i> Permission to Enter' : '<i class="fa-solid fa-circle-check text-primary"></i> OK to Enter' ?> </h5>
+						<h5 class="mb-1"><?php echo $task_info['has_animal'] == 1 ? '<i class="fa-solid fa-circle-exclamation text-warning"></i> Pets in Unit' : '<i class="fa-solid fa-circle-check text-primary"></i> NO Pets' ?></h5>
+					</div>
+
+				<?php if ($task_info['wo_message'] != ''): ?>
+					<div class="mb-0">
+						<div class="border bg-light p-1">
+							<?php echo html_encode($task_info['wo_message']) ?>
+						</div>
+					</div>
+				<?php endif; ?>
 				</div>
 			</div>
 
@@ -146,23 +138,40 @@ $task_action = isset($HcaWOM->task_actions[$task_info['task_action']]) ? $HcaWOM
 						<h6 class="mb-0"><?php echo html_encode($task_info['item_name']).' ('.$task_action ?>)</h6>
 						<h6 class="mb-0">Priority: <?php echo (isset($HcaWOM->priority[$task_info['priority']]) ? $HcaWOM->priority[$task_info['priority']] : 'Low') ?></h6>
 					</div>
+
+				<?php if ($task_info['task_message'] != ''): ?>
 					<div class="mb-0">
 						<div class="border bg-light p-1">
-							<?php echo html_encode($task_info['wo_message']) ?>
+							<?php echo html_encode($task_info['task_message']) ?>
 						</div>
 					</div>
+				<?php endif; ?>
 				</div>
 			</div>
+<?php
+if (isset($_POST['time_start']))
+	$time_start = $_POST['time_start'];
+else if ($task_info['time_start'] != '00:00:00')
+	$time_start = format_date($task_info['time_start'], 'H:i');
+else
+	$time_start = date('H:i');
 
+if (isset($_POST['time_end']))
+	$time_end = $_POST['time_end'];
+else if ($task_info['time_end'] != '00:00:00')
+	$time_end = format_date($task_info['time_end'], 'H:i');
+else
+	$time_end = '';
+?>
 			<div class="card">
 				<div class="card-body">
 					<div class="input-group mb-2">
 						<span class="input-group-text w-25">Start</span>
-						<input class="form-control" type="time" name="time_start" id="fld_time_start" value="<?php echo ($task_info['time_start'] != '00:00:00') ? format_date($task_info['time_start'], 'H:i') : date('H:i') ?>" required>
+						<input class="form-control" type="time" name="time_start" id="fld_time_start" value="<?php echo $time_start ?>" required>
 					</div>
 					<div class="input-group">
 						<span class="input-group-text w-25">End&nbsp;</span>
-						<input class="form-control" type="time" name="time_end" id="fld_time_end" value="<?php echo ($task_info['time_end'] != '00:00:00') ? format_date($task_info['time_end'], 'H:i') : '' ?>" required>
+						<input class="form-control" type="time" name="time_end" id="fld_time_end" value="<?php echo $time_end ?>" required>
 					</div>
 				</div>
 			</div>
@@ -175,7 +184,8 @@ if ($task_info['task_status'] < 4)
 	$SwiftUploader->uploadImage('hca_wom_tasks', $id);
 }
 ?>
-					<h6 class="mb-0"><strong id="num_images"><?=$SwiftUploader->getUploadedImages('hca_wom_tasks', $id)?></strong> uploaded images</h6>
+					<h6 class="mb-0 badge bg-primary"><?=$SwiftUploader->getUploadedImagesLink('hca_wom_tasks', $id)?></h6>
+					
 				</div>
 			</div>
 
@@ -203,18 +213,18 @@ if ($task_info['task_status'] < 4)
 			<div class="card">
 				<div class="card-body">
 					<label class="form-label" for="fld_tech_comment">Closing comments</label>
-					<textarea type="text" name="tech_comment" class="form-control" id="fld_tech_comment" placeholder="Required if task not completed" required><?php echo html_encode($task_info['tech_comment']) ?></textarea>
+					<textarea type="text" name="tech_comment" class="form-control" id="fld_tech_comment" placeholder="Required if task not completed" required><?php echo (isset($_POST['tech_comment']) ? html_encode($_POST['tech_comment']) : html_encode($task_info['tech_comment'])) ?></textarea>
 				</div>
 			</div>
 
 			<div class="card">
-				<div class="card-body d-flex justify-content-between">
-<?php if ($task_info['task_status'] < 4): ?>
-					<button type="submit" name="complete" class="btn btn-primary"><i class="fa-solid fa-circle-check"></i> Save and Close</button>
-					<a href="<?php echo $URL->link('hca_wom_tasks') ?>" class="btn btn-secondary text-white"><i class="fa-solid fa-circle-xmark"></i> My Tasks</a>
-<?php else: ?>
-					<div class="callout callout-success mb-2">The task has been closed by property manager.</div>
-<?php endif; ?>
+				<div class="card-body">
+
+					<div class="d-flex justify-content-between mb-3">
+						<button type="submit" name="complete" class="btn btn-primary" <?php echo ($task_info['task_status'] == 4) ? 'disabled' : '' ?>><i class="fa-solid fa-circle-check"></i> Save and Close</button>
+						<a href="<?php echo $URL->genLink('hca_wom_tasks', ['section' => 'active']) ?>" class="btn btn-secondary text-white"><i class="fa-solid fa-circle-xmark"></i> To-Do List</a>
+					</div>
+
 				</div>
 			</div>
 

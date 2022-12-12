@@ -205,6 +205,7 @@ class HcaHVACInspections
 		$output[6] = 'Last 6 months';
 		$output[3] = 'Last 3 months';
 		$output[1] = 'Last month';
+		$output[0] = 'Today';
 
 		for ($year = $start; $year <= date('Y'); $year++)
 		{

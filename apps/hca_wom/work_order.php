@@ -3,68 +3,16 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access1 = ($User->checkAccess('hca_wom', 1)) ? true : false;
-if (!$access1)
+$access2 = ($User->checkAccess('hca_wom', 2)) ? true : false;
+if (!$access2)
 	message($lang_common['No permission']);
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
+$SwiftUploader = new SwiftUploader;
 $HcaWOM = new HcaWOM;
 
-if (isset($_POST['add']))
-{
-	$form_data = array(
-		'property_id'		=> isset($_POST['property_id']) ? intval($_POST['property_id']) : 0,
-		'unit_id'			=> isset($_POST['unit_id']) ? intval($_POST['unit_id']) : 0,
-		'priority'			=> isset($_POST['priority']) ? intval($_POST['priority']) : 1,
-		//'has_animal'		=> isset($_POST['has_animal']) ? intval($_POST['has_animal']) : 0,
-		//'enter_permission'	=> isset($_POST['enter_permission']) ? intval($_POST['enter_permission']) : 0,
-
-		'dt_created'		=> date('Y-m-d\TH:i:s'),
-		'requested_by'		=> $User->get('id'),
-		'wo_status'			=> 1
-	);
-
-	if ($form_data['property_id'] == 0)
-		$Core->add_error('Select a property from dropdown list.');
-
-	if (empty($Core->errors))
-	{
-		// Create a new Work Order
-		$new_id = $DBLayer->insert_values('hca_wom_work_orders', $form_data);
-
-		//$DBLayer->insert_values('hca_wom_tasks', ['work_order_id' => $new_id]);
-
-		// Add flash message
-		$flash_message = 'Work Order has been created';
-		$FlashMessenger->add_info($flash_message);
-		redirect($URL->link('hca_wom_work_order', $new_id), $flash_message);
-	}
-}
-
-else if (isset($_POST['complete']))
-{
-	$form_data = array(
-		'priority'			=> isset($_POST['priority']) ? intval($_POST['priority']) : 0,
-		'has_animal'		=> isset($_POST['has_animal']) ? intval($_POST['has_animal']) : 0,
-		'enter_permission'	=> isset($_POST['enter_permission']) ? intval($_POST['enter_permission']) : 0,
-		'wo_message'		=> isset($_POST['wo_message']) ? swift_trim($_POST['wo_message']) : 0,
-		'wo_status'			=> 4
-	);
-
-	if (empty($Core->errors))
-	{
-		// Update Work Order
-		$DBLayer->update('hca_wom_work_orders', $form_data, $id);
-
-		// Add flash message
-		$flash_message = 'Work Order #'.$id.' has been closed.';
-		$FlashMessenger->add_info($flash_message);
-		redirect('', $flash_message);
-	}
-}
-
-else if (isset($_POST['update_wo']))
+if (isset($_POST['update_wo']))
 {
 	$form_data = array(
 		'priority'			=> isset($_POST['priority']) ? intval($_POST['priority']) : 0,
@@ -85,6 +33,37 @@ else if (isset($_POST['update_wo']))
 	}
 }
 
+else if (isset($_POST['complete_wo']))
+{
+	$form_data = array(
+		'priority'			=> isset($_POST['priority']) ? intval($_POST['priority']) : 0,
+		'has_animal'		=> isset($_POST['has_animal']) ? intval($_POST['has_animal']) : 0,
+		'enter_permission'	=> isset($_POST['enter_permission']) ? intval($_POST['enter_permission']) : 0,
+		'wo_message'		=> isset($_POST['wo_message']) ? swift_trim($_POST['wo_message']) : 0,
+		'closed_by'			=> $User->get('id'),
+		'dt_closed'			=> date('Y-m-d\TH:i:s'),
+		'wo_status'			=> 2
+	);
+
+	if (empty($Core->errors))
+	{
+		// Update Work Order
+		$DBLayer->update('hca_wom_work_orders', $form_data, $id);
+
+		$query = array(
+			'UPDATE'	=> 'hca_wom_tasks',
+			'SET'		=> 'task_status=4',
+			'WHERE'		=> 'work_order_id='.$id
+		);
+		$DBLayer->query_build($query) or error(__FILE__, __LINE__);
+
+		// Add flash message
+		$flash_message = 'Work Order #'.$id.' and tasks have been closed.';
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
+	}
+}
+
 else if (isset($_POST['reopen_wo']))
 {
 	$DBLayer->update('hca_wom_work_orders', ['wo_status' => 1], $id);
@@ -99,7 +78,7 @@ else if (isset($_POST['reopen_wo']))
 
 else if (isset($_POST['cancel_wo']))
 {
-	$DBLayer->update('hca_wom_work_orders', ['wo_status' => 0], $id);
+	$DBLayer->update('hca_wom_work_orders', ['wo_status' => 3], $id);
 
 	$DBLayer->update('hca_wom_tasks', ['task_status' => 0], 'work_order_id='.$id);
 
@@ -109,12 +88,12 @@ else if (isset($_POST['cancel_wo']))
 	redirect('', $flash_message);
 }
 
+// TASK ACTIONS
 else if (isset($_POST['add_task']))
 {
 	$form_data = array(
 		'work_order_id' => $id,
-		'task_type'		=> isset($_POST['task_type']) ? intval($_POST['task_type']) : 0,
-		'task_item'		=> isset($_POST['task_item']) ? intval($_POST['task_item']) : 0,
+		'item_id'		=> isset($_POST['item_id']) ? intval($_POST['item_id']) : 0,
 		'task_action'	=> isset($_POST['task_action']) ? intval($_POST['task_action']) : 0,
 		'assigned_to'	=> isset($_POST['assigned_to']) ? intval($_POST['assigned_to']) : 0,
 		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
@@ -132,7 +111,7 @@ else if (isset($_POST['add_task']))
 
 		$query = array(
 			'UPDATE'	=> 'hca_wom_work_orders',
-			'SET'		=> 'num_tasks=num_tasks+1',
+			'SET'		=> 'num_tasks=num_tasks+1, last_task_id='.$new_tid,
 			'WHERE'		=> 'id='.$id
 		);
 		$DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -172,15 +151,14 @@ else if (isset($_POST['add_task']))
 else if (isset($_POST['update_task']))
 {
 	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
-	
+	$notify_technician = isset($_POST['notify_technician']) ? intval($_POST['notify_technician']) : 0;
+
 	$form_data = [
 		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
 	];
 
-	if (isset($_POST['task_type']))
-		$form_data['task_type'] = intval($_POST['task_type']);
-	if (isset($_POST['task_item']))
-		$form_data['task_item'] = intval($_POST['task_item']);
+	if (isset($_POST['item_id']))
+		$form_data['item_id'] = intval($_POST['item_id']);
 	if (isset($_POST['task_action']))
 		$form_data['task_action'] = intval($_POST['task_action']);
 	if (isset($_POST['assigned_to']))
@@ -194,6 +172,32 @@ else if (isset($_POST['update_task']))
 		// Update task of Work Order
 		$DBLayer->update('hca_wom_tasks', $form_data, $task_id);
 
+		// notify_technician
+		if ($notify_technician == 1)
+		{
+			$task_info = $HcaWOM->getTaskInfo($task_id);
+			if (isset($task_info['assigned_email']))
+			{
+				$SwiftMailer = new SwiftMailer;
+				//$SwiftMailer->isHTML();
+
+				$mail_subject = 'Property Task #'.$task_info['id'];
+				$mail_message = [];
+				$mail_message[] = 'Hello '.$task_info['assigned_name'];
+				$mail_message[] = 'Your Task #'.$task_info['id'].' has been updated by Property Manager.';
+				$mail_message[] = 'Property: '.$task_info['pro_name'];
+				$mail_message[] = 'Unit: '.$task_info['unit_number'];
+				
+				if ($task_info['task_message'] != '')
+					$mail_message[] = 'Details: '.$task_info['task_message'];
+
+				$mail_message[] = 'To view the task follow the link:';
+				$mail_message[] = $URL->link('hca_wom_task', $task_info['id']);
+
+				$SwiftMailer->send($task_info['assigned_email'], $mail_subject, implode("\n", $mail_message));
+			}
+		}
+		
 		// Add flash message
 		$flash_message = 'Task #'.$task_id.' has been updated.';
 		$FlashMessenger->add_info($flash_message);
@@ -204,11 +208,9 @@ else if (isset($_POST['update_task']))
 else if (isset($_POST['close_task']))
 {
 	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
+	$notify_technician = isset($_POST['notify_technician']) ? intval($_POST['notify_technician']) : 0;
+
 	$form_data = [
-		//'task_type'		=> isset($_POST['task_type']) ? intval($_POST['task_type']) : 0,
-		//'task_item'		=> isset($_POST['task_item']) ? intval($_POST['task_item']) : 0,
-		//'task_action'	=> isset($_POST['task_action']) ? intval($_POST['task_action']) : 0,
-		//'assigned_to'	=> isset($_POST['assigned_to']) ? intval($_POST['assigned_to']) : 0,
 		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
 		'task_status'	=> 4,
 	];
@@ -217,6 +219,32 @@ else if (isset($_POST['close_task']))
 	{
 		// Update task of Work Order
 		$DBLayer->update('hca_wom_tasks', $form_data, $task_id);
+
+		// notify_technician
+		if ($notify_technician == 1)
+		{
+			$task_info = $HcaWOM->getTaskInfo($task_id);
+			if (isset($task_info['assigned_email']))
+			{
+				$SwiftMailer = new SwiftMailer;
+				//$SwiftMailer->isHTML();
+
+				$mail_subject = 'Property Task #'.$task_info['id'];
+				$mail_message = [];
+				$mail_message[] = 'Hello '.$task_info['assigned_name'];
+				$mail_message[] = 'Your Task #'.$task_info['id'].' has been approved and closed by Property Manager.';
+				$mail_message[] = 'Property: '.$task_info['pro_name'];
+				$mail_message[] = 'Unit: '.$task_info['unit_number'];
+				
+				if ($task_info['task_message'] != '')
+					$mail_message[] = 'Details: '.$task_info['task_message'];
+
+				$mail_message[] = 'To view your active tasks follow the link:';
+				$mail_message[] = $URL->genLink('hca_wom_tasks', ['section' => 'active']);
+
+				$SwiftMailer->send($task_info['assigned_email'], $mail_subject, implode("\n", $mail_message));
+			}
+		}
 
 		// Add flash message
 		$flash_message = 'Task #'.$task_id.' has been closed.';
@@ -228,6 +256,7 @@ else if (isset($_POST['close_task']))
 else if (isset($_POST['reopen_task']))
 {
 	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
+
 	if ($task_id > 0)
 	{
 		// Update task of Work Order
@@ -242,6 +271,7 @@ else if (isset($_POST['reopen_task']))
 
 else if (isset($_POST['delete_task']))
 {
+	$notify_technician = isset($_POST['notify_technician']) ? intval($_POST['notify_technician']) : 0;
 	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
 
 	if ($task_id > 0)
@@ -254,6 +284,32 @@ else if (isset($_POST['delete_task']))
 			'WHERE'		=> 'id='.$id
 		);
 		$DBLayer->query_build($query) or error(__FILE__, __LINE__);
+
+		// notify_technician
+		if ($notify_technician == 1)
+		{
+			$task_info = $HcaWOM->getTaskInfo($task_id);
+			if (isset($task_info['assigned_email']))
+			{
+				$SwiftMailer = new SwiftMailer;
+				//$SwiftMailer->isHTML();
+
+				$mail_subject = 'Property Task #'.$task_info['id'];
+				$mail_message = [];
+				$mail_message[] = 'Hello '.$task_info['assigned_name'];
+				$mail_message[] = 'Your Task #'.$task_info['id'].' has been deleted by Property Manager.';
+				$mail_message[] = 'Property: '.$task_info['pro_name'];
+				$mail_message[] = 'Unit: '.$task_info['unit_number'];
+				
+				if ($task_info['task_message'] != '')
+					$mail_message[] = 'Details: '.$task_info['task_message'];
+
+				$mail_message[] = 'To view your active tasks follow the link:';
+				$mail_message[] = $URL->genLink('hca_wom_tasks', ['section' => 'active']);
+
+				$SwiftMailer->send($task_info['assigned_email'], $mail_subject, implode("\n", $mail_message));
+			}
+		}
 
 		// Add flash message
 		$flash_message = 'Task #'.$task_id.' has been deleted.';
@@ -309,12 +365,12 @@ if ($id > 0)
 		message('The Work Order does not exist.');
 
 	$query = [
-		'SELECT'	=> 't.*, i.item_name, i.item_actions, u1.realname AS assigned_name',
+		'SELECT'	=> 't.*, i.item_name, i.item_actions, i.item_type, u1.realname AS assigned_name',
 		'FROM'		=> 'hca_wom_tasks AS t',
 		'JOINS'		=> [
 			[
 				'LEFT JOIN'		=> 'hca_wom_items AS i',
-				'ON'			=> 'i.id=t.task_item'
+				'ON'			=> 'i.id=t.item_id'
 			],
 			[
 				'LEFT JOIN'		=> 'users AS u1',
@@ -325,9 +381,10 @@ if ($id > 0)
 		'ORDER BY'	=> 't.task_status',
 	];
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-	$tasks_info = [];
+	$tasks_info = $task_ids = [];
 	while ($row = $DBLayer->fetch_assoc($result)) {
 		$tasks_info[] = $row;
+		$task_ids[] = $row['id'];
 	}
 ?>
 
@@ -396,13 +453,16 @@ if ($id > 0)
 			</div>
 
 			<div class="mb-1">
-<?php if ($wo_info['wo_status'] < 3): ?>
 				<button type="submit" name="update_wo" class="btn btn-sm btn-primary">Update</button>
-
+<?php if ($wo_info['wo_status'] < 2): ?>
 				<button type="submit" name="cancel_wo" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel it? All tasks will be closed.')">Cancel</button>
+
+	<?php if ($HcaWOM->areTasksCompleted($tasks_info)): ?>
+				<button type="submit" name="complete_wo" class="btn btn-sm btn-success">Complete Work Order</button>
+	<?php endif; ?>
+
 <?php endif; ?>
 			</div>
-
 		</div>
 	</div>
 </form>
@@ -415,7 +475,7 @@ if ($id > 0)
 	if (!empty($tasks_info))
 	{
 ?>
-<table class="table table-sm table-striped table-bordered">
+<table class="table table-striped table-bordered">
 	<thead>
 		<tr>
 			<th>#</th>
@@ -424,6 +484,7 @@ if ($id > 0)
 			<th>Action</th>
 			<th>Details</th>
 			<th>Assigned to</th>
+			<th>Closing Comments</th>
 			<th>Status</th>
 			<th></th>
 		</tr>
@@ -433,6 +494,9 @@ if ($id > 0)
 		$i = 1;
 		foreach ($tasks_info as $cur_info)
 		{
+			$item_type = isset($HcaWOM->item_types[$cur_info['item_type']]) ? $HcaWOM->item_types[$cur_info['item_type']] : '';
+			$task_action = isset($HcaWOM->task_actions[$cur_info['task_action']]) ? $HcaWOM->task_actions[$cur_info['task_action']] : '';
+
 			$task_status = '';
 			if ($cur_info['task_status'] == 4)
 				$task_status = '<span class="badge badge-success">Closed by Manager</span>';
@@ -445,15 +509,16 @@ if ($id > 0)
 			else if ($cur_info['task_status'] == 0)
 				$task_status = '<span class="badge badge-danger">Canceled</span>';
 
-			$edit = ($User->is_admmod()) ? '<span class="badge bg-primary" role="button" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="manageTask('.$cur_info['id'].')"><i class="fas fa-edit"></i> edit</span>' : '';
+			$edit = ($access2) ? '<span class="badge bg-primary" role="button" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="manageTask('.$cur_info['id'].')"><i class="fas fa-edit"></i> edit</span>' : '';
 ?>
 		<tr>
 			<td class="ta-center">#<?=$cur_info['id']?></td>
-			<td class="min-100 ta-center"><?php echo $HcaWOM->item_types[$cur_info['task_type']] ?></td>
+			<td class="min-100 ta-center"><?php echo html_encode($item_type) ?></td>
 			<td class="min-100 ta-center"><?php echo html_encode($cur_info['item_name']) ?></td>
-			<td class="min-100 ta-center"><?php echo $HcaWOM->task_actions[$cur_info['task_action']] ?></td>
-			<td class="min-100 ta-center"><?php echo html_encode($cur_info['task_message']) ?></td>
+			<td class="min-100 ta-center"><?php echo $task_action ?></td>
+			<td class="min-100"><?php echo html_encode($cur_info['task_message']) ?></td>
 			<td class="min-100 ta-center"><?php echo html_encode($cur_info['assigned_name']) ?></td>
+			<td class="min-100"><?php echo html_encode($cur_info['tech_comment']) ?></td>
 			<td class="min-100 ta-center"><?php echo $task_status ?></td>
 			<td class="min-100 ta-center"><?php echo $edit ?></td>
 		</tr>
@@ -463,7 +528,21 @@ if ($id > 0)
 ?>
 	</tbody>
 </table>
+
+
+<div class="card-header d-flex justify-content-between">
+	<h6 class="card-title mb-0">Uploaded Image</h6>
+</div>
+<div class="card">
+	<div class="card-body">
+		<div class="row">
+			<?php $SwiftUploader->displayCurProjectImages('hca_wom_tasks', $task_ids); ?>
+		</div>
+	</div>
+</div>
+
 <?php
+
 	}
 	else
 	{
@@ -498,38 +577,6 @@ if ($id > 0)
 </div>
 
 <script>
-/*
-function showToastMessage()
-{
-    const toastLiveExample = document.getElementById('liveToast');
-    const toast = new bootstrap.Toast(toastLiveExample);
-    toast.show();
-}
-let form = document.querySelector('#form_main');
-form.addEventListener('change', ()=>{
-	jQuery.ajax({
-		type: 'POST',
-        url: $('#form_main').attr('action'),
-        data: $('#form_main').serialize(),
-		success: function(re){
-            var msg = '<div id="liveToast" class="toast position-fixed bottom-0 end-0 m-2" role="alert" aria-live="assertive" aria-atomic="true">';
-			msg += '<div class="toast-header toast-success"><strong class="me-auto">Message</strong></div>';
-			msg += '<div class="toast-body toast-success">Form has been updated.</div>';
-			msg += '</div>';
-			$("#toast_container").empty().html(msg);
-            showToastMessage();
-		},
-		error: function(re){
-			var msg = '<div id="liveToast" class="toast position-fixed bottom-0 end-0 m-2" role="alert" aria-live="assertive" aria-atomic="true">';
-			msg += '<div class="toast-header toast-danger"><strong class="me-auto">Error</strong></div>';
-			msg += '<div class="toast-body toast-danger">Failed to update form.</div>';
-			msg += '</div>';
-			$("#toast_container").empty().html(msg);
-            showToastMessage();
-		}
-	});
-})
-*/
 function manageTask(task_id)
 {
 	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_manage_task')) ?>";
@@ -548,25 +595,8 @@ function manageTask(task_id)
 		}
 	});
 }
-function getItems(){
-	var type_id = $("#fld_task_type").val();
-	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_get_items')) ?>";
-	jQuery.ajax({
-		url:	"<?php echo $URL->link('hca_wom_ajax_get_items') ?>",
-		type:	"POST",
-		dataType: "json",
-		data: ({type_id:type_id,csrf_token:csrf_token}),
-		success: function(re){
-			$("#fld_task_item").empty().html(re.task_items);
-			$("#fld_task_action").empty().html('<option value="0" selected disabled>Select one</option>');
-		},
-		error: function(re){
-			document.getElementById("#fld_task_item").innerHTML = re;
-		}
-	});
-}
 function getActions(){
-	var item_id = $("#fld_task_item").val();
+	var item_id = $("#fld_item_id").val();
 	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_get_items')) ?>";
 	jQuery.ajax({
 		url:	"<?php echo $URL->link('hca_wom_ajax_get_items') ?>",
@@ -574,7 +604,7 @@ function getActions(){
 		dataType: "json",
 		data: ({item_id:item_id,csrf_token:csrf_token}),
 		success: function(re){
-			$("#fld_task_action").empty().html(re.task_items);
+			$("#fld_task_action").empty().html(re.item_actions);
 
 		},
 		error: function(re){

@@ -627,44 +627,47 @@ class User
 
 	function checkPermissions($to, $key = 0)
 	{
-			global $DBLayer;
+		global $DBLayer;
 
-			if ($this->is_admin())
-				return true;
-	
-			$output = false;
-			if (empty($this->user_permissions) && !$this->is_guest())
+		if ($this->is_guest())
+			return false;
+		else if ($this->is_admin())
+			return true;
+
+		$output = false;
+		if (empty($this->user_permissions) && !$this->is_guest())
+		{
+			// get all permissions of current user og group
+			$query = [
+				'SELECT'	=> 'p.id, p.p_gid, p.p_uid, p.p_to, p.p_key, p.p_value',
+				'FROM'		=> 'user_permissions AS p',
+				'WHERE'		=> 'p.p_uid='.$this->get('id').' OR p.p_gid='.$this->get('group_id')
+			];
+			$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+			while ($row = $DBLayer->fetch_assoc($result))
 			{
-				$query = [
-					'SELECT'	=> 'p.id, p.p_gid, p.p_uid, p.p_to, p.p_key, p.p_value',
-					'FROM'		=> 'user_permissions AS p',
-					'WHERE'		=> 'p.p_uid='.$this->get('id').' OR p.p_gid='.$this->get('group_id')
-				];
-				$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-				while ($row = $DBLayer->fetch_assoc($result))
+				$this->user_permissions[] = $row;
+			}
+		}
+
+		if (!empty($this->user_permissions))
+		{
+			foreach($this->user_permissions as $cur_info)
+			{
+				if ($cur_info['p_to'] == $to && $cur_info['p_key'] == $key && $cur_info['p_value'] == 1)
 				{
-					$this->user_permissions[] = $row;
+					$output = true;
+					break;
+				}
+				else if ($cur_info['p_to'] == $to && $key == 0)
+				{
+					$output = true;
+					break;
 				}
 			}
-	
-			if (!empty($this->user_permissions))
-			{
-				foreach($this->user_permissions as $cur_info)
-				{
-					if ($cur_info['p_to'] == $to && $cur_info['p_key'] == $key && $cur_info['p_value'] == 1)
-					{
-						$output = true;
-						break;
-					}
-					else if ($cur_info['p_to'] == $to && $key == 0)
-					{
-						$output = true;
-						break;
-					}
-				}
-			}
-	
-			return $output;
+		}
+
+		return $output;
 	}
 
 	function checkNotification($to, $key, $uid)

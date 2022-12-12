@@ -3,7 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-//$access = ($User->checkAccess('hca_projects', 12) || $User->get('hca_5840_access') > 0) ? true : false;
+//$access = ($User->checkAccess('hca_projects', 12)) ? true : false;
 //if (!$access)
 //	message($lang_common['No permission']);
 

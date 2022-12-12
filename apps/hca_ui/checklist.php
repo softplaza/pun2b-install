@@ -514,6 +514,11 @@ document.addEventListener("DOMContentLoaded", function() {
 	{
 		$checked_items[] = $row;
 	}
+
+	if (empty($main_info))
+		message('This project does not exist or has been deleted.');
+
+
 ?>
 
 <form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data">

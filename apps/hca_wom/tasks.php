@@ -3,18 +3,15 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access3 = ($User->checkAccess('hca_wom', 3)) ? true : false;
-if (!$access3)
-	message($lang_common['No permission']);
+$access11 = ($User->checkAccess('hca_wom', 11)) ? true : false; // active 
+$access12 = ($User->checkAccess('hca_wom', 12)) ? true : false; // unassigned
+$access13 = ($User->checkAccess('hca_wom', 13)) ? true : false; // completed
 
-$HcaWOM = new HcaWOM;
-
-// 3 - Maintenance, 9 - Painters
-$is_technician = in_array($User->get('group_id'), [3,9]) ? true : false;
-$is_manager = ($User->get('property_access') != '' && $User->get('property_access') != 0) ? true : false;
-
+$section = isset($_GET['section']) ? $_GET['section'] : null;
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
+
+$HcaWOM = new HcaWOM;
 
 if (isset($_POST['accept_task']))
 {
@@ -31,9 +28,16 @@ if (isset($_POST['accept_task']))
 }
 
 $search_query = [];
-$search_query[] = 't.task_status < 3'; // Exclude completed
-if ($is_technician)
-	$search_query[] = 'w.assigned_to='.$User->get('id');
+
+if ($section == 'unassigned')
+	$search_query[] = 't.task_status=1';
+else if ($section == 'active')
+	$search_query[] = 't.task_status=2';
+else
+	$search_query[] = 't.task_status>2';
+
+if (in_array($User->get('group_id'), [3,9]))
+	$search_query[] = 't.assigned_to='.$User->get('id');
 
 if ($search_by_property_id > 0)
 	$search_query[] = 'w.property_id='.$search_by_property_id;
@@ -87,7 +91,7 @@ $query = [
 		],
 		[
 			'LEFT JOIN'		=> 'hca_wom_items AS i',
-			'ON'			=> 'i.id=t.task_item'
+			'ON'			=> 'i.id=t.item_id'
 		],
 		[
 			'LEFT JOIN'		=> 'users AS u1',
@@ -103,27 +107,37 @@ $query = [
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$hca_wom_work_orders = [];
+$hca_wom_tasks = $property_ids = [];
 while ($row = $DBLayer->fetch_assoc($result))
 {
 	$property_ids[] = $row['property_id'];
-	$hca_wom_work_orders[] = $row;
+	$hca_wom_tasks[] = $row;
 }
-$PagesNavigator->num_items($hca_wom_work_orders);
+$PagesNavigator->num_items($hca_wom_tasks);
 
-$Core->set_page_id('hca_wom_tasks_active', 'hca_wom');
+if ($section == 'unassigned')
+	$Core->set_page_id('hca_wom_tasks_unassigned', 'hca_wom');
+else if ($section == 'active')
+	$Core->set_page_id('hca_wom_tasks_active', 'hca_wom');
+else
+	$Core->set_page_id('hca_wom_tasks_completed', 'hca_wom');
+
 require SITE_ROOT.'header.php';
 
+$property_info = [];
 $query = array(
 	'SELECT'	=> 'p.*',
 	'FROM'		=> 'sm_property_db AS p',
-	'WHERE'		=> 'p.id IN ('.implode(',', $property_ids).')',
+	//'WHERE'		=> 'p.id IN ('.implode(',', $property_ids).')',
 	'ORDER BY'	=> 'p.pro_name'
 );
-$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$property_info = [];
-while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
-	$property_info[] = $fetch_assoc;
+if (!empty($property_ids)) 
+{
+	$query['WHERE'] = 'p.id IN ('.implode(',', $property_ids).')';
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
+		$property_info[] = $fetch_assoc;
+	}
 }
 ?>
 <nav class="navbar search-bar">
@@ -154,12 +168,20 @@ foreach ($property_info as $val)
 </nav>
 
 <?php
-if (!empty($hca_wom_work_orders))
+if (!empty($hca_wom_tasks))
 {
+
+if ($section == 'unassigned')
+	$title = 'List of Unassigned Tasks';
+else if ($section == 'active')
+	$title = 'List of Active Tasks';
+else
+	$title = 'List of Completed Tasks';
+
 ?>
 
 <div class="card-header">
-	<h6 class="card-title mb-0">List of Active Tasks</h6>
+	<h6 class="card-title mb-0"><?php echo $title ?></h6>
 </div>
 <form method="post" accept-charset="utf-8" action="">
 	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
@@ -173,11 +195,13 @@ if (!empty($hca_wom_work_orders))
 		<tbody>
 <?php
 	$property_id = 0;
-	foreach ($hca_wom_work_orders as $cur_info)
+	foreach ($hca_wom_tasks as $cur_info)
 	{
 		$task_id_number = ($cur_info['task_status'] > 1) ? '<a href="'.$URL->link('hca_wom_task', $cur_info['id']).'" class="badge bg-info">Task #'.$cur_info['id'].'</a>' : '<button type="submit" name="accept_task['.$cur_info['id'].']" class="badge bg-primary">Accept</button>';
 		
 		$unit_number = ($cur_info['unit_id'] > 0) ? html_encode($cur_info['unit_number']) : 'Common area';
+
+		$task_action = isset($HcaWOM->task_actions[$cur_info['task_action']]) ? '('.$HcaWOM->task_actions[$cur_info['task_action']].')' : '';
 
 		if ($property_id != $cur_info['property_id'])
 		{
@@ -191,7 +215,7 @@ if (!empty($hca_wom_work_orders))
 					<p class="fw-bold"><?php echo $task_id_number ?></p>
 				</td>
 				<td>
-					<p class="fw-bold"><?php echo html_encode($cur_info['item_name']) ?></p>
+					<p><span class="fw-bold"><?php echo html_encode($cur_info['item_name']) ?></span> <?php echo $task_action ?></p>
 					<p class=""><?php echo html_encode($cur_info['task_message']) ?></p>
 					<p class="float-end text-muted fst-italic"><?php echo format_time($cur_info['time_created']) ?></p>
 				</td>

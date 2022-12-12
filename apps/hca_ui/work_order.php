@@ -51,6 +51,9 @@ $query = [
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $main_info = $DBLayer->fetch_assoc($result);
 
+if (empty($main_info))
+	message('This project does not exist or has been deleted.');
+
 if (isset($_POST['submit']))
 {
 	$form_data = [
@@ -224,7 +227,6 @@ else
 $Core->set_page_id('hca_ui_work_order', 'hca_ui');
 require SITE_ROOT.'header.php';
 
-
 if ($action == 'pdf')
 {
 	$HcaUiPDF = new HcaUiPDF;
@@ -239,7 +241,6 @@ if ($action == 'pdf')
 	require SITE_ROOT.'footer.php';
 }
 ?>
-
 
 <div class="card mb-1">
 	<div class="card-header">

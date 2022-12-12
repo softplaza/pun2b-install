@@ -23,21 +23,36 @@ if ($type_id > 0)
 		$hca_wom_items[] = $row;
 	}
 
-	$task_items = [];
+	$first_item = true;
+	$item_list = $item_actions = [];
 	if (!empty($hca_wom_items))
 	{
 		//$task_items[] = '<option value="0">Select one</option>';
 		foreach($hca_wom_items as $cur_info)
 		{
-			$task_items[] = '<option value="'.$cur_info['id'].'">'.html_encode($cur_info['item_name']).'</option>';
+			$item_list[] = '<option value="'.$cur_info['id'].'">'.html_encode($cur_info['item_name']).'</option>';
+
+			if ($first_item)
+			{
+				$item_actions = explode(',', $cur_info['item_actions']);
+				$first_item = false;
+			}
 		}
 	}
 	
+	foreach ($HcaWOM->task_actions as $key => $value)
+	{
+		if (in_array($key, $item_actions))
+			$item_actions[] = '<option value="'.$key.'">'.$value.'</option>';
+	}
+
 	echo json_encode(array(
-		'task_items' => implode('', $task_items),
+		'item_list' => implode('', $item_list),
+		'item_actions' => implode('', $item_actions),
 	));
 }
-// Getting actions
+
+// Get item actions
 if ($item_id > 0)
 {
 	require SITE_ROOT.'apps/hca_wom/classes/HcaWOM.php';
@@ -51,7 +66,7 @@ if ($item_id > 0)
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	$hca_wom_items = $DBLayer->fetch_assoc($result);
 
-	$task_items = [];
+	$item_actions = [];
 	if (!empty($hca_wom_items))
 	{
 		$item_actions = explode(',', $hca_wom_items['item_actions']);
@@ -59,12 +74,12 @@ if ($item_id > 0)
 		foreach ($HcaWOM->task_actions as $key => $value)
 		{
 			if (in_array($key, $item_actions))
-				$task_items[] = '<option value="'.$key.'">'.$value.'</option>';
+				$item_actions[] = '<option value="'.$key.'">'.$value.'</option>';
 		}
 	}
 	
 	echo json_encode(array(
-		'task_items' => implode('', $task_items),
+		'item_actions' => implode('', $item_actions),
 	));
 }
 

@@ -13,7 +13,8 @@ class Hooks
 	private $hooks_unused = [];
 	private $hooks_all = [];
 
-	function __construct() {
+	function __construct()
+	{
 		global $Core, $Cachinger;
 
 		// Load hooks if cache file exists

@@ -234,6 +234,7 @@ class Hook
             return $arguments;
         }
 
+        $args = [];
         for ($i = 0; $i < $argsNumber; $i++) {
             if (array_key_exists($i, $arguments)) {
                 $args[] = $arguments[$i];

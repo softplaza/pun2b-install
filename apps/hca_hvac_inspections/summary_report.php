@@ -36,7 +36,7 @@ foreach($HcaHVACInspections->getPeriods(2022) as $key => $value)
 				</div>
 				<div class="col-md-auto">
 					<button type="submit" class="btn btn-sm btn-outline-success">Search</button>
-					<a href="<?php echo $URL->link('hca_ui_summary_report') ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
+					<a href="<?php echo $URL->link('hca_hvac_inspections_summary_report') ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
 				</div>
 			</div>
 		</div>
@@ -44,36 +44,36 @@ foreach($HcaHVACInspections->getPeriods(2022) as $key => $value)
 </nav>
 
 <div class="card-header">
-	<h6 class="card-title mb-0 text-primary">Property Report</h6>
+	<h6 class="card-title mb-0 text-primary">HVAC Summary Report</h6>
 </div>
 <table class="table table-striped table-bordered">
 	<thead>
 		<tr>
 			<th>Property name</th>
-			<th class="bg-warning text-white">Pending Inspections</th>
-			<th class="bg-success text-white">Completed Inspections</th>
-			<th class="bg-primary text-white hidden">Replaced items</th>
-			<th class="bg-info text-white hidden">Repaired items</th>
-			<th class="bg-secondary text-white">Not Inspected</th>
+			<th class="table-warning">Pending Inspections</th>
+			<th class="bg-warning">Pending Work Orders</th>
+			<th class="bg-danger">Not Inspected Units</th>
 			<th>Date of Last Inspection</th>
 		</tr>
 	</thead>
 	<tbody>
 
 <?php
+
+$HcaHVACSummaryReport->genSummaryData();
+
+$i = 0;
 foreach($HcaHVACInspections->getProperties() as $cur_info)
 {
-	$inspections_pending = isset($HcaHVACSummaryReport->inspections_pending[$cur_info['id']]) ? $HcaHVACSummaryReport->inspections_pending[$cur_info['id']] : 0;
-	$inspections_completed = isset($HcaHVACSummaryReport->inspections_completed[$cur_info['id']]) ? $HcaHVACSummaryReport->inspections_completed[$cur_info['id']] : 0;
+	$num_pending_inspections = isset($HcaHVACSummaryReport->num_pending_inspections[$cur_info['id']]) ? $HcaHVACSummaryReport->num_pending_inspections[$cur_info['id']] : 0;
 
-	$items_replaced = isset($HcaHVACSummaryReport->items_replaced[$cur_info['id']]) ? $HcaHVACSummaryReport->items_replaced[$cur_info['id']] : 0;
-	$items_repaired = isset($HcaHVACSummaryReport->items_repaired[$cur_info['id']]) ? $HcaHVACSummaryReport->items_repaired[$cur_info['id']] : 0;
-	$units_never_inspected = isset($HcaHVACSummaryReport->units_never_inspected[$cur_info['id']]) ? $HcaHVACSummaryReport->units_never_inspected[$cur_info['id']] : 0;
-	$date_inspected = isset($HcaHVACSummaryReport->date_last_inspected[$cur_info['id']]) ? format_date($HcaHVACSummaryReport->date_last_inspected[$cur_info['id']], 'Y-m-d') : '';
+	$num_pending_wo = isset($HcaHVACSummaryReport->num_pending_wo[$cur_info['id']]) ? $HcaHVACSummaryReport->num_pending_wo[$cur_info['id']] : 0;
 
+	$num_never_inspected = isset($HcaHVACSummaryReport->num_never_inspected[$cur_info['id']]) ? $HcaHVACSummaryReport->num_never_inspected[$cur_info['id']] : 0;
 
+	$date_last_inspected = isset($HcaHVACSummaryReport->date_last_inspected[$cur_info['id']]) ? format_date($HcaHVACSummaryReport->date_last_inspected[$cur_info['id']], 'Y-m-d') : '';
 
-	if ($inspections_pending > 0 || $inspections_completed > 0)
+	if ($num_pending_inspections > 0 || $num_pending_wo > 0 || $num_never_inspected > 0)
 	{
 		$sub_link_args = [
 			'property_id' => $cur_info['id'],
@@ -85,27 +85,23 @@ foreach($HcaHVACInspections->getProperties() as $cur_info)
 				<span class="fw-bold"><?php echo html_encode($cur_info['pro_name']) ?></span>
 				<a href="<?php echo $URL->genLink('hca_hvac_inspections_property_report', $sub_link_args) ?>" class="badge bg-primary float-end text-white">View</a>
 			</td>
-			<td class="ta-center fw-bold"><?php echo $inspections_pending ?></td>
-			<td class="ta-center fw-bold"><?php echo $inspections_completed ?></td>
-			<td class="ta-center fw-bold hidden"><?php echo $items_replaced ?></td>
-			<td class="ta-center fw-bold hidden"><?php echo $items_repaired ?></td>
-			<td class="ta-center fw-bold"><?php echo $units_never_inspected ?></td>
-			<td class="ta-center"><?php echo $date_inspected ?></td>
+			<td class="ta-center fw-bold"><?php echo $num_pending_inspections ?></td>
+			<td class="ta-center fw-bold"><?php echo $num_pending_wo ?></td>
+			<td class="ta-center fw-bold"><?php echo $num_never_inspected ?></td>
+			<td class="ta-center"><?php echo $date_last_inspected ?></td>
 		</tr>
 <?php
-		$HcaHVACSummaryReport->total_units_never_inspected = $HcaHVACSummaryReport->total_units_never_inspected + $units_never_inspected;
+		++$i;
 	}
 }
 ?>
 	</tbody>
 	<tfoot>
 		<tr>
-			<td class="fw-bold"></td>
-			<td class="ta-center fw-bold"><?php echo $HcaHVACSummaryReport->total_inspections_pending ?></td>
-			<td class="ta-center fw-bold"><?php echo $HcaHVACSummaryReport->total_inspections_completed ?></td>
-			<td class="ta-center fw-bold hidden"><?php echo $HcaHVACSummaryReport->total_replaced ?></td>
-			<td class="ta-center fw-bold hidden"><?php echo $HcaHVACSummaryReport->total_repaired ?></td>
-			<td class="ta-center fw-bold"><?php echo $HcaHVACSummaryReport->total_units_never_inspected ?></td>
+			<td class="ta-center fw-bold"><?=$i?></td>
+			<td class="ta-center fw-bold"><?php echo $HcaHVACSummaryReport->total_pending_inspections ?></td>
+			<td class="ta-center fw-bold"><?php echo $HcaHVACSummaryReport->total_pending_wo ?></td>
+			<td class="ta-center fw-bold"><?php echo $HcaHVACSummaryReport->total_never_inspected ?></td>
 			<td></td>
 		</tr>
 	</tfoot>

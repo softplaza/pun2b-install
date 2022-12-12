@@ -41,6 +41,8 @@ class SwiftSettings
 		
 			if ($user_id > 0 && $type == 1)
 			{
+				$num_rows = $DBLayer->getNumRows('user_access', 'a_to=\''.$DBLayer->escape($this->rules_to).'\' AND a_uid='.$user_id);
+
 				foreach($this->access_options as $key => $title)
 				{
 					$data = [
@@ -49,11 +51,17 @@ class SwiftSettings
 						'a_key'		=> $key,
 						'a_value'	=> 0
 					];
-					$DBLayer->insert('user_access', $data);
+					if ($num_rows < 1)
+						$DBLayer->insert('user_access', $data);
 				}
+
+				if ($num_rows > 0)
+					$Core->add_error('The selected user is already in the list.');
 			}
 			else if ($user_id > 0 && $type == 2)
 			{
+				$num_rows = $DBLayer->getNumRows('user_permissions', 'p_to=\''.$DBLayer->escape($this->rules_to).'\' AND p_uid='.$user_id);
+
 				foreach($this->permissions_options as $key => $title)
 				{
 					$data = [
@@ -62,11 +70,17 @@ class SwiftSettings
 						'p_key'		=> $key,
 						'p_value'	=> 0
 					];
-					$DBLayer->insert('user_permissions', $data);
+					if ($num_rows < 1)
+						$DBLayer->insert('user_permissions', $data);
 				}
+
+				if ($num_rows > 0)
+					$Core->add_error('The selected user is already in the list.');
 			}
 			else if ($user_id > 0 && $type == 3)
 			{
+				$num_rows = $DBLayer->getNumRows('user_notifications', 'n_to=\''.$DBLayer->escape($this->rules_to).'\' AND n_uid='.$user_id);
+
 				foreach($this->notifications_options as $key => $title)
 				{
 					$data = [
@@ -75,11 +89,17 @@ class SwiftSettings
 						'n_key'		=> $key,
 						'n_value'	=> 0
 					];
-					$DBLayer->insert('user_notifications', $data);
+					if ($num_rows < 1)
+						$DBLayer->insert('user_notifications', $data);
 				}
+
+				if ($num_rows > 0)
+					$Core->add_error('The selected user is already in the list.');
 			}
 			else if ($group_id > 0 && $type == 4)
 			{
+				$num_rows = $DBLayer->getNumRows('user_access', 'a_to=\''.$DBLayer->escape($this->rules_to).'\' AND a_gid='.$group_id);
+
 				foreach($this->access_options as $key => $title)
 				{
 					$data = [
@@ -88,11 +108,17 @@ class SwiftSettings
 						'a_key'		=> $key,
 						'a_value'	=> 0
 					];
-					$DBLayer->insert('user_access', $data);
+					if ($num_rows < 1)
+						$DBLayer->insert('user_access', $data);
 				}
+
+				if ($num_rows > 0)
+					$Core->add_error('The selected group is already in the list.');
 			}
 			else if ($group_id > 0 && $type == 5)
 			{
+				$num_rows = $DBLayer->getNumRows('user_permissions', 'p_to=\''.$DBLayer->escape($this->rules_to).'\' AND p_gid='.$group_id);
+
 				foreach($this->permissions_options as $key => $title)
 				{
 					$data = [
@@ -101,11 +127,17 @@ class SwiftSettings
 						'p_key'		=> $key,
 						'p_value'	=> 0
 					];
-					$DBLayer->insert('user_permissions', $data);
+					if ($num_rows < 1)
+						$DBLayer->insert('user_permissions', $data);
 				}
+
+				if ($num_rows > 0)
+					$Core->add_error('The selected group is already in the list.');
 			}
 			else if ($group_id > 0 && $type == 6)
 			{
+				$num_rows = $DBLayer->getNumRows('user_notifications', 'n_to=\''.$DBLayer->escape($this->rules_to).'\' AND n_gid='.$group_id);
+
 				foreach($this->notifications_options as $key => $title)
 				{
 					$data = [
@@ -114,8 +146,12 @@ class SwiftSettings
 						'n_key'		=> $key,
 						'n_value'	=> 0
 					];
-					$DBLayer->insert('user_notifications', $data);
+					if ($num_rows < 1)
+						$DBLayer->insert('user_notifications', $data);
 				}
+
+				if ($num_rows > 0)
+					$Core->add_error('The selected group is already in the list.');
 			}
 			else
 				$Core->add_error('Select an user or group');
@@ -371,10 +407,10 @@ class SwiftSettings
 	?>
 	
 	<form method="post" accept-charset="utf-8" action="">
-		<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
+		<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 		<div class="card">
 			<div class="card-header">
-				<h6 class="card-title mb-0">Create user permissions</h6>
+				<h6 class="card-title mb-0">Setup rights for:</h6>
 			</div>
 			<div class="card-body">
 	
@@ -384,53 +420,54 @@ class SwiftSettings
 					<?php if (!empty($this->access_options)) : ?>
 						<div class="form-check form-check-inline">
 							<input class="form-check-input" type="radio" name="type" id="radio1" value="1" required onchange="switchSection(1)">
-							<label class="form-check-label fw-bold" for="radio1">User permissions</label>
+							<label class="form-check-label fw-bold" for="radio1">User access</label>
 						</div>
 					<?php endif; ?>
 	
 					<?php if (!empty($this->permissions_options)) : ?>
 						<div class="form-check form-check-inline">
 							<input class="form-check-input" type="radio" name="type" id="radio2" value="2" onchange="switchSection(1)">
-							<label class="form-check-label fw-bold" for="radio2">User Permissions</label>
+							<label class="form-check-label fw-bold" for="radio2">User permissions</label>
 						</div>
 					<?php endif; ?>
 	
 					<?php if (!empty($this->notifications_options)) : ?>
 						<div class="form-check form-check-inline">
 							<input class="form-check-input" type="radio" name="type" id="radio3" value="3" onchange="switchSection(1)">
-							<label class="form-check-label fw-bold" for="radio3">User Notification</label>
+							<label class="form-check-label fw-bold" for="radio3">User notifications</label>
 						</div>
 					<?php endif; ?>
 	
 					<?php if (!empty($this->access_options)) : ?>
 						<div class="form-check form-check-inline">
 							<input class="form-check-input" type="radio" name="type" id="radio4" value="4" onchange="switchSection(2)">
-							<label class="form-check-label fw-bold" for="radio4">Group permissions</label>
+							<label class="form-check-label fw-bold" for="radio4">Group access</label>
 						</div>
 					<?php endif; ?>
 	
 					<?php if (!empty($this->permissions_options)) : ?>
 						<div class="form-check form-check-inline">
 							<input class="form-check-input" type="radio" name="type" id="radio5" value="5" onchange="switchSection(2)">
-							<label class="form-check-label fw-bold" for="radio5">Group Permissions</label>
+							<label class="form-check-label fw-bold" for="radio5">Group permissions</label>
 						</div>
 					<?php endif; ?>
 	
 					<?php if (!empty($this->notifications_options)) : ?>
 						<div class="form-check form-check-inline">
 							<input class="form-check-input" type="radio" name="type" id="radio6" value="6" onchange="switchSection(2)">
-							<label class="form-check-label fw-bold" for="radio6">Group Notification</label>
+							<label class="form-check-label fw-bold" for="radio6">Group notifications</label>
 						</div>
 					<?php endif; ?>
 	
 					</div>	
 				</div>
+
 				<div class="row" id="users_list">
 					<div class="col-md-4 mb-3">
 						<select name="user_id" class="form-select form-select-sm">
 <?php
 		$optgroup = 0;
-		echo "\t\t\t\t\t\t".'<option value="" selected="selected" disabled>Select an user</option>'."\n";
+		echo "\t\t\t\t\t\t".'<option value="" selected disabled>Select an user</option>'."\n";
 		foreach ($users_info as $cur_user)
 		{
 			if ($cur_user['group_id'] != $optgroup) {
@@ -463,7 +500,7 @@ class SwiftSettings
 			$groups_info[] = $cur_group;
 	
 		$optgroup = 0;
-		echo "\t\t\t\t\t\t".'<option value="" selected="selected" disabled>Select a group</option>'."\n";
+		echo "\t\t\t\t\t\t".'<option value="" selected disabled>Select a group</option>'."\n";
 		foreach ($groups_info as $cur_group)
 		{
 			echo "\t\t\t\t\t\t".'<option value="'.$cur_group['g_id'].'">'.html_encode($cur_group['g_title']).'</option>'."\n";
@@ -473,7 +510,7 @@ class SwiftSettings
 					</div>
 				</div>
 				<div class="mb-3">
-					<button type="submit" name="create" class="btn btn-primary btn-sm">Create</button>
+					<button type="submit" name="create" class="btn btn-primary btn-sm">Submit</button>
 				</div>
 			</div>
 		</div>
@@ -481,89 +518,6 @@ class SwiftSettings
 <?php
 	}
 
-	function getUserAccess()
-	{
-		global $DBLayer, $URL;
-		
-		$query = [
-			'SELECT'	=> 'a.*, u.group_id, u.realname',
-			'FROM'		=> 'user_access AS a',
-			'JOINS'		=> [
-				[
-					'INNER JOIN'	=> 'users AS u',
-					'ON'			=> 'u.id=a.a_uid'
-				],
-			],
-			'WHERE'		=> 'a.a_to=\''.$DBLayer->escape($this->rules_to).'\'',
-			'ORDER BY'	=> 'u.realname',
-		];
-		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-		$access_info = $access_for_users = [];
-		while ($row = $DBLayer->fetch_assoc($result)) {
-			$access_info[] = $row;
-
-			if (!isset($access_for_users[$row['a_uid']]))
-				$access_for_users[$row['a_uid']] = $row['realname'];
-		}
-
-		if (!empty($access_for_users))
-		{
-?>
-		<div class="card-header">
-			<h6 class="card-title mb-0">Available user permissions</h6>
-		</div>
-		<form method="post" accept-charset="utf-8" action="">
-			<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
-			<table class="table table-sm table-striped">
-				<thead>
-					<tr>
-						<th>Username</th>
-						
-<?php
-			foreach($this->access_options as $key => $title)
-				echo '<th>'.$title.'</th>';
-?>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-<?php
-			$num_options = count($this->access_options);
-			foreach($access_for_users as $user_id => $username)
-			{
-				echo '<tr>';
-				echo '<td><h6><a href="'.$URL->link('user', $user_id).'">'.html_encode($username).'</a></h6></td>';
-
-				$a = 0;
-				foreach($this->access_options as $key => $title)
-				{
-					$cur_info = $this->get_user_access($access_info, $user_id, $key);
-
-					if (!empty($cur_info) && $cur_info['a_key'] == $key)
-					{
-						echo '<input type="hidden" name="access_keys['.$user_id.'][]" value="'.$key.'">';
-
-						$checked = ($cur_info['a_value'] == 1) ? 'checked' : '';
-						echo '<td><div class="form-check form-switch"><input type="checkbox" class="form-check-input start-50" onchange="updateRules(1, '.$cur_info['id'].')" id="access_'.$cur_info['id'].'" '.$checked.'></div></td>';
-
-						++$a;
-					}
-				}
-
-				if ($num_options > $a)
-					echo '<td><button type="submit" name="fix_access['.$user_id.']" class="badge bg-success ms-1">Update</button></td>';
-				else
-					echo '<td><button type="submit" name="delete_access['.$user_id.']" class="badge bg-danger float-end" onclick="return confirm(\'Are you sure you want to delete all permissions for this user?\')">Delete</button></td>';
-
-				echo '</tr>';
-			}
-?>
-				</tbody>
-			</table>
-		</form>
-<?php
-		}
-	}
 
 	function getGroupAccess()
 	{
@@ -594,7 +548,7 @@ class SwiftSettings
 		{
 ?>
 		<div class="card-header">
-			<h6 class="card-title mb-0">Available group permissions</h6>
+			<h6 class="card-title mb-0">List of groups who have access to pages</h6>
 		</div>
 		<form method="post" accept-charset="utf-8" action="">
 			<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
@@ -647,6 +601,264 @@ class SwiftSettings
 <?php
 		}
 	}
+
+
+	function getUserAccess()
+	{
+		global $DBLayer, $URL;
+		
+		$query = [
+			'SELECT'	=> 'a.*, u.group_id, u.realname',
+			'FROM'		=> 'user_access AS a',
+			'JOINS'		=> [
+				[
+					'INNER JOIN'	=> 'users AS u',
+					'ON'			=> 'u.id=a.a_uid'
+				],
+			],
+			'WHERE'		=> 'a.a_to=\''.$DBLayer->escape($this->rules_to).'\'',
+			'ORDER BY'	=> 'u.realname',
+		];
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		$access_info = $user_ids = [];
+		while ($row = $DBLayer->fetch_assoc($result)) {
+			$access_info[] = $row;
+
+			if (!isset($user_ids[$row['a_uid']]))
+				$user_ids[$row['a_uid']] = $row['realname'];
+		}
+
+		if (!empty($user_ids))
+		{
+?>
+		<div class="card-header">
+			<h6 class="card-title mb-0">List of users who have access to pages</h6>
+		</div>
+		<form method="post" accept-charset="utf-8" action="">
+			<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
+			<table class="table table-sm table-striped">
+				<thead>
+					<tr>
+						<th>Username</th>
+						
+<?php
+			foreach($this->access_options as $key => $title)
+				echo '<th>'.$title.'</th>';
+?>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+<?php
+			$num_options = count($this->access_options);
+			foreach($user_ids as $user_id => $username)
+			{
+				echo '<tr>';
+				echo '<td><h6><a href="'.$URL->link('user', $user_id).'">'.html_encode($username).'</a></h6></td>';
+
+				$a = 0;
+				foreach($this->access_options as $key => $title)
+				{
+					$cur_info = $this->get_user_access($access_info, $user_id, $key);
+
+					if (!empty($cur_info) && $cur_info['a_key'] == $key)
+					{
+						echo '<input type="hidden" name="access_keys['.$user_id.'][]" value="'.$key.'">';
+
+						$checked = ($cur_info['a_value'] == 1) ? 'checked' : '';
+						echo '<td><div class="form-check form-switch"><input type="checkbox" class="form-check-input start-50" onchange="updateRules(1, '.$cur_info['id'].')" id="access_'.$cur_info['id'].'" '.$checked.'></div></td>';
+
+						++$a;
+					}
+				}
+
+				if ($num_options > $a)
+					echo '<td><button type="submit" name="fix_access['.$user_id.']" class="badge bg-success ms-1">Update</button></td>';
+				else
+					echo '<td><button type="submit" name="delete_access['.$user_id.']" class="badge bg-danger float-end" onclick="return confirm(\'Are you sure you want to delete all permissions for this user?\')">Delete</button></td>';
+
+				echo '</tr>';
+			}
+?>
+				</tbody>
+			</table>
+		</form>
+<?php
+		}
+	}
+
+
+	// Group Prms
+	function getGroupPermissions()
+	{
+		global $DBLayer, $URL;
+		
+		$query = [
+			'SELECT'	=> 'p.*, g.g_id, g.g_title',
+			'FROM'		=> 'user_permissions AS p',
+			'JOINS'		=> [
+				[
+					'INNER JOIN'	=> 'groups AS g',
+					'ON'			=> 'g.g_id=p.p_gid'
+				],
+			],
+			'WHERE'		=> 'p.p_to=\''.$DBLayer->escape($this->rules_to).'\'',
+			'ORDER BY'	=> 'g.g_title',
+		];
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		$main_info = $group_ids = [];
+		while ($row = $DBLayer->fetch_assoc($result)) {
+			$main_info[] = $row;
+
+			if (!isset($group_ids[$row['g_id']]))
+				$group_ids[$row['g_id']] = $row['g_title'];
+		}
+
+		if (!empty($group_ids))
+		{
+?>
+		<div class="card-header">
+			<h6 class="card-title mb-0">Available Group Permissions</h6>
+		</div>
+		<form method="post" accept-charset="utf-8" action="">
+			<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
+			<table class="table table-sm table-striped">
+				<thead>
+					<tr>
+						<th>Group name</th>
+						
+<?php
+			foreach($this->permissions_options as $key => $title)
+				echo '<th>'.$title.'</th>';
+?>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+<?php
+			$num_options = count($this->permissions_options);
+			foreach($group_ids as $id => $name)
+			{
+				echo '<tr>';
+				echo '<td><h6><a href="'.$URL->link('user', $id).'">'.html_encode($name).'</a></h6></td>';
+
+				$a = 0;
+				foreach($this->permissions_options as $key => $title)
+				{
+					$cur_info = $this->get_group_permission($main_info, $id, $key);
+
+					if (!empty($cur_info) && $cur_info['p_key'] == $key)
+					{
+						echo '<input type="hidden" name="permissions_keys['.$id.'][]" value="'.$key.'">';
+
+						$checked = ($cur_info['p_value'] == 1) ? 'checked' : '';
+						echo '<td><div class="form-check form-switch"><input type="checkbox" class="form-check-input start-50" onchange="updateRules(2, '.$cur_info['id'].')" id="permission_'.$cur_info['id'].'" '.$checked.'></div></td>';
+
+						++$a;
+					}
+				}
+
+				if ($num_options > $a)
+					echo '<td><button type="submit" name="fix_permissions['.$id.']" class="badge bg-success ms-1">Update</button></td>';
+				else
+					echo '<td><button type="submit" name="delete_permissions['.$id.']" class="badge bg-danger float-end" onclick="return confirm(\'Are you sure you want to delete all permissions for this user?\')">Delete</button></td>';
+
+				echo '</tr>';
+			}
+?>
+				</tbody>
+			</table>
+		</form>
+<?php
+		}
+	}
+
+
+
+	function getUserPermissions()
+	{
+		global $DBLayer, $URL;
+		
+		$query = [
+			'SELECT'	=> 'p.*, u.group_id, u.realname',
+			'FROM'		=> 'user_permissions AS p',
+			'JOINS'		=> [
+				[
+					'INNER JOIN'	=> 'users AS u',
+					'ON'			=> 'u.id=p.p_uid'
+				],
+			],
+			'WHERE'		=> 'p.p_to=\''.$DBLayer->escape($this->rules_to).'\'',
+			'ORDER BY'	=> 'u.realname',
+		];
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		$main_info = $user_ids = [];
+		while ($row = $DBLayer->fetch_assoc($result)) {
+			$main_info[] = $row;
+
+			if (!isset($user_ids[$row['p_uid']]))
+				$user_ids[$row['p_uid']] = $row['realname'];
+		}
+
+		if (!empty($user_ids))
+		{
+?>
+		<div class="card-header">
+			<h6 class="card-title mb-0">Available user permissions</h6>
+		</div>
+		<form method="post" accept-charset="utf-8" action="">
+			<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
+			<table class="table table-sm table-striped">
+				<thead>
+					<tr>
+						<th>Username</th>
+						
+<?php
+			foreach($this->permissions_options as $key => $title)
+				echo '<th>'.$title.'</th>';
+?>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+<?php
+			$num_options = count($this->permissions_options);
+			foreach($user_ids as $user_id => $username)
+			{
+				echo '<tr>';
+				echo '<td><h6><a href="'.$URL->link('user', $user_id).'">'.html_encode($username).'</a></h6></td>';
+
+				$a = 0;
+				foreach($this->permissions_options as $key => $title)
+				{
+					$cur_info = $this->get_user_permission($main_info, $user_id, $key);
+
+					if (!empty($cur_info) && $cur_info['p_key'] == $key)
+					{
+						echo '<input type="hidden" name="permissions_keys['.$user_id.'][]" value="'.$key.'">';
+
+						$checked = ($cur_info['p_value'] == 1) ? 'checked' : '';
+						echo '<td><div class="form-check form-switch"><input type="checkbox" class="form-check-input start-50" onchange="updateRules(2, '.$cur_info['id'].')" id="permission_'.$cur_info['id'].'" '.$checked.'></div></td>';
+
+						++$a;
+					}
+				}
+
+				if ($num_options > $a)
+					echo '<td><button type="submit" name="fix_permissions['.$user_id.']" class="badge bg-success ms-1">Update</button></td>';
+				else
+					echo '<td><button type="submit" name="delete_permissions['.$user_id.']" class="badge bg-danger float-end" onclick="return confirm(\'Are you sure you want to delete all permissions for this user?\')">Delete</button></td>';
+
+				echo '</tr>';
+			}
+?>
+				</tbody>
+			</table>
+		</form>
+<?php
+		}
+	}
+
 
 	function getGroupNotifications()
 	{
@@ -881,43 +1093,59 @@ class SwiftSettings
 	}
 
 	// Helpers
-	function get_group_access($access_info, $gid, $key)
+	function get_group_access($info, $gid, $key)
 	{
 		$output = [];
-		foreach($access_info as $cur_access)
+		foreach($info as $cur_info)
 		{
-			if ($cur_access['a_gid'] == $gid && $cur_access['a_key'] == $key)
-				$output = $cur_access;
+			if ($cur_info['a_gid'] == $gid && $cur_info['a_key'] == $key)
+				$output = $cur_info;
 		}
 		return $output;
 	}
-	function get_user_access($access_info, $user_id, $key)
+	function get_user_access($info, $user_id, $key)
 	{
 		$output = [];
-		foreach($access_info as $cur_access)
+		foreach($info as $cur_info)
 		{
-			if ($cur_access['a_uid'] == $user_id && $cur_access['a_key'] == $key)
-				$output = $cur_access;
+			if ($cur_info['a_uid'] == $user_id && $cur_info['a_key'] == $key)
+				$output = $cur_info;
 		}
 		return $output;
 	}
+	
+	function get_group_permission($info, $gid, $key){
+		foreach($info as $cur_info)
+		{
+			if ($cur_info['p_gid'] == $gid && $cur_info['p_key'] == $key)
+				return $cur_info;
+		}
+	}
+	function get_user_permission($info, $user_id, $key){
+		foreach($info as $cur_info)
+		{
+			if ($cur_info['p_uid'] == $user_id && $cur_info['p_key'] == $key)
+				return $cur_info;
+		}
+	}
+
 	function get_group_notification($info, $gid, $key)
 	{
 		$output = [];
-		foreach($info as $cur_access)
+		foreach($info as $cur_info)
 		{
-			if ($cur_access['n_gid'] == $gid && $cur_access['n_key'] == $key)
-				$output = $cur_access;
+			if ($cur_info['n_gid'] == $gid && $cur_info['n_key'] == $key)
+				$output = $cur_info;
 		}
 		return $output;
 	}
-	function get_user_notification($notifications_info, $user_id, $key)
+	function get_user_notification($info, $user_id, $key)
 	{
 		$output = [];
-		foreach($notifications_info as $cur_notifications)
+		foreach($info as $cur_info)
 		{
-			if ($cur_notifications['n_uid'] == $user_id && $cur_notifications['n_key'] == $key)
-				$output = $cur_notifications;
+			if ($cur_info['n_uid'] == $user_id && $cur_info['n_key'] == $key)
+				$output = $cur_info;
 		}
 		return $output;
 	}

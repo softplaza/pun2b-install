@@ -1,8 +1,6 @@
 <?php
 
-if (!defined('SITE_ROOT') )
-	define('SITE_ROOT', '../../../');
-
+define('SITE_ROOT', '../../../');
 require SITE_ROOT.'include/common.php';
 
 if ($User->is_guest())
@@ -11,7 +9,7 @@ if ($User->is_guest())
 $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
 
 $query = array(
-	'SELECT'	=> 'u.unit_number',
+	'SELECT'	=> 'u.id, u.unit_number',
 	'FROM'		=> 'sm_property_units AS u',
 	'WHERE'		=> 'u.property_id='.$id,
 	'ORDER BY'	=> 'u.id',
@@ -25,14 +23,13 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 if (!empty($units_info))
 {
 	$json = [];
-	$json[] = '<input type="text" name="unit_number" list="units_list" class="form-select" placeholder="Select/Enter unit #">';
-	$json[] = '<datalist id="units_list">';
-	$json[] = '<option value="Common area">';
+	$json[] = '<select name="unit_id" id="fld_unit_id" class="form-select form-select-sm">';
+	$json[] = '<option value="0" selected>Common area</option>';
 	foreach($units_info as $cur_info)
 	{
-		$json[] = '<option value="'.$cur_info['unit_number'].'">';
+		$json[] = '<option value="'.$cur_info['id'].'">'.html_encode($cur_info['unit_number']).'</option>';
 	}
-	$json[] = '</datalist>';
+	$json[] = '</select>';
 	
 	echo json_encode(array(
 		'unit_number' => implode('', $json),
@@ -41,10 +38,9 @@ if (!empty($units_info))
 else
 {
 	echo json_encode(array(
-		'unit_number' => '<input type="text" name="unit_number" value="" placeholder="Enter Unit #"/>',
+		'unit_number' => '<input type="text" class="form-control" disabled>',
 	));
 }
-
 
 // End the transaction
 $DBLayer->end_transaction();

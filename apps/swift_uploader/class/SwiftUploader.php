@@ -39,7 +39,7 @@ class SwiftUploader
     public $cur_project_media = [];
 
     var $uploaded_images = [];
-    
+
     // Exceptions
     public $errors = [];
     
@@ -176,13 +176,14 @@ class SwiftUploader
         }
     }
 
-	function getUploadedImages($table_name, $table_id)
+	function getUploadedImagesLink($table_name, $table_id)
 	{
-        global $DBLayer;
+        global $DBLayer, $URL;
 
         if (!$this->access_view_files)
             return;
 
+        $project_ids = [];
         $query = array(
             'SELECT'	=> 'f.*',
             'FROM'		=> 'sm_uploader AS f',
@@ -191,9 +192,16 @@ class SwiftUploader
         $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
         while ($row = $DBLayer->fetch_assoc($result)) {
             $this->uploaded_images[] = $row;
+            $project_ids[] = $row['id'];
         }
 
-        return count($this->uploaded_images);
+        if ($this->access_view_files && !empty($project_ids))
+        {
+            $hash = base64_encode('project='.$table_name.'&ids='.implode(',', $project_ids));
+            return '<a href="'.$URL->link('swift_uploader_view', $hash).'" target="_blank"><strong id="num_uploaded_images">'.count($this->uploaded_images).'</strong> <span>uploaded images</span></a>';
+        }
+        else
+            return '<strong id="num_uploaded_images">'.count($this->uploaded_images).'</strong> <span>uploaded images</span>';
     }
 
 	function getCurrentFile($cur_info)
@@ -265,7 +273,7 @@ function uploadImage(table,id)
             showToastMessage();
             $('#fld_image').val('');
             $('#image_progress').empty().html('');
-            $("#num_images").empty().html(re.num_images);
+            $("#num_uploaded_images").empty().html(re.num_images);
 		},
 		error: function(re){
             var msg = '<div id="liveToast" class="toast position-fixed bottom-0 end-0 m-2" role="alert" aria-live="assertive" aria-atomic="true">';
@@ -414,28 +422,46 @@ function deleteFile(table,id)
 	{
         global $DBLayer;
 
-        $query = array(
-            'SELECT'	=> 'f.*',
-            'FROM'		=> 'sm_uploader as f',
-        );
-
-        if (is_array($table_ids))
-            $query['WHERE'] = 'f.table_name=\''.$table_name.'\' AND f.table_id IN ('.implode(',', $table_ids).')';
-        else
-            $query['WHERE'] = 'f.table_name=\''.$table_name.'\' AND f.table_id='.$table_ids;
-
-        $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-
-        $images = $files = $media = array();
-        while ($row = $DBLayer->fetch_assoc($result)) {
-            $files[] = $row;
+        if (empty($this->cur_project_files))
+        {
+            $query = array(
+                'SELECT'	=> 'f.*',
+                'FROM'		=> 'sm_uploader AS f',
+            );
+    
+            if (is_array($table_ids) && !empty($table_ids))
+                $query['WHERE'] = 'f.table_name=\''.$table_name.'\' AND f.table_id IN ('.implode(',', $table_ids).')';
+            else
+                $query['WHERE'] = 'f.table_name=\''.$table_name.'\' AND f.table_id='.$table_ids;
+    
+            $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+            while ($row = $DBLayer->fetch_assoc($result)) {
+                $this->cur_project_files[] = $row;
+            }
+    
+            return $this->cur_project_files;
         }
+    }
 
-        // check all projects before display it !!!
+	public function displayCurProjectImages($table_name, $table_ids)
+	{
+        global $URL;
 
-        $this->cur_project_files = $files;
+        if (empty($this->cur_project_files))
+            $this->getProjectFiles($table_name, $table_ids);
 
-        return $files;
+        if (!empty($this->cur_project_files))
+        {
+            $output = [];
+            foreach($this->cur_project_files as $cur_info)
+            {
+                $output[] = '<div class="col-md-auto"><a data-fancybox="single" href="'.$URL->link($cur_info['file_path'].$cur_info['file_name']).'" target="_blank"><img class="img-thumbnail max-h-15" src="'.$URL->link($cur_info['file_path'].$cur_info['file_name']).'"/></a></div>';
+            }
+
+            echo implode("\n", $output);
+        }
+        else
+            echo '<div class="alert alert-warning" role="alert">No images uploaded.</div>';
     }
 
 	function getCurProjectFiles($project_id)
@@ -477,7 +503,6 @@ function deleteFile(table,id)
 
 	function getCurProject($project_id)
 	{
-        global $URL;
         $output = [];
         if (!empty($this->cur_project_files))
         {
@@ -536,14 +561,20 @@ function deleteFile(table,id)
 	{
         global $DBLayer, $Loader, $URL;
 
-?>
-		<div class="content-head">
-			<h6 class="hn"><strong>Uploaded Images</strong></h6>
-		</div>
-		<div class="ct-group">
-<?php
-if (!empty($this->cur_project_images))
-{
+        if (empty($this->cur_project_images))
+        {
+            $query = array(
+                'SELECT'	=> 'f.*',
+                'FROM'		=> 'sm_uploader AS f',
+                'WHERE'		=> 'f.table_name=\''.$DBLayer->escape($table_name).'\' AND f.table_id='.$table_id
+            );
+            $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+            while ($row = $DBLayer->fetch_assoc($result))
+            {
+                if ($row['file_type'] == 'image')
+                    $this->cur_project_images[] = $row;
+            } 
+
 ?>
 <style>
  .cur-img img {height: 150px;}

@@ -3,7 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 2) || $User->get('hca_5840_access') > 0) ? true : false;
+$access = ($User->checkAccess('hca_mi', 2)) ? true : false;
 if (!$access)
 	message($lang_common['No permission']);
 
@@ -124,12 +124,16 @@ if ($search_by_appendixb == 1)
 	$search_query[] = 'pj.appendixb=1';
 
 $query = array(
-	'SELECT'	=> 'pj.*, p.pro_name, u.realname',
+	'SELECT'	=> 'pj.*, pj.unit_number AS unit, p.pro_name, un.unit_number, u.realname',
 	'FROM'		=> 'hca_5840_projects AS pj',
 	'JOINS'		=> [
 		[
 			'INNER JOIN'	=> 'sm_property_db AS p',
 			'ON'			=> 'p.id=pj.property_id'
+		],
+		[
+			'LEFT JOIN'		=> 'sm_property_units AS un',
+			'ON'			=> 'un.id=pj.unit_id'
 		],
 		[
 			'LEFT JOIN'		=> 'users AS u',
@@ -145,9 +149,12 @@ if (!empty($search_query))
 	$query['WHERE'] = implode(' AND ', $search_query);
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 
-	while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
-		$projects_info[] = $fetch_assoc;
-		$projects_ids[] = $fetch_assoc['id'];
+	while ($row = $DBLayer->fetch_assoc($result))
+	{
+		$row['unit_number'] = ($row['unit_number'] != '') ? $row['unit_number'] : $row['unit'];
+
+		$projects_info[] = $row;
+		$projects_ids[] = $row['id'];
 	}
 }
 
@@ -155,7 +162,7 @@ $query = array(
 	'SELECT'	=> 'id, realname, email',
 	'FROM'		=> 'users',
 	'ORDER BY'	=> 'realname',
-	'WHERE'		=> 'hca_5840_access > 0'
+	//'WHERE'		=> 'hca_5840_access > 0'
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $project_manager = array();
@@ -386,8 +393,8 @@ if (!empty($projects_info))
 					$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_project', $cur_info['id']).'"><i class="fas fa-edit"></i> Edit project</a>');
 				if ($User->checkAccess('hca_mi', 14))
 					$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_files', $cur_info['id']).'"><i class="far fa-image"></i> View Files</a>');
-				if ($User->checkAccess('hca_mi', 13))
-					$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_invoice', $cur_info['id']).'"><i class="fas fa-file-invoice-dollar"></i> View Invoice</a>');
+				//if ($User->checkAccess('hca_mi', 13))
+				//	$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_invoice', $cur_info['id']).'"><i class="fas fa-file-invoice-dollar"></i> View Invoice</a>');
 				if ($User->checkAccess('hca_mi', 16))
 				{
 					$email_param = [];
@@ -472,46 +479,6 @@ else
 </div>
 <?php
 }
-
-$hca_5840_mailing_fields_details = $Moisture->get_email_details();
-$o_hca_5840_mailing_fields = explode(',', $Config->get('o_hca_5840_mailing_fields'));
-
-$hca_5840_mailing_fields = array();
-foreach($hca_5840_mailing_fields_details as $key => $value) {
-	if (in_array($key, $o_hca_5840_mailing_fields))
-		$hca_5840_mailing_fields[] = '<p><input type="checkbox" value="1" checked="checked" name="hca_5840_mailing_fields['.$key.']"> '.$value.'</p>';
-	else
-		$hca_5840_mailing_fields[] = '<p><input type="checkbox" value="0" name="hca_5840_mailing_fields['.$key.']"> '.$value.'</p>';
-}
-?>
-
-
-
-
-
-<!--
-<div class="email-window" style="display:none">
-	<label class="close-window"><img src="./img/close.png" width="16px" onclick="closeWindows()"/></label>
-	<form method="post" accept-charset="utf-8" action="">
-		<div class="hidden">
-			<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
-			<input type="hidden" name="project_id" value="0" />
-		</div>
-		<div class="edit-assign">
-			<p>Subject</p>
-			<p class="subject"><input type="text" name="subject" value="HCA: Moisture Inspection"></p>
-			<p>Comma-separated email addresses</p>
-			<p><textarea name="email_list" rows="3" placeholder="Enter emails separated by commas"><?php echo $Config->get('o_hca_5840_mailing_list') ?></textarea></p>
-			<p><textarea name="mail_message" rows="3" placeholder="Write your message">Hello. </textarea></p>
-			<div class="mailing-fields">
-				<?php echo implode(' ', $hca_5840_mailing_fields) ?>
-			</div>
-			<p class="btn-action"><span class="submit primary"><input type="submit" name="send_email" value="Send Email"/></span></p>
-		</div>
-	</form>
-</div>
--->
-<?php
 
 $MonthlyFrequency = $Hca5840Chart->getMonthlyFrequency();
 $monthly_names = array_keys($MonthlyFrequency);

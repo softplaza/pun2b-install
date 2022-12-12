@@ -6,7 +6,7 @@ require SITE_ROOT.'include/common.php';
 $section = isset($_GET['section']) ? $_GET['section'] : 'active';
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-$access = ($User->checkAccess('hca_mi', 1) || $User->get('hca_5840_access') > 0) ? true : false;
+$access = ($User->checkAccess('hca_mi', 1)) ? true : false;
 if (!$access)
 	message($lang_common['No permission']);
 
@@ -241,7 +241,7 @@ $query = array(
 	'SELECT'	=> 'id, realname, email',
 	'FROM'		=> 'users',
 	'ORDER BY'	=> 'realname',
-	'WHERE'		=> 'hca_5840_access > 0'
+	//'WHERE'		=> 'hca_5840_access > 0'
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $project_manager = array();
@@ -250,8 +250,14 @@ while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
 }
 
 $query = array(
-	'SELECT'	=> 'COUNT(id)',
-	'FROM'		=> 'hca_5840_projects',
+	'SELECT'	=> 'COUNT(pj.id)',
+	'FROM'		=> 'hca_5840_projects AS pj',
+	'JOINS'		=> [
+		[
+			'INNER JOIN'	=> 'sm_property_db AS p',
+			'ON'			=> 'p.id=pj.property_id'
+		],
+	],
 );
 if ($section == 'on_hold') $query['WHERE'] = 'job_status=2';
 else if ($section == 'completed') $query['WHERE'] = 'job_status=3';
@@ -271,19 +277,23 @@ $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $PagesNavigator->set_total($DBLayer->result($result));
 
 $query = array(
-	'SELECT'	=> 'pj.*, p.pro_name, u1.realname AS performed_by_realname',
+	'SELECT'	=> 'pj.*, pj.unit_number AS unit, pt.pro_name, un.unit_number, u1.realname AS performed_by_realname',
 	'FROM'		=> 'hca_5840_projects AS pj',
 	'JOINS'		=> [
 		[
-			'INNER JOIN'	=> 'sm_property_db AS p',
-			'ON'			=> 'p.id=pj.property_id'
+			'INNER JOIN'	=> 'sm_property_db AS pt',
+			'ON'			=> 'pt.id=pj.property_id'
+		],
+		[
+			'LEFT JOIN'		=> 'sm_property_units AS un',
+			'ON'			=> 'un.id=pj.unit_id'
 		],
 		[
 			'LEFT JOIN'		=> 'users AS u1',
 			'ON'			=> 'u1.id=pj.performed_uid'
 		],
 	],
-	'ORDER BY'	=> 'p.pro_name, LENGTH(pj.unit_number)',
+	'ORDER BY'	=> 'pt.pro_name, LENGTH(pj.unit_number)',
 	'LIMIT'		=> $PagesNavigator->limit(),
 );
 if ($section == 'on_hold') $query['WHERE'] = 'pj.job_status=2';
@@ -302,7 +312,10 @@ if (!empty($search_by_unit)) {
 }
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $main_info = $projects_ids = array();
-while ($row = $DBLayer->fetch_assoc($result)) {
+while ($row = $DBLayer->fetch_assoc($result))
+{
+	$row['unit_number'] = ($row['unit_id'] > 0) ? $row['unit_number'] : $row['unit'];
+
 	$main_info[] = $row;
 	$projects_ids[] = $row['id'];
 }
@@ -377,7 +390,6 @@ require SITE_ROOT.'header.php';
 .actions .submit{text-align: center;margin-top:5px;}
 .actions p{text-align: center;cursor: pointer;}
 .subject input, .email-window textarea{width:97%;}
-.mailing-fields{columns: 2;padding-left: 5px;}
 .events{min-width: 200px;}
 .events strong{background: green;color: white;border-radius: 7px;padding: 1px 10px;cursor: pointer;font-weight: bold;}
 .events p{margin-bottom: .2em;}
@@ -458,8 +470,6 @@ if (!empty($main_info))
 	foreach ($main_info as $cur_info)
 	{
 		$page_param['td'] = array();
-		$page_param['td']['pro_name'] = html_encode($cur_info['pro_name']);
-		$page_param['td']['unit_number'] = !empty($cur_info['unit_number'])? 'Unit: '.html_encode($cur_info['unit_number']) : '';
 		$page_param['td']['location'] = str_replace(',', ', ', $cur_info['location']);
 
 		$page_param['td']['mois_report_date'] = format_time($cur_info['mois_report_date'], 1);
@@ -528,16 +538,16 @@ if (!empty($main_info))
 				$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_files', $cur_info['id']).'"><i class="far fa-image"></i> Upload Files</a>');
 			if ($User->checkAccess('hca_mi', 15))
 				$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_appendixb', $cur_info['id']).'"><i class="far fa-file-pdf"></i> Create Appendix-B</a>');
-			if ($User->checkAccess('hca_mi', 13))
-				$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_invoice', $cur_info['id']).'"><i class="fas fa-file-invoice-dollar"></i> Edit Invoice</a>');
-			if ($User->checkAccess('hca_mi', 16))
-				$Core->add_dropdown_item('<a href="#!" onclick="emailWindow('.$cur_info['id'].')" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="far fa-envelope"></i> Send Email</a>');
+			//if ($User->checkAccess('hca_mi', 13))
+			//	$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_invoice', $cur_info['id']).'"><i class="fas fa-file-invoice-dollar"></i> Edit Invoice</a>');
+			//if ($User->checkAccess('hca_mi', 16))
+			//	$Core->add_dropdown_item('<a href="#!" onclick="emailWindow('.$cur_info['id'].')" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="far fa-envelope"></i> Send Email</a>');
 		}
 ?>
 					<tr id="row<?php echo $cur_info['id'] ?>" class="<?php echo ($id == $cur_info['id']) ? 'selected' : '' ?>">
 						<td class="td1">
-							<p class="property"><?php echo $page_param['td']['pro_name'] ?></p>
-							<p class="unit"><?php echo $page_param['td']['unit_number'] ?></p>
+							<p class="property"><?php echo html_encode($cur_info['pro_name']) ?></p>
+							<p class="unit">Unit: <?php echo html_encode($cur_info['unit_number']) ?></p>
 							<p class="location"><?php echo $page_param['td']['location'] ?></p>
 							<?php echo $view_files ?>
 							<span class="float-end"><?php echo $Core->get_dropdown_menu($cur_info['id']) ?></span>
@@ -631,19 +641,6 @@ if (!empty($main_info))
 ?>
 
 <?php if ($access): 
-
-$hca_5840_mailing_fields_details = $Moisture->get_email_details();
-$o_hca_5840_mailing_fields = explode(',', $Config->get('o_hca_5840_mailing_fields'));
-
-$hca_5840_mailing_fields = array();
-foreach($hca_5840_mailing_fields_details as $key => $value)
-{
-	if (in_array($key, $o_hca_5840_mailing_fields))
-		$hca_5840_mailing_fields[] = '<p><input type="checkbox" value="1" checked="checked" name="hca_5840_mailing_fields['.$key.']"> '.$value.'</p>';
-	else
-		$hca_5840_mailing_fields[] = '<p><input type="checkbox" value="0" name="hca_5840_mailing_fields['.$key.']"> '.$value.'</p>';
-}
-
 ?>
 <div class="pop-up-window" id="email-window">
 	<form method="post" accept-charset="utf-8" action="">
@@ -659,11 +656,6 @@ foreach($hca_5840_mailing_fields_details as $key => $value)
 			<p>Message for Manager of Property</p>
 			<p style="display:none"><textarea name="email_list" rows="3" placeholder="Enter emails separated by commas"><?php echo $Config->get('o_hca_5840_mailing_list') ?></textarea></p>
 			<p><textarea name="mail_message" rows="8" placeholder="Write your message">Hello. </textarea></p>
-			<p>*The manager will receive a link to submit the form.</p>
-			<div class="mailing-fields">
-				<?php echo implode(' ', $hca_5840_mailing_fields) ?>
-			</div>
-			
 			<p class="btn-action">
 				<span class="submit primary"><input type="submit" name="send_email" value="Send Email"/></span>
 			</p>

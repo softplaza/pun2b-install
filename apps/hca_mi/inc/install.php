@@ -6,54 +6,68 @@ $schema = array(
 	'FIELDS'		=> array(
 		'id'						=> $DBLayer->dt_serial(),
 		'property_id'				=> $DBLayer->dt_int(),
-		//'property_name'				=> $DBLayer->dt_varchar(), //removed
-		'unit_number'				=> $DBLayer->dt_varchar(),
+		'unit_id'					=> $DBLayer->dt_int(),
+		'unit_number'				=> $DBLayer->dt_varchar(),// to replace
 		'location'					=> $DBLayer->dt_varchar(),
 		'locations'					=> $DBLayer->dt_varchar(),
 		'mois_report_date'			=> $DBLayer->dt_int(),
-		'mois_performed_by'			=> $DBLayer->dt_varchar(),
+
+		'mois_performed_by'			=> $DBLayer->dt_varchar(),// to remove
 		'performed_uid'				=> $DBLayer->dt_int(),
+		'performed_uid2'			=> $DBLayer->dt_int(),
+
 		'mois_inspection_date'		=> $DBLayer->dt_int(),
 
 		'mois_source'				=> $DBLayer->dt_text(),// must be removed
 		'symptoms'					=> $DBLayer->dt_text(),
 		'action'					=> $DBLayer->dt_text(),
 
+		// Carpet/Vinyl Sections
+		'services_vendor_id'		=> $DBLayer->dt_int(),
 		'delivery_equip_date'		=> $DBLayer->dt_int(),
 		'pickup_equip_date'			=> $DBLayer->dt_int(),
 		'delivery_equip_comment'	=> $DBLayer->dt_text(),
 		'afcc_date'					=> $DBLayer->dt_int(),
 		'afcc_comment' 				=> $DBLayer->dt_text(),
+
 		//Scope of Work/Asbestos
-		'asb_vendor'				=> $DBLayer->dt_varchar(),
+		'asb_vendor'				=> $DBLayer->dt_varchar(),//to replace
+		'asb_vendor_id'				=> $DBLayer->dt_int(),
 		'asb_po_number'				=> $DBLayer->dt_varchar(),
 		'asb_test_date' 			=> $DBLayer->dt_int(),
 		'asb_budget'				=> $DBLayer->dt_varchar(),
 		'asb_total_amount'			=> $DBLayer->dt_varchar(),
 		'asb_comment' 				=> $DBLayer->dt_text(),
+
 		//Remediation Dates
-		'rem_vendor'				=> $DBLayer->dt_varchar(),
+		'rem_vendor'				=> $DBLayer->dt_varchar(),//to replace
+		'rem_vendor_id'				=> $DBLayer->dt_int(),
 		'rem_po_number'				=> $DBLayer->dt_varchar(),
 		'rem_start_date'			=> $DBLayer->dt_int(),
 		'rem_end_date'				=> $DBLayer->dt_int(),
 		'rem_budget'				=> $DBLayer->dt_varchar(),
 		'rem_total_amount'			=> $DBLayer->dt_varchar(),
 		'rem_comment' 				=> $DBLayer->dt_text(),
+
 		//Constructions Dates
-		'cons_vendor'				=> $DBLayer->dt_varchar(),
+		'cons_vendor'				=> $DBLayer->dt_varchar(),//to replace
+		'cons_vendor_id'			=> $DBLayer->dt_int(),
 		'cons_po_number'			=> $DBLayer->dt_varchar(),
 		'cons_start_date'			=> $DBLayer->dt_int(),
 		'cons_end_date'				=> $DBLayer->dt_int(),
 		'cons_budget'				=> $DBLayer->dt_varchar(),
 		'cons_total_amount'			=> $DBLayer->dt_varchar(),
 		'cons_comment' 				=> $DBLayer->dt_text(),
+
 		'total_cost'				=> $DBLayer->dt_int(),
 		'moveout_date'				=> $DBLayer->dt_int(),
 		'movein_date'				=> $DBLayer->dt_int(),
 		'maintenance_date'			=> $DBLayer->dt_int(),
 		'maintenance_comment'		=> $DBLayer->dt_text(),
-		'final_performed_by'		=> $DBLayer->dt_varchar(),
+
+		'final_performed_by'		=> $DBLayer->dt_varchar(),//to remove
 		'final_performed_uid'		=> $DBLayer->dt_int(),
+
 		'final_performed_date'		=> $DBLayer->dt_int(),
 		'remarks'					=> $DBLayer->dt_text(),
 		'job_status'				=> $DBLayer->dt_int('TINYINT(1)'),
@@ -72,11 +86,64 @@ $schema = array(
 		'leak_type' 				=> $DBLayer->dt_int('TINYINT(2)'),
 		'symptom_type' 				=> $DBLayer->dt_int('TINYINT(2)'),
 	),
-	'PRIMARY KEY'	=> array('id')
+	'PRIMARY KEY'	=> ['id']
 );
 $DBLayer->create_table('hca_5840_projects', $schema);
-$DBLayer->add_field('hca_5840_projects', 'symptom_type', 'TINYINT(2)', false, '0');
-$DBLayer->drop_field('hca_5840_projects', 'property_name');
+
+$DBLayer->add_field('hca_5840_projects', 'performed_uid2', 'INT(10) UNSIGNED', false, '0');
+$DBLayer->add_field('hca_5840_projects', 'unit_id', 'INT(10) UNSIGNED', false, '0');
+$DBLayer->add_field('hca_5840_projects', 'services_vendor_id', 'INT(10) UNSIGNED', false, '0');
+$DBLayer->add_field('hca_5840_projects', 'asb_vendor_id', 'INT(10) UNSIGNED', false, '0');
+$DBLayer->add_field('hca_5840_projects', 'rem_vendor_id', 'INT(10) UNSIGNED', false, '0');
+$DBLayer->add_field('hca_5840_projects', 'cons_vendor_id', 'INT(10) UNSIGNED', false, '0');
+
+
+
+$sm_property_units = $DBLayer->select_all('sm_property_units');
+$sm_vendors = $DBLayer->select_all('sm_vendors');
+$hca_5840_projects = $DBLayer->select_all('hca_5840_projects');
+
+foreach($hca_5840_projects as $cur_project)
+{
+	$db_data = [];
+	$asb_vendor_id = $rem_vendor_id = $cons_vendor_id = $unit_id = 0;
+	foreach($sm_vendors as $cur_vendor)
+	{
+		if ($asb_vendor_id == 0 && $cur_vendor['vendor_name'] == $cur_project['asb_vendor'])
+			$db_data['asb_vendor_id'] = $cur_vendor['id'];
+
+		if ($rem_vendor_id == 0 && $cur_vendor['vendor_name'] == $cur_project['rem_vendor'])
+			$db_data['rem_vendor_id'] = $cur_vendor['id'];
+
+		if ($cons_vendor_id == 0 && $cur_vendor['vendor_name'] == $cur_project['cons_vendor'])
+			$db_data['cons_vendor_id'] = $cur_vendor['id'];
+	}
+
+	foreach($sm_property_units as $cur_unit)
+	{
+		if ($unit_id == 0 && $cur_unit['unit_number'] == $cur_project['unit_number'] && $cur_unit['property_id'] == $cur_project['property_id'])
+		{
+			$db_data['unit_id'] = $cur_unit['id'];
+			break;
+		}
+	}
+
+	if (!empty($db_data))
+		$DBLayer->update('hca_5840_projects', $db_data, $cur_project['id']);
+}
+
+
+
+$schema = array(
+	'FIELDS'		=> array(
+		'id'				=> $DBLayer->dt_serial(),
+		'vendor_id'			=> $DBLayer->dt_int(),
+		'group_id'			=> $DBLayer->dt_int('TINYINT(3)'),
+		'enabled'			=> $DBLayer->dt_int('TINYINT(1)', false, '1'),
+	),
+	'PRIMARY KEY'	=> array('id')
+);
+$DBLayer->create_table('hca_5840_vendors_filter', $schema);
 
 $schema = array(
 	'FIELDS'		=> array(
@@ -95,104 +162,15 @@ $schema = array(
 $DBLayer->create_table('hca_5840_forms', $schema);
 
 // need to be remove
-$schema = array(
-	'FIELDS'		=> array(
-		'id'						=> $DBLayer->dt_serial(),
-		'project_id'				=> $DBLayer->dt_int(),
-		'reported_time'				=> $DBLayer->dt_int(),
-		'property_name'				=> $DBLayer->dt_varchar(),
-		'unit_number'				=> $DBLayer->dt_varchar(),
-		'inspector_name'			=> $DBLayer->dt_varchar(),
-		'mois_type_clear' 			=> $DBLayer->dt_int('TINYINT(1)'),
-		'mois_type_clear_init'		=> $DBLayer->dt_varchar(),
-		'mois_type_clear_desc'		=> $DBLayer->dt_varchar(),
-		'mois_type_grey'			=> $DBLayer->dt_int('TINYINT(1)'),
-		'mois_type_grey_init'		=> $DBLayer->dt_varchar(),
-		'mois_type_grey_desc'		=> $DBLayer->dt_varchar(),
-		'mois_type_black'			=> $DBLayer->dt_int('TINYINT(1)'),
-		'mois_type_black_init'		=> $DBLayer->dt_varchar(),
-		'mois_type_black_desc'		=> $DBLayer->dt_varchar(),
-		'disc_bldg_attics' 			=> $DBLayer->dt_int('TINYINT(1)'),
-		'disc_bldg_attics_init'		=> $DBLayer->dt_varchar(),
-		'disc_bldg_attics_desc'		=> $DBLayer->dt_varchar(),
-		'disc_bldg_ceilings' 		=> $DBLayer->dt_int('TINYINT(1)'),
-		'disc_bldg_ceilings_init'	=> $DBLayer->dt_varchar(),
-		'disc_bldg_ceilings_desc'	=> $DBLayer->dt_varchar(),
-		'disc_bldg_walls' 			=> $DBLayer->dt_int('TINYINT(1)'),
-		'disc_bldg_walls_init'		=> $DBLayer->dt_varchar(),
-		'disc_bldg_walls_desc'		=> $DBLayer->dt_varchar(),
-		'disc_bldg_windows' 		=> $DBLayer->dt_int('TINYINT(1)'),
-		'disc_bldg_windows_init'	=> $DBLayer->dt_varchar(),
-		'disc_bldg_windows_desc'	=> $DBLayer->dt_varchar(),
-		'disc_bldg_floors' 			=> $DBLayer->dt_int('TINYINT(1)'),
-		'disc_bldg_floors_init'		=> $DBLayer->dt_varchar(),
-		'disc_bldg_floors_desc'		=> $DBLayer->dt_varchar(),
-		'disc_utilit_toilets' 		=> $DBLayer->dt_int('TINYINT(1)'),
-		'disc_utilit_toilets_init'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_toilets_desc'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_washers' 		=> $DBLayer->dt_int('TINYINT(1)'),
-		'disc_utilit_washers_init'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_washers_desc'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_heaters' 		=> $DBLayer->dt_int('TINYINT(1)'),
-		'disc_utilit_heaters_init'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_heaters_desc'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_furnace' 		=> $DBLayer->dt_int('TINYINT(1)'),
-		'disc_utilit_furnace_init'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_furnace_desc'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_sinks' 		=> $DBLayer->dt_int('TINYINT(1)'),
-		'disc_utilit_sinks_init'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_sinks_desc'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_potable' 		=> $DBLayer->dt_int('TINYINT(1)'),
-		'disc_utilit_potable_init'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_potable_desc'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_drain' 		=> $DBLayer->dt_int('TINYINT(1)'),
-		'disc_utilit_drain_init'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_drain_desc'	=> $DBLayer->dt_varchar(),
-		'disc_utilit_hvac' 			=> $DBLayer->dt_int('TINYINT(1)'),
-		'disc_utilit_hvac_init'		=> $DBLayer->dt_varchar(),
-		'disc_utilit_hvac_desc'		=> $DBLayer->dt_varchar(),
-		'location'					=> $DBLayer->dt_varchar(),
-		'square_footages'			=> $DBLayer->dt_varchar(),
-		'wood_results'				=> $DBLayer->dt_varchar(),
-		'concrete_results'			=> $DBLayer->dt_varchar(),
-		'location2'					=> $DBLayer->dt_varchar(),
-		'square_footages2'			=> $DBLayer->dt_varchar(),
-		'wood_results2'				=> $DBLayer->dt_varchar(),
-		'concrete_results2'			=> $DBLayer->dt_varchar(),
-		'location3'					=> $DBLayer->dt_varchar(),
-		'square_footages3'			=> $DBLayer->dt_varchar(),
-		'wood_results3'				=> $DBLayer->dt_varchar(),
-		'concrete_results3'			=> $DBLayer->dt_varchar(),
-		'location4'					=> $DBLayer->dt_varchar(),
-		'square_footages4'			=> $DBLayer->dt_varchar(),
-		'wood_results4'				=> $DBLayer->dt_varchar(),
-		'concrete_results4'			=> $DBLayer->dt_varchar(),
-		//Additional fields
-		'square_footages1'			=> $DBLayer->dt_varchar(),
-		'wood_results1'				=> $DBLayer->dt_varchar(),
-		'concrete_results1'			=> $DBLayer->dt_varchar(),
-		'location2'					=> $DBLayer->dt_varchar(),
-		'square_footages2'			=> $DBLayer->dt_varchar(),
-		'wood_results2'				=> $DBLayer->dt_varchar(),
-		'concrete_results2'			=> $DBLayer->dt_varchar(),
-		'location3'					=> $DBLayer->dt_varchar(),
-		'square_footages3'			=> $DBLayer->dt_varchar(),
-		'wood_results3'				=> $DBLayer->dt_varchar(),
-		'concrete_results3'			=> $DBLayer->dt_varchar(),
-		'location4'					=> $DBLayer->dt_varchar(),
-		'square_footages4'			=> $DBLayer->dt_varchar(),
-		'wood_results4'				=> $DBLayer->dt_varchar(),
-		'concrete_results4'			=> $DBLayer->dt_varchar(),
-		'action'					=> $DBLayer->dt_text(),
-		'email_status' 				=> $DBLayer->dt_int('TINYINT(1)'),
-	),
-	'PRIMARY KEY'	=> array('id')
-);
-$DBLayer->create_table('hca_5840_appendixb', $schema);
+$DBLayer->drop_table('hca_5840_appendixb');
+$DBLayer->drop_field('users', 'hca_5840_access');
 
-$DBLayer->add_field('users', 'hca_5840_access', 'TINYINT(1)', false, '0');
 $DBLayer->add_field('sm_vendors', 'hca_5840', 'TINYINT(1)', false, '1');
 
 config_add('o_hca_5840_mailing_list', '');
-config_add('o_hca_5840_mailing_fields', '');
+//config_add('o_hca_5840_mailing_fields', '');
 config_add('o_hca_5840_locations', '');
+
+config_remove(array(
+	'o_hca_5840_mailing_fields',
+));

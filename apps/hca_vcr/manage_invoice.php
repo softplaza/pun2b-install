@@ -34,7 +34,7 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 $query = array(
 	'SELECT'	=> 'id, realname, email',
 	'FROM'		=> 'users',
-	'WHERE'		=> 'hca_5840_access > 0'
+	//'WHERE'		=> 'hca_5840_access > 0'
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $project_managers = array();

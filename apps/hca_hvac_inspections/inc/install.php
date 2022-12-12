@@ -18,32 +18,20 @@ $schema = array(
 		'item_type'					=> $DBLayer->dt_int('TINYINT(1)'),
 		'item_inspection_type'		=> $DBLayer->dt_int('TINYINT(1)', false, '1'),
 		'comment_required'			=> $DBLayer->dt_int('TINYINT(1)'),
+		'po_number'					=> $DBLayer->dt_varchar(),
 	),
 	'PRIMARY KEY'	=> array('id')
 );
 $DBLayer->create_table('hca_hvac_inspections_items', $schema);
 
-$DBLayer->add_field('hca_hvac_inspections_items', 'item_type', 'TINYINT(1)', false, '0');
-$DBLayer->add_field('hca_hvac_inspections_items', 'job_actions', 'VARCHAR(255)', false, '');
-$DBLayer->add_field('hca_hvac_inspections_items', 'item_inspection_type', 'TINYINT(1)', false, '1');
-$DBLayer->add_field('hca_hvac_inspections_items', 'comment_required', 'TINYINT(1)', false, '0');
-$DBLayer->add_field('hca_hvac_inspections_items', 'po_number', 'VARCHAR(255)', false, '');
-
-/*
-
-$DBLayer->drop_table('hca_hvac_inspections_elements');
-
-// REMOVE
 $schema = array(
 	'FIELDS'		=> array(
 		'id'						=> $DBLayer->dt_serial(),
-		'element_id'				=> $DBLayer->dt_int(),
-		'po_number'					=> $DBLayer->dt_varchar(),
+		'filter_size'				=> $DBLayer->dt_varchar(),
 	),
 	'PRIMARY KEY'	=> array('id')
 );
-$DBLayer->create_table('hca_hvac_inspections_elements', $schema);
-*/
+$DBLayer->create_table('hca_hvac_inspections_filter_sizes', $schema);
 
 $schema = array(
 	'FIELDS'		=> array(
@@ -96,12 +84,6 @@ $schema = array(
 );
 $DBLayer->create_table('hca_hvac_inspections_checklist', $schema);
 
-$DBLayer->add_field('hca_hvac_inspections_checklist', 'filter_size_id', 'INT(10) UNSIGNED', false, '0');
-$DBLayer->add_field('hca_hvac_inspections_checklist', 'ch_inspection_type', 'TINYINT(1)', false, '1');
-
-//$DBLayer->add_field('hca_hvac_inspections_checklist', 'are_inside', 'TINYINT(1)', false, '0');
-$DBLayer->drop_field('hca_hvac_inspections_checklist', 'are_inside');
-
 $schema = array(
 	'FIELDS'		=> array(
 		'id'						=> $DBLayer->dt_serial(),
@@ -109,14 +91,13 @@ $schema = array(
 		'item_id'					=> $DBLayer->dt_int(),
 		'problem_id'				=> $DBLayer->dt_int('TINYINT(3)'),
 		'problem_ids'				=> $DBLayer->dt_varchar(),
-		'check_type'				=> $DBLayer->dt_int('TINYINT(1)'), // YES or NO
+		'check_type'				=> $DBLayer->dt_int('TINYINT(1)'), // 2 = YES or 1 = NO
 		'job_type'					=> $DBLayer->dt_int('TINYINT(1)'), // 0 = Pending
 		'comment'					=> $DBLayer->dt_text(),
 	),
 	'PRIMARY KEY'	=> array('id')
 );
 $DBLayer->create_table('hca_hvac_inspections_checklist_items', $schema);
-$DBLayer->add_field('hca_hvac_inspections_checklist_items', 'check_type', 'TINYINT(1)', false, '0');
 
 // ACTIONS 
 $schema = array(

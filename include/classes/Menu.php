@@ -135,7 +135,7 @@ class Menu
 	// Add Basic Top Main items to array
 	function add_basic_top_sub_items()
 	{
-		global $User, $Config, $URL, $page_param, $lang_profile, $section, $id, $user;
+		global $User, $URL, $page_param, $id;
 		
 		$user_id = (isset($id) && $this->page_section == 'profile') ? $id : $User->get('id');
 		$page_param['own_profile'] = ($User->get('id') == $user_id) ? true : false;

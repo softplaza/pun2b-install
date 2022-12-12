@@ -53,7 +53,7 @@ if (isset($_POST['install']))
 		$Cachinger->gen_apps();
 		$Cachinger->gen_config();
 
-		$flash_message = 'Applications installed';
+		$flash_message = 'Application installed.';
 		$FlashMessenger->add_info($flash_message);
 		redirect($URL->link('apps_management'), $flash_message);
 	}
@@ -78,7 +78,7 @@ else if (isset($_POST['uninstall']))
 		$Cachinger->gen_apps();
 		$Cachinger->gen_config();
 
-		$flash_message = 'Applications uninstalled';
+		$flash_message = 'Application uninstalled.';
 		$FlashMessenger->add_info($flash_message);
 		redirect($URL->link('apps_management'), $flash_message);
 	}
@@ -97,7 +97,7 @@ else if (isset($_POST['disable']))
 		// Regenerate the hooks cache
 		$Cachinger->gen_apps();
 
-		$flash_message = 'Applications disabled';
+		$flash_message = 'Application disabled.';
 		$FlashMessenger->add_info($flash_message);
 		redirect($URL->link('apps_management'), $flash_message);
 	}
@@ -116,7 +116,7 @@ else if (isset($_POST['enable']))
 		// Regenerate the hooks cache
 		$Cachinger->gen_apps();
 
-		$flash_message = 'Applications enabled';
+		$flash_message = 'Application enabled.';
 		$FlashMessenger->add_info($flash_message);
 		redirect($URL->link('apps_management'), $flash_message);
 	}
@@ -149,7 +149,7 @@ else if (isset($_POST['update']))
         $Cachinger->gen_apps();
 		$Cachinger->gen_config();
 
-        $flash_message = 'Applications updated';
+        $flash_message = 'Application updated.';
         $FlashMessenger->add_info($flash_message);
         redirect($URL->link('apps_management'), $flash_message);
     }

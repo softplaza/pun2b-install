@@ -127,8 +127,6 @@ class SwiftMenu
 
 	function getSlideMenu()
 	{
-		global $User, $URL;
-		
 		$this->menu_items = $this->orderBy($this->menu_items, 'level', SORT_ASC);
 
 		$this->findParent($this->menu_items);

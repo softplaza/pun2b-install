@@ -1990,7 +1990,6 @@ table .tcr{
     border-color: #c6e6f1;
 }
 
-
 .bd-callout h4{margin-bottom:.25rem}
 .bd-callout p:last-child{margin-bottom:0}
 .bd-callout code{border-radius:.25rem}
@@ -2007,6 +2006,11 @@ table .tcr{
     color: darkcyan;
 }
 .table th {text-align:center}
+
+/* Bootstrap improvements */
+
+
+
 
 /* NEW STANDART STYLES*/
 
@@ -2046,6 +2050,14 @@ button {
 .min-h-3 {min-height: 3em}
 .min-h-4 {min-height: 4em}
 .min-h-5 {min-height: 5em}
+
+.max-h-1 {max-height: 1em}
+.max-h-2 {max-height: 2em}
+.max-h-3 {max-height: 3em}
+.max-h-4 {max-height: 4em}
+.max-h-5 {max-height: 5em}
+.max-h-10 {max-height: 10em}
+.max-h-15 {max-height: 15em}
 
 .min-w-5 {min-width: 5em}
 .min-w-6 {min-width: 6em}

@@ -3,7 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 2) || $User->get('hca_5840_access') > 0) ? true : false;
+$access = ($User->checkAccess('hca_mi', 2)) ? true : false;
 if (!$access)
 	message($lang_common['No permission']);
 
@@ -135,7 +135,7 @@ $query = array(
 	'SELECT'	=> 'id, realname, email',
 	'FROM'		=> 'users',
 	'ORDER BY'	=> 'realname',
-	'WHERE'		=> 'hca_5840_access > 0'
+	//'WHERE'		=> 'hca_5840_access > 0'
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $project_manager = array();
@@ -381,8 +381,8 @@ if (!empty($projects_info))
 		{
 			$Hca5840Chart->addSymptoms($cur_info['mois_source']);
 
-			if ($cur_info['moveout_date'] > 0)
-				$Hca5840Chart->addRelocation();
+			//if ($cur_info['moveout_date'] > 0)
+			//	$Hca5840Chart->addRelocation();
 		}
 		++$i;
 	}
@@ -403,17 +403,6 @@ if (!empty($projects_info))
 	</div>
 <?php
 }
-
-$hca_5840_mailing_fields_details = $Moisture->get_email_details();
-$o_hca_5840_mailing_fields = explode(',', $Config->get('o_hca_5840_mailing_fields'));
-
-$hca_5840_mailing_fields = array();
-foreach($hca_5840_mailing_fields_details as $key => $value) {
-	if (in_array($key, $o_hca_5840_mailing_fields))
-		$hca_5840_mailing_fields[] = '<p><input type="checkbox" value="1" checked="checked" name="hca_5840_mailing_fields['.$key.']"> '.$value.'</p>';
-	else
-		$hca_5840_mailing_fields[] = '<p><input type="checkbox" value="0" name="hca_5840_mailing_fields['.$key.']"> '.$value.'</p>';
-}
 ?>
 
 	<div class="email-window" style="display:none">
@@ -429,12 +418,8 @@ foreach($hca_5840_mailing_fields_details as $key => $value) {
 				<p>Subject</p>
 				<p class="subject"><input type="text" name="subject" value="HCA: Moisture Inspection"></p>
 				<p>Comma-separated email addresses</p>
-				<p><textarea name="email_list" rows="3" placeholder="Enter emails separated by commas"><?php echo $Config->get('o_hca_5840_mailing_list') ?></textarea></p>
+				<p><textarea name="email_list" rows="3" placeholder="Enter emails separated by commas"></textarea></p>
 				<p><textarea name="mail_message" rows="3" placeholder="Write your message">Hello. </textarea></p>
-				
-				<div class="mailing-fields">
-					<?php echo implode(' ', $hca_5840_mailing_fields) ?>
-				</div>
 				
 				<p class="btn-action"><span class="submit primary"><input type="submit" name="send_email" value="Send Email"/></span></p>
 			</div>

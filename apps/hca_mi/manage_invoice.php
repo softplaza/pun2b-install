@@ -3,7 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 13) || $User->get('hca_5840_access') > 0) ? true : false;
+$access = ($User->checkAccess('hca_mi', 13)) ? true : false;
 if (!$access)
 	message($lang_common['No permission']);
 
@@ -23,7 +23,7 @@ $main_info = $DBLayer->fetch_assoc($result);
 $query = array(
 	'SELECT'	=> 'id, realname, email',
 	'FROM'		=> 'users',
-	'WHERE'		=> 'hca_5840_access > 0'
+	//'WHERE'		=> 'hca_5840_access > 0'
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $project_managers = array();
@@ -67,28 +67,17 @@ if (isset($_POST['form_sent']))
 		{
 			$mail_subject = 'HCA: Moisture Inspection';
 			$mail_message = 'Hello. The total cost of the project exceeded $ 5,000. See details bellow.'."\n\n";
-			$mailing_fields = explode(',', $Config->get('o_hca_5840_mailing_fields'));
-			
-			if (in_array('property_name', $mailing_fields))
-				$mail_message .= 'Property: '.$main_info['property_name']."\n\n";
-			if (in_array('unit_number', $mailing_fields))
-				$mail_message .= 'Unit #: '.$main_info['unit_number']."\n\n";
-			if (in_array('location', $mailing_fields))
-				$mail_message .= 'Location: '.$main_info['location']."\n\n";
-			if (in_array('mois_report_date', $mailing_fields))
-				$mail_message .= 'Report Date: '.date('m/d/Y', $main_info['mois_report_date'])."\n\n";
-			if (in_array('mois_performed_by', $mailing_fields))
-				$mail_message .= 'Performed by: '.$main_info['mois_performed_by']."\n\n";
-			if (in_array('mois_inspection_date', $mailing_fields))
-				$mail_message .= 'Inspection Date: '.date('m/d/Y', $main_info['mois_inspection_date'])."\n\n";
-			if (in_array('mois_source', $mailing_fields))
-				$mail_message .= 'Source: '.$main_info['mois_source']."\n\n";
-			if (in_array('symptoms', $mailing_fields))
-				$mail_message .= 'Symptoms: '.$main_info['symptoms']."\n\n";
-			if (in_array('action', $mailing_fields))
-				$mail_message .= 'Action: '.$main_info['action']."\n\n";
-			if (in_array('remarks', $mailing_fields))
-				$mail_message .= 'Remarks: '.$main_info['remarks']."\n\n";
+
+			$mail_message .= 'Property: '.$main_info['property_name']."\n\n";
+			$mail_message .= 'Unit #: '.$main_info['unit_number']."\n\n";
+			$mail_message .= 'Location: '.$main_info['location']."\n\n";
+			$mail_message .= 'Report Date: '.date('m/d/Y', $main_info['mois_report_date'])."\n\n";
+			$mail_message .= 'Performed by: '.$main_info['mois_performed_by']."\n\n";
+			$mail_message .= 'Inspection Date: '.date('m/d/Y', $main_info['mois_inspection_date'])."\n\n";
+			$mail_message .= 'Source: '.$main_info['mois_source']."\n\n";
+			$mail_message .= 'Symptoms: '.$main_info['symptoms']."\n\n";
+			$mail_message .= 'Action: '.$main_info['action']."\n\n";
+			$mail_message .= 'Remarks: '.$main_info['remarks']."\n\n";
 				
 			$mail_message .= 'Total cost: $ '.$total_cost."\n\n";
 			$mail_message .= 'To view all the details of the project follow this link: '.get_cur_url()."\n\n";
@@ -96,7 +85,7 @@ if (isset($_POST['form_sent']))
 			$email_list = implode(',', $project_managers);
 			if ($email_list != '' && $main_info['over_price_notified'] == 0)
 			{
-				$SwiftMailer = new SwiftMailerl;
+				$SwiftMailer = new SwiftMailer;
 				$SwiftMailer->isHTML();
 				$SwiftMailer->send($email_list, $mail_subject, $mail_message);
 				

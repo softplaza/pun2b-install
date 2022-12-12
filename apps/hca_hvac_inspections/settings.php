@@ -31,7 +31,11 @@ $SwiftSettings->addAccessOption(17, 'View list of actions');
 $SwiftSettings->addAccessOption(18, 'Upload images');
 $SwiftSettings->addAccessOption(19, 'Delete images');
 
-//$SwiftSettings->addPermissionOption(10, 'Delete images');
+// Permissions as Edite, Add, Remove etc.
+$SwiftSettings->addPermissionOption(1, 'Full Inspection');
+$SwiftSettings->addPermissionOption(2, 'Filter Replacement');
+
+
 $SwiftSettings->addNotifyOption(1, 'Appendix-B created');
 // Settings END
 
@@ -41,13 +45,15 @@ $Core->set_page_id('hca_hvac_inspections_settings', 'hca_hvac_inspections');
 require SITE_ROOT.'header.php';
 
 if ($User->is_admmod())
-{
 	$SwiftSettings->createRule();
-}
+
+$SwiftSettings->getGroupAccess();
 
 $SwiftSettings->getUserAccess();
 
-$SwiftSettings->getGroupAccess();
+$SwiftSettings->getGroupPermissions();
+
+$SwiftSettings->getUserPermissions();
 
 $SwiftSettings->getUserNotifications();
 

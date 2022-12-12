@@ -25,7 +25,7 @@ if ($section == 'work_order')
 		'JOINS'		=> [
 			[
 				'LEFT JOIN'		=> 'hca_wom_items AS i',
-				'ON'			=> 'i.id=t.task_item'
+				'ON'			=> 'i.id=t.item_id'
 			],
 			[
 				'LEFT JOIN'		=> 'users AS u1',

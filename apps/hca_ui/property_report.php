@@ -135,7 +135,7 @@ if ($search_by_property_id > 0)
 	<div class="col-12">
 		<div class="card">
 			<div class="card-header">
-				<h6 class="card-title mb-0 text-primary">Summary Report</h6>
+				<h6 class="card-title mb-0 text-primary"><?php echo html_encode($cur_property_info['pro_name']) ?> Property Report</h6>
 			</div>
 			<div class="card-body py-3">
 				<div class="chart chart-sm">
@@ -424,7 +424,7 @@ else
 <?php
 	}
 
-	
+	$num_pending_inspections = 0;
 	if (!empty($HcaUIPropertyReport->inspections_info))
 	{
 ?>
@@ -449,7 +449,7 @@ else
 
 <?php
 
-		$i = $inspection_items_pending = 0;
+		$inspection_items_pending = 0;
 		foreach($HcaUIPropertyReport->inspections_info as $cur_info)
 		{
 			$num_pending = 0;
@@ -503,7 +503,7 @@ else
 <?php endif; ?>
 		</tr>
 <?php
-				++$i;
+				++$num_pending_inspections;
 				$inspection_items_pending = $inspection_items_pending + $num_pending;
 			//}
 
@@ -512,7 +512,7 @@ else
 	</tbody>
 	<tfoot>
 		<tr>
-			<td class="ta-center fw-bold"><?=$i?></td>
+			<td class="ta-center fw-bold"><?=$num_pending_inspections?></td>
 			<td class="ta-right fw-bold" colspan="4"></td>
 <?php if ($search_by_job_type == 0): ?>
 			<td class="ta-center fw-bold"><?php echo $inspection_items_pending ?></td>
@@ -558,35 +558,39 @@ else
 <?php
 	}
 
-
+	$chart_labels = $chart_numbers = $chart_colors = [];
 	// Completed: WO, items, repaired
 	if ($search_by_job_type == 1)
 	{
-		$chart_column_label_1 = '"Completed Work Orders"';
-		$chart_column_label_2 = '"Replaced items"';
-		$chart_column_label_3 = '"Repaired items"';
+		$chart_labels[] = '"Completed Work Orders"';
+		$chart_labels[] = '"Replaced items"';
+		$chart_labels[] = '"Repaired items"';
 
-		$chart_column_total_1 = $number_work_orders;
-		$chart_column_total_2 = $wo_total_replaced;
-		$chart_column_total_3 = $wo_total_repaired;
+		$chart_numbers[] = $number_work_orders;
+		$chart_numbers[] = $wo_total_replaced;
+		$chart_numbers[] = $wo_total_repaired;
 
-		$chart_column_color_1 = 'window.theme.success';
-		$chart_column_color_2 = 'window.theme.primary';
-		$chart_column_color_3 = 'window.theme.info';
+		$chart_colors[] = 'window.theme.success';
+		$chart_colors[] = 'window.theme.primary';
+		$chart_colors[] = 'window.theme.info';
 	}
-	else // Pending WO, items, never inspected units
+	// Pending Inspections, WO, items, never inspected units
+	else
 	{
-		$chart_column_label_1 = '"Pending Work Orders"';
-		$chart_column_label_2 = '"Pending items"';
-		$chart_column_label_3 = '"Never inspected units"';
+		$chart_labels[] = '"Pending Inspections"';
+		$chart_labels[] = '"Pending Work Orders"';
+		$chart_labels[] = '"Pending items"';
+		$chart_labels[] = '"Never inspected units"';
 
-		$chart_column_total_1 = $number_work_orders;
-		$chart_column_total_2 = $total_items_pending;
-		$chart_column_total_3 = $HcaUIPropertyReport->num_never_inspected;
+		$chart_numbers[] = $num_pending_inspections;
+		$chart_numbers[] = $number_work_orders;
+		$chart_numbers[] = $total_items_pending;
+		$chart_numbers[] = $HcaUIPropertyReport->num_never_inspected;
 
-		$chart_column_color_1 = 'window.theme.warning';
-		$chart_column_color_2 = 'window.theme.danger';
-		$chart_column_color_3 = 'window.theme.secondary';
+		$chart_colors[] = 'window.theme.coral';
+		$chart_colors[] = 'window.theme.warning';
+		$chart_colors[] = 'window.theme.danger';
+		$chart_colors[] = 'window.theme.secondary';
 	}
 
 ?>
@@ -600,10 +604,10 @@ document.addEventListener("DOMContentLoaded", function() {
 	new Chart(document.getElementById("chartjs-dashboard-pie-pillars"), {
 		type: "bar",
 		data: {
-			labels: [<?=$chart_column_label_1?>, <?=$chart_column_label_2?>, <?=$chart_column_label_3?>],
+			labels: [<?php echo implode(',', $chart_labels) ?>],
 			datasets: [{
-				data: [<?=$chart_column_total_1?>, <?=$chart_column_total_2?>, <?=$chart_column_total_3?>],
-				backgroundColor: [<?=$chart_column_color_1?>, <?=$chart_column_color_2?>, <?=$chart_column_color_3?>],
+				data: [<?php echo implode(',', $chart_numbers) ?>],
+				backgroundColor: [<?php echo implode(',', $chart_colors) ?>],
 				borderWidth: 5
 			}]
 		},

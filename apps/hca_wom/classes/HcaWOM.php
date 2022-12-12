@@ -4,6 +4,13 @@ class HcaWOM
 {
 	var $cur_work_order_info = [];
 	var $cur_task_info = [];
+	var $wo_tasks_info = [];
+
+	var $wo_status = [
+		1 => 'Open',
+		2 => 'Closed',
+		3 => 'Canceled'
+	];
 
 	var $priority = [
 		//0 => 'Select one',
@@ -37,7 +44,7 @@ class HcaWOM
 		12 => 'Leak',
 		8 => 'Mulch', 
 		0 => 'Other',
-		5 => 'Repaire',
+		5 => 'Repair',
 		4 => 'Replace',
 		7 => 'Replace Bulb',
 		11 => 'Treat'//last one
@@ -88,7 +95,7 @@ class HcaWOM
 		global $DBLayer;
 
 		$query = [
-			'SELECT'	=> 'w.*, p.pro_name, pu.unit_number, u2.realname AS requested_name, u2.email AS requested_email', // , u1.realname AS assigned_name, u1.email AS assigned_email
+			'SELECT'	=> 'w.*, p.pro_name, pu.unit_number, u1.realname AS requested_name, u1.email AS requested_email',
 			'FROM'		=> 'hca_wom_work_orders AS w',
 			'JOINS'		=> [
 				[
@@ -96,18 +103,12 @@ class HcaWOM
 					'ON'			=> 'p.id=w.property_id'
 				],
 				[
-					'LEFT JOIN'		=> 'sm_property_units AS pu',
+					'INNER JOIN'	=> 'sm_property_units AS pu',
 					'ON'			=> 'pu.id=w.unit_id'
 				],
-				/*
 				[
-					'LEFT JOIN'		=> 'users AS u1',
-					'ON'			=> 'u1.id=w.assigned_to'
-				],
-				*/
-				[
-					'LEFT JOIN'		=> 'users AS u2',
-					'ON'			=> 'u2.id=w.requested_by'
+					'INNER JOIN'	=> 'users AS u1',
+					'ON'			=> 'u1.id=w.requested_by'
 				],
 			],
 			'WHERE'		=> 'w.id='.$id,
@@ -126,7 +127,7 @@ class HcaWOM
 		global $DBLayer;
 
 		$query = [
-			'SELECT'	=> 't.*, w.wo_message, p.pro_name, pu.unit_number, u1.realname AS assigned_name, u1.email AS assigned_email, u2.realname AS requested_name, u2.email AS requested_email', // 
+			'SELECT'	=> 't.*, w.property_id, w.unit_id, w.wo_message, w.priority, w.enter_permission, w.has_animal, p.pro_name, pu.unit_number, u1.realname AS requested_name, u1.email AS requested_email, i.item_name, u2.realname AS assigned_name, u2.email AS assigned_email',
 			'FROM'		=> 'hca_wom_tasks AS t',
 			'JOINS'		=> [
 				[
@@ -138,16 +139,21 @@ class HcaWOM
 					'ON'			=> 'p.id=w.property_id'
 				],
 				[
+					'INNER JOIN'	=> 'users AS u1',
+					'ON'			=> 'u1.id=w.requested_by'
+				],
+				[
+					// LEFT if unit_id - 0
 					'LEFT JOIN'		=> 'sm_property_units AS pu',
 					'ON'			=> 'pu.id=w.unit_id'
 				],
 				[
-					'LEFT JOIN'		=> 'users AS u1',
-					'ON'			=> 'u1.id=t.assigned_to'
+					'LEFT JOIN'		=> 'hca_wom_items AS i',
+					'ON'			=> 'i.id=t.item_id'
 				],
 				[
 					'LEFT JOIN'		=> 'users AS u2',
-					'ON'			=> 'u2.id=w.requested_by'
+					'ON'			=> 'u2.id=t.assigned_to'
 				],
 			],
 			'WHERE'		=> 't.id='.$id,
@@ -155,50 +161,89 @@ class HcaWOM
 		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 		$this->cur_task_info = $DBLayer->fetch_assoc($result);
 
-		if ($this->cur_task_info['unit_id'] == 0)
+		if ($this->cur_task_info['unit_id'] == 0 || $this->cur_task_info['unit_id'] == '')
 			$this->cur_task_info['unit_number'] = 'Common area';
 
 		return $this->cur_task_info;
 	}
 
+	function getWOTasks($work_order_id)
+	{
+		global $DBLayer;
+
+		$query = [
+			'SELECT'	=> 't.*, i.item_name',
+			'FROM'		=> 'hca_wom_tasks AS t',
+			'JOINS'		=> [
+				[
+					'LEFT JOIN'		=> 'hca_wom_items AS i',
+					'ON'			=> 'i.id=t.item_id'
+				],
+			],
+			'WHERE'		=> 't.work_order_id='.$work_order_id,
+		];
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		while ($row = $DBLayer->fetch_assoc($result)) {
+			$this->wo_tasks_info[] = $row;
+		}
+
+		return $this->wo_tasks_info;
+	}
+
+	function areTasksClosed($arr = []){
+		$ident = false;
+		if (!empty($arr)){
+			$ident = true;
+			foreach($arr as $cur_info){
+				if ($cur_info['task_status'] < 4)
+					return false;
+			}
+		}
+		return $ident;
+	}
+
+	function areTasksCompleted($arr = []){
+		$ident = false;
+		if (!empty($arr)){
+			$ident = true;
+			foreach($arr as $cur_info){
+				if ($cur_info['task_status'] < 3)
+					return false;
+			}
+		}
+		return $ident;
+	}
+
 	function getWorkOrderStatus($wo_status)
 	{
 		$output = [];
-
+		// Canceled
+		if ($wo_status == 3){
+			$output[] = '<div class="callout callout-danger mb-2">';
+			$output[] = 'The Work Order has been canceled.';
+			$output[] = '<button type="submit" name="reopen_wo" class="badge bg-primary">Reopen WO</button>';
+			$output[] = '</div>';
+		}
 		// Completed
-		if ($wo_status == 4)
-		{
+		if ($wo_status == 2){
 			$output[] = '<div class="callout callout-success mb-2">';
-			$output[] = 'The Work Order has been closed by property manager.';
-			$output[] = '<button type="submit" name="reopen_wo" class="badge badge-primary">Complete</button>';
+			$output[] = 'The Work Order has been closed.';
+			$output[] = '<button type="submit" name="reopen_wo" class="badge bg-primary">Reopen WO</button>';
 			$output[] = '</div>';
 		}
-/*
-		else if ($wo_status == 3)
-		{
-			$output[] = '<div class="callout callout-primary mb-2">';
-			$output[] = 'The Work Order has been completed by technician.';
-			$output[] = '</div>';
-		}
-		else if ($wo_status == 2)
-		{
-			$output[] = '<div class="callout callout-info mb-2">';
-			$output[] = 'The Work Order has been accepted by technician.';
-			$output[] = '</div>';
-		}
-*/
 		// Active
 		else if ($wo_status == 1)
 		{
 			$output[] = '<div class="callout callout-warning mb-2">';
-			$output[] = 'The Work Order is active.';
+			$output[] = 'The Work Order is open.';
+			//$output[] = '<button type="submit" name="complete_wo" class="badge badge-primary">Complete</button>';
 			$output[] = '</div>';
 		}
-		// Canceled
+		// On-Hold
 		else if ($wo_status == 0)
 		{
-			$output[] = '<div class="callout callout-danger mb-2">';
-			$output[] = 'The Work Order has been canceled by property manager.';
+			$output[] = '<div class="callout callout-secondary mb-2">';
+			$output[] = 'The Work Order is On-Hold.';
 			$output[] = '<button type="submit" name="reopen_wo" class="badge bg-primary">Reopen WO</button>';
 			$output[] = '</div>';
 		}

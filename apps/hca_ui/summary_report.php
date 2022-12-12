@@ -64,35 +64,33 @@ foreach ($inspection_types as $key => $val)
 </nav>
 
 <div class="card-header">
-	<h6 class="card-title mb-0 text-primary">Property Report</h6>
+	<h6 class="card-title mb-0 text-primary">Summary Report of Plumbing Inspections</h6>
 </div>
 <table class="table table-striped table-bordered">
 	<thead>
 		<tr>
 			<th>Property name</th>
+			<th class="bg-danger text-white">Pending Inspections</th>
 			<th class="bg-warning text-white">Pending Work Orders</th>
-			<th class="bg-danger text-white">Pending items</th>
-			<th class="bg-primary text-white">Replaced items</th>
-			<th class="bg-info text-white">Repaired items</th>
-			<th class="bg-secondary text-white">Not Inspected</th>
+			<th class="bg-secondary text-white">Not Inspected Units</th>
 			<th>Date of Last Inspection</th>
 		</tr>
 	</thead>
 	<tbody>
 
 <?php
+$i = 0;
 foreach($HcaUnitInspection->getProperties() as $cur_info)
 {
-	$wo_pending = isset($HcaUISummaryReport->wo_pending[$cur_info['id']]) ? $HcaUISummaryReport->wo_pending[$cur_info['id']] : 0;
-	$items_pending = isset($HcaUISummaryReport->items_pending[$cur_info['id']]) ? $HcaUISummaryReport->items_pending[$cur_info['id']] : 0;
-	$items_replaced = isset($HcaUISummaryReport->items_replaced[$cur_info['id']]) ? $HcaUISummaryReport->items_replaced[$cur_info['id']] : 0;
-	$items_repaired = isset($HcaUISummaryReport->items_repaired[$cur_info['id']]) ? $HcaUISummaryReport->items_repaired[$cur_info['id']] : 0;
-	$units_never_inspected = isset($HcaUISummaryReport->units_never_inspected[$cur_info['id']]) ? $HcaUISummaryReport->units_never_inspected[$cur_info['id']] : 0;
-	$date_inspected = isset($HcaUISummaryReport->date_last_inspected[$cur_info['id']]) ? format_date($HcaUISummaryReport->date_last_inspected[$cur_info['id']], 'Y-m-d') : '';
+	$num_pending_inspections = isset($HcaUISummaryReport->num_pending_inspections[$cur_info['id']]) ? $HcaUISummaryReport->num_pending_inspections[$cur_info['id']] : 0;
 
+	$num_pending_wo = isset($HcaUISummaryReport->num_pending_wo[$cur_info['id']]) ? $HcaUISummaryReport->num_pending_wo[$cur_info['id']] : 0;
 
+	$num_never_inspected = isset($HcaUISummaryReport->num_never_inspected[$cur_info['id']]) ? $HcaUISummaryReport->num_never_inspected[$cur_info['id']] : 0;
 
-	if ($items_pending > 0 || $items_replaced > 0 || $items_repaired > 0)
+	$date_last_inspected = isset($HcaUISummaryReport->date_last_inspected[$cur_info['id']]) ? format_date($HcaUISummaryReport->date_last_inspected[$cur_info['id']], 'Y-m-d') : '';
+
+	if ($num_pending_inspections > 0 || $num_pending_wo > 0 || $num_never_inspected > 0)
 	{
 		$sub_link_args = [
 			'property_id' => $cur_info['id'],
@@ -106,26 +104,23 @@ foreach($HcaUnitInspection->getProperties() as $cur_info)
 				<span class="fw-bold"><?php echo html_encode($cur_info['pro_name']) ?></span>
 				<a href="<?php echo $URL->genLink('hca_ui_property_report', $sub_link_args) ?>" class="badge bg-primary float-end text-white">View</a>
 			</td>
-			<td class="ta-center fw-bold"><?php echo $wo_pending ?></td>
-			<td class="ta-center fw-bold"><?php echo $items_pending ?></td>
-			<td class="ta-center fw-bold"><?php echo $items_replaced ?></td>
-			<td class="ta-center fw-bold"><?php echo $items_repaired ?></td>
-			<td class="ta-center fw-bold"><?php echo $units_never_inspected ?></td>
-			<td class="ta-center"><?php echo $date_inspected ?></td>
+			<td class="ta-center fw-bold"><?php echo $num_pending_inspections ?></td>
+			<td class="ta-center fw-bold"><?php echo $num_pending_wo ?></td>
+			<td class="ta-center fw-bold"><?php echo $num_never_inspected ?></td>
+			<td class="ta-center"><?php echo $date_last_inspected ?></td>
 		</tr>
 <?php
+		++$i;
 	}
 }
 ?>
 	</tbody>
 	<tfoot>
 		<tr>
-			<td class="fw-bold"></td>
-			<td class="ta-center fw-bold"><?php echo $HcaUISummaryReport->total_wo_pending ?></td>
-			<td class="ta-center fw-bold"><?php echo $HcaUISummaryReport->total_pending ?></td>
-			<td class="ta-center fw-bold"><?php echo $HcaUISummaryReport->total_replaced ?></td>
-			<td class="ta-center fw-bold"><?php echo $HcaUISummaryReport->total_repaired ?></td>
-			<td class="ta-center fw-bold"><?php echo $HcaUISummaryReport->total_units_never_inspected ?></td>
+			<td class="ta-center fw-bold"><?=$i?></td>
+			<td class="ta-center fw-bold"><?php echo $HcaUISummaryReport->total_pending_inspections ?></td>
+			<td class="ta-center fw-bold"><?php echo $HcaUISummaryReport->total_pending_wo ?></td>
+			<td class="ta-center fw-bold"><?php echo $HcaUISummaryReport->total_never_inspected ?></td>
 			<td></td>
 		</tr>
 	</tfoot>

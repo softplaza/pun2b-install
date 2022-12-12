@@ -29,7 +29,7 @@ define('DB_CONFIG', 1);
 define('SPM_DEBUG', 1);
 
 // Enable show DB Queries mode by removing // from the following line
-define('SPM_SHOW_QUERIES', 1);
+//define('SPM_SHOW_QUERIES', 1);
 
 // Disable email from server
 //define('SWIFT_DISABLE_EMAIL', 1);

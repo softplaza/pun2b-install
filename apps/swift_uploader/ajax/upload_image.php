@@ -66,12 +66,12 @@ if (isset($_FILES['image']['name']) && $id > 0 && $table_name != '')
 		$toast_container[] = '</div>';
 	}
 
-	$SwiftUploader->getUploadedImages($table_name, $id);
+	$num_rows = $DBLayer->getNumRows('sm_uploader', 'table_name=\''.$DBLayer->escape($table_name).'\' AND table_id='.$id);
 
 	echo json_encode(
 		[
 			'toast_container'	=> implode('', $toast_container),
-			'num_images'		=> count($SwiftUploader->uploaded_images),
+			'num_images'		=> $num_rows,
 		]
 	);
 }

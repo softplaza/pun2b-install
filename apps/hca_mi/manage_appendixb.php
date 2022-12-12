@@ -3,7 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 15) || $User->get('hca_5840_access') > 0) ? true : false;
+$access = ($User->checkAccess('hca_mi', 15)) ? true : false;
 if (!$access)
 	message($lang_common['No permission']);
 
@@ -21,7 +21,7 @@ $query = array(
 	'SELECT'	=> 'id, realname, email',
 	'FROM'		=> 'users',
 	'ORDER BY'	=> 'realname',
-	'WHERE'		=> 'hca_5840_access > 0'
+	//'WHERE'		=> 'hca_5840_access > 0'
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $user_info = array();
