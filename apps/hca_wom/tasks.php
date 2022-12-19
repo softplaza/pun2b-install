@@ -3,9 +3,8 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access11 = ($User->checkAccess('hca_wom', 11)) ? true : false; // active 
-$access12 = ($User->checkAccess('hca_wom', 12)) ? true : false; // unassigned
-$access13 = ($User->checkAccess('hca_wom', 13)) ? true : false; // completed
+if (!$User->checkAccess('hca_wom', 5))
+	message($lang_common['No permission']);
 
 $section = isset($_GET['section']) ? $_GET['section'] : null;
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -32,7 +31,7 @@ $search_query = [];
 if ($section == 'unassigned')
 	$search_query[] = 't.task_status=1';
 else if ($section == 'active')
-	$search_query[] = 't.task_status=2';
+	$search_query[] = 't.task_status<3';
 else
 	$search_query[] = 't.task_status>2';
 
@@ -55,16 +54,16 @@ $query = [
 			'ON'			=> 'p.id=w.property_id'
 		],
 		[
-			'LEFT JOIN'		=> 'sm_property_units AS pu',
-			'ON'			=> 'pu.id=w.unit_id'
-		],
-		[
 			'INNER JOIN'	=> 'users AS u2',
 			'ON'			=> 'u2.id=w.requested_by'
 		],
 		[
-			'LEFT JOIN'		=> 'users AS u1',
+			'INNER JOIN'	=> 'users AS u1',
 			'ON'			=> 'u1.id=t.assigned_to'
+		],
+		[
+			'LEFT JOIN'		=> 'sm_property_units AS pu',
+			'ON'			=> 'pu.id=w.unit_id'
 		],
 	],
 ];
@@ -74,7 +73,7 @@ $PagesNavigator->set_total($DBLayer->result($result));
 
 $property_ids = [];
 $query = [
-	'SELECT'	=> 't.*, w.property_id, w.unit_id, w.wo_message, p.pro_name, pu.unit_number, i.item_name, u1.realname AS assigned_name, u1.email AS assigned_email, u2.realname AS requested_name, u2.email AS requested_email',
+	'SELECT'	=> 't.*, w.property_id, w.unit_id, w.wo_message, p.pro_name, pu.unit_number, i.item_name, pb.problem_name, u1.realname AS assigned_name, u1.email AS assigned_email, u2.realname AS requested_name, u2.email AS requested_email',
 	'FROM'		=> 'hca_wom_tasks AS t',
 	'JOINS'		=> [
 		[
@@ -86,6 +85,14 @@ $query = [
 			'ON'			=> 'p.id=w.property_id'
 		],
 		[
+			'INNER JOIN'	=> 'users AS u2',
+			'ON'			=> 'u2.id=w.requested_by'
+		],
+		[
+			'INNER JOIN'	=> 'users AS u1',
+			'ON'			=> 'u1.id=t.assigned_to'
+		],
+		[
 			'LEFT JOIN'		=> 'sm_property_units AS pu',
 			'ON'			=> 'pu.id=w.unit_id'
 		],
@@ -94,13 +101,10 @@ $query = [
 			'ON'			=> 'i.id=t.item_id'
 		],
 		[
-			'LEFT JOIN'		=> 'users AS u1',
-			'ON'			=> 'u1.id=t.assigned_to'
+			'LEFT JOIN'		=> 'hca_wom_problems AS pb',
+			'ON'			=> 'pb.id=t.task_action'
 		],
-		[
-			'INNER JOIN'	=> 'users AS u2',
-			'ON'			=> 'u2.id=w.requested_by'
-		],
+
 	],
 	'LIMIT'		=> $PagesNavigator->limit(),
 	'ORDER BY'	=> 'p.pro_name, t.task_status, LENGTH(pu.unit_number), pu.unit_number',
@@ -174,7 +178,7 @@ if (!empty($hca_wom_tasks))
 if ($section == 'unassigned')
 	$title = 'List of Unassigned Tasks';
 else if ($section == 'active')
-	$title = 'List of Active Tasks';
+	$title = 'To-Do List';
 else
 	$title = 'List of Completed Tasks';
 
@@ -183,49 +187,36 @@ else
 <div class="card-header">
 	<h6 class="card-title mb-0"><?php echo $title ?></h6>
 </div>
-<form method="post" accept-charset="utf-8" action="">
-	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
-	<table class="table table-striped table-bordered">
-		<thead>
-			<tr>
-				<th class="min-100">Unit</th>
-				<th>Details</th>
-			</tr>
-		</thead>
-		<tbody>
+
+<div class="row">
+	<div class="col-4 ta-center fw-bold py-1 border alert-primary">Unit</div>
+	<div class="col-8 ta-center fw-bold py-1 border alert-primary">Details</div>
+</div>
+
 <?php
 	$property_id = 0;
 	foreach ($hca_wom_tasks as $cur_info)
 	{
-		$task_id_number = ($cur_info['task_status'] > 1) ? '<a href="'.$URL->link('hca_wom_task', $cur_info['id']).'" class="badge bg-info">Task #'.$cur_info['id'].'</a>' : '<button type="submit" name="accept_task['.$cur_info['id'].']" class="badge bg-primary">Accept</button>';
-		
-		$unit_number = ($cur_info['unit_id'] > 0) ? html_encode($cur_info['unit_number']) : 'Common area';
-
-		$task_action = isset($HcaWOM->task_actions[$cur_info['task_action']]) ? '('.$HcaWOM->task_actions[$cur_info['task_action']].')' : '';
+		$unit_number = ($cur_info['unit_id'] > 0) ? 'Unit #'.html_encode($cur_info['unit_number']) : 'Common area';
 
 		if ($property_id != $cur_info['property_id'])
 		{
-			echo '<tr class="table-warning"><td colspan="2" class="fw-bold">'.html_encode($cur_info['pro_name']).'</td></tr>';
+			echo '<div class="fw-bold py-1 alert-warning">'.html_encode($cur_info['pro_name']).'</div>';
 			$property_id = $cur_info['property_id'];
 		}
 ?>
-			<tr>
-				<td class="ta-center">
-					<p class="fw-bold"><?php echo $unit_number ?></p>
-					<p class="fw-bold"><?php echo $task_id_number ?></p>
-				</td>
-				<td>
-					<p><span class="fw-bold"><?php echo html_encode($cur_info['item_name']) ?></span> <?php echo $task_action ?></p>
-					<p class=""><?php echo html_encode($cur_info['task_message']) ?></p>
-					<p class="float-end text-muted fst-italic"><?php echo format_time($cur_info['time_created']) ?></p>
-				</td>
-			</tr>
+	<a href="<?=$URL->link('hca_wom_task', $cur_info['id'])?>" class="row">
+		<div class="col-4 border"><p class="h5"><?=$unit_number?></p></div>
+		<div class="col-8 border">
+			<p><span class="fw-bold"><?php echo html_encode($cur_info['item_name']) ?></span> (<?php echo html_encode($cur_info['problem_name']) ?>)</p>
+			<p class=""><?php echo html_encode($cur_info['task_message']) ?></p>
+			<p class="float-end text-muted fst-italic"><?php echo format_time($cur_info['time_created']) ?></p>
+		</div>
+	</a>
 <?php
 	}
 ?>
-		</tbody>
-	</table>
-</form>
+
 <?php
 }
 else

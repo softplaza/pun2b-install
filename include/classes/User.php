@@ -8,25 +8,26 @@
 class User
 {
 	// Info of current user
-	public $user_info = [];
+	var $user_info = [];
 	// DB permissions of current user
-	public $user_perms = [];
+	var $user_perms = [];
+	var $userlist_have_access = [];
 
 	// Ident project for permission
-	public $cur_project_id = '';
+	var $cur_project_id = '';
 	// array[project_id][key] = title
-	public $perms_info = [];
-	public $apps_info = [];
+	var $perms_info = [];
+	var $apps_info = [];
 
 	// APN keys
-	public $access_keys = [];
-	public $permission_keys = [];
-	public $notification_keys = [];
+	var $access_keys = [];
+	var $permission_keys = [];
+	var $notification_keys = [];
 
 	// APN created rules
-	public $user_access = [];
-	public $user_permissions = [];
-	public $user_notifications = [];
+	var $user_access = [];
+	var $user_permissions = [];
+	var $user_notifications = [];
 
 	private $access_checked = false;
 
@@ -582,11 +583,10 @@ class User
 	{
 		global $DBLayer;
 
-		if ($this->is_admin())
-			return true;
-
 		if ($this->is_guest())
 			return false;
+		else if ($this->is_admin())
+			return true;
 
 		$output = false;
 		if (!$this->access_checked)
@@ -635,7 +635,7 @@ class User
 			return true;
 
 		$output = false;
-		if (empty($this->user_permissions) && !$this->is_guest())
+		if (empty($this->user_permissions))
 		{
 			// get all permissions of current user og group
 			$query = [
@@ -730,7 +730,6 @@ class User
 		global $DBLayer;
 
 		$where = [];
-
 		if ($project_id != '')
 			$where[] = 'a.a_to=\''.$DBLayer->escape($project_id).'\'';
 		if ($key > 0)
@@ -759,16 +758,31 @@ class User
 			$users[] = $row;
 		}
 
+		$this->userlist_have_access = $users;
 		return $users;
 	}
 
-	function getNotifyEmails($app_id, $key)
+	function getUserAccessIDS()
+	{
+		$output = [];
+		if (!empty($this->userlist_have_access)){
+			foreach($this->userlist_have_access as $cur_info){
+				$output[] = $cur_info['id'];
+			}
+		}
+		return $output;
+	}
+
+	function getNotifyEmails($app_id, $key = 0)
 	{
 		global $DBLayer;
 
 		$where = [];
 		$where[] = 'n.n_to=\''.$DBLayer->escape($app_id).'\'';
-		$where[] = 'n.n_key='.$key;
+
+		if ($key > 0)
+			$where[] = 'n.n_key='.$key;
+
 		$where[] = 'n.n_value=1';
 
 		$query = [
@@ -794,4 +808,43 @@ class User
 
 		return $emails;
 	}
+
+	// get list of notified users and groups
+	function getNotifyInfo($app_id, $key = 0)
+	{
+		global $DBLayer;
+
+		$where = [];
+		$where[] = 'n.n_to=\''.$DBLayer->escape($app_id).'\'';
+
+		if ($key > 0)
+			$where[] = 'n.n_key='.$key;
+
+		$where[] = 'n.n_value=1';
+
+		$query = [
+			'SELECT'	=> 'u.id, u.realname, u.email',//
+			'FROM'		=> 'users AS u',
+			'JOINS'		=> [
+				[
+					'LEFT JOIN'		=> 'user_notifications AS n',
+					'ON'			=> '(n.n_uid=u.id OR n.n_gid=u.group_id)'
+				],
+			],
+			'ORDER BY'	=> 'u.realname',
+		];
+
+		if (!empty($where))
+			$query['WHERE'] = implode(' AND ', $where);
+
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		$emails = [];
+		while ($row = $DBLayer->fetch_assoc($result))
+		{
+			$emails[$row['id']] = $row;
+		}
+
+		return $emails;
+	}
+	
 }

@@ -3,8 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 21)) ? true : false;
-if (!$access)
+if (!$User->checkAccess('hca_mi', 21))
 	message($lang_common['No permission']);
 
 $SwiftSettings = new SwiftSettings;
@@ -14,17 +13,13 @@ $SwiftSettings = new SwiftSettings;
 $SwiftSettings->setId('hca_mi');
 
 // Set access to the following pages
-$SwiftSettings->addAccessOption(1, 'List of Projects');
-$SwiftSettings->addAccessOption(2, 'View Report');
-$SwiftSettings->addAccessOption(3, 'Messages of Property Manager');
-$SwiftSettings->addAccessOption(11, 'Create new projects');
-$SwiftSettings->addAccessOption(12, 'Edit projects');
-$SwiftSettings->addAccessOption(13, 'Edit Invoice');
-$SwiftSettings->addAccessOption(14, 'Upload Files');
-$SwiftSettings->addAccessOption(15, 'Create Appendix-B');
-$SwiftSettings->addAccessOption(16, 'Send project info to Email');
-$SwiftSettings->addAccessOption(17, 'Change project status');
-$SwiftSettings->addAccessOption(18, 'Remove projects');
+$SwiftSettings->addAccessOption(1, 'Current Project');
+$SwiftSettings->addAccessOption(2, 'Project Files');
+$SwiftSettings->addAccessOption(3, 'Project Invoice');
+$SwiftSettings->addAccessOption(4, 'List of Projects');
+$SwiftSettings->addAccessOption(5, 'Report');
+$SwiftSettings->addAccessOption(6, 'Property Report');
+$SwiftSettings->addAccessOption(7, 'Messages');
 
 $SwiftSettings->addAccessOption(20, 'Settings');
 $SwiftSettings->addAccessOption(21, 'Access');

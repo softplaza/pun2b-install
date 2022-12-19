@@ -86,15 +86,16 @@ class SwiftMenu
 		$profile_links[] = '</ul>';
 		$profile_links[] = '</li>';
 
+
 		// Action links
 		$actions[] = '<li class="nav-item dropdown">';
 		$actions[] = '<span class="nav-link text-white" role="button" data-bs-toggle="dropdown"><i class="fas fa-print fa-lg"></i></span>';// Actions <i class="fas fa-share-alt"></i>
 		$actions[] = '<ul class="dropdown-menu dropdown-menu-end">';
 
-		if (PAGE_ID == 'print')
+		//if (PAGE_ID == 'print')
 			$actions[] = "\t\t\t\t\t\t\t\t\t\t".'<li><a class="dropdown-item" href="javascript:window.print();void 0;"><i class="fa fa-print fa-1x" aria-hidden="true"></i> Print page</a></li>'."\n";
-		else
-			$actions[] = "\t\t\t\t\t\t\t\t\t\t".'<li><a class="dropdown-item" href="'.get_cur_url('action=print').'"><i class="fa fa-print fa-1x" aria-hidden="true"></i> Print page</a></li>'."\n";
+		//else
+		//	$actions[] = "\t\t\t\t\t\t\t\t\t\t".'<li><a class="dropdown-item" href="'.get_cur_url('action=print').'"><i class="fa fa-print fa-1x" aria-hidden="true"></i> Print page</a></li>'."\n";
 		
 		if (!empty($this->nav_actions))
 		{
@@ -105,6 +106,7 @@ class SwiftMenu
 		}
 		$actions[] = '</ul>';
 		$actions[] = '</li>';
+
 
 		krsort($this->bread_crumbs);
 		$bread_crumbs = !empty($this->bread_crumbs) ? implode(' &rArr; ', $this->bread_crumbs) : html_encode($Config->get('o_board_title'));

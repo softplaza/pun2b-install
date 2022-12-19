@@ -44,7 +44,7 @@ let arrow = document.querySelectorAll(".icon-link");
 for (var i = 0; i < arrow.length; i++)
 {
 	arrow[i].addEventListener("click", (e)=>{
-		
+
 		// Accordion. Close others by click on current
 		let show = document.querySelectorAll(".show");
 		show.forEach(s => {
@@ -56,25 +56,7 @@ for (var i = 0; i < arrow.length; i++)
 		arrowParent.classList.toggle("show");
 	});
 }
-/*
-// Open/close menu by click on arrow
-let arrow = document.querySelectorAll(".arrow");
-for (var i = 0; i < arrow.length; i++)
-{
-	arrow[i].addEventListener("click", (e)=>{
-		
-		// Accordion. Close others by click on current
-		let show = document.querySelectorAll(".show");
-		show.forEach(s => {
-				s.classList.remove("show");
-		});
 
-		//selecting main parent of arrow
-		let arrowParent = e.target.parentElement.parentElement;
-		arrowParent.classList.toggle("show");
-	});
-}
-*/
 // Open/close Sidebar
 let sidebar = document.querySelector(".sidebar");
 let sidebarBtn = document.querySelector(".fa-bars");

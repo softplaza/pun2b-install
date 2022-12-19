@@ -6,10 +6,22 @@ class HcaWOM
 	var $cur_task_info = [];
 	var $wo_tasks_info = [];
 
+	var $template_type = [
+		1 => 'Standard',
+		2 => 'Make Ready',
+	];
+
 	var $wo_status = [
 		1 => 'Open',
 		2 => 'Closed',
 		3 => 'Canceled'
+	];
+
+	var $task_status = [
+		1 => 'Assigned',
+		2 => 'Accepted by technician',
+		3 => 'Waiting for review',
+		4 => 'Closed',
 	];
 
 	var $priority = [
@@ -19,6 +31,7 @@ class HcaWOM
 		3 => 'High',
 	];
 
+/*
 	var $item_types = [
 		//0 => '',
 		1 => '5840 Moisture Event',
@@ -49,8 +62,9 @@ class HcaWOM
 		7 => 'Replace Bulb',
 		11 => 'Treat'//last one
 	];
+*/
 
-	function getActions($ids = '')
+	function getActions($hca_wom_problems, $ids = '')
 	{
 		$output = [];
 		if ($ids != '')
@@ -61,8 +75,8 @@ class HcaWOM
 			{
 				foreach($array as $id)
 				{
-					if (isset($this->task_actions[$id]))
-						$output[] = $this->task_actions[$id];
+					if (isset($hca_wom_problems[$id]))
+						$output[] = $hca_wom_problems[$id];
 				}
 
 				return implode(', ', $output);
@@ -127,7 +141,7 @@ class HcaWOM
 		global $DBLayer;
 
 		$query = [
-			'SELECT'	=> 't.*, w.property_id, w.unit_id, w.wo_message, w.priority, w.enter_permission, w.has_animal, p.pro_name, pu.unit_number, u1.realname AS requested_name, u1.email AS requested_email, i.item_name, u2.realname AS assigned_name, u2.email AS assigned_email',
+			'SELECT'	=> 't.*, w.property_id, w.unit_id, w.wo_message, w.priority, w.enter_permission, w.has_animal, p.pro_name, pu.unit_number, u1.realname AS requested_name, u1.email AS requested_email, i.item_name, pb.problem_name, u2.realname AS assigned_name, u2.email AS assigned_email',
 			'FROM'		=> 'hca_wom_tasks AS t',
 			'JOINS'		=> [
 				[
@@ -150,6 +164,10 @@ class HcaWOM
 				[
 					'LEFT JOIN'		=> 'hca_wom_items AS i',
 					'ON'			=> 'i.id=t.item_id'
+				],
+				[
+					'LEFT JOIN'		=> 'hca_wom_problems AS pb',
+					'ON'			=> 'pb.id=t.task_action'
 				],
 				[
 					'LEFT JOIN'		=> 'users AS u2',

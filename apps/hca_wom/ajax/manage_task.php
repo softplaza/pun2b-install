@@ -42,14 +42,31 @@ if ($task_id > 0)
 	}
 
 	$query = array(
-		'SELECT'	=> 'i.*',
+		'SELECT'	=> 'i.*, tp.type_name',
 		'FROM'		=> 'hca_wom_items AS i',
+		'JOINS'		=> [
+			[
+				'INNER JOIN'	=> 'hca_wom_types AS tp',
+				'ON'			=> 'tp.id=i.item_type'
+			],
+		],
 		'ORDER BY'	=> 'i.item_type, i.item_name',
 	);
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	$hca_wom_items = [];
 	while ($row = $DBLayer->fetch_assoc($result)) {
 		$hca_wom_items[] = $row;
+	}
+
+	$query = array(
+		'SELECT'	=> 'pr.*',
+		'FROM'		=> 'hca_wom_problems AS pr',
+		'ORDER BY'	=> 'pr.problem_name'
+	);
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	$hca_wom_problems = [];
+	while ($row = $DBLayer->fetch_assoc($result)) {
+		$hca_wom_problems[$row['id']] = $row['problem_name'];
 	}
 
 	$modal_body = $modal_footer = [];
@@ -75,12 +92,12 @@ if ($task_id > 0)
 					if ($optgroup) {
 						$modal_body[] = '</optgroup>';
 					}
-					$modal_body[] = '<optgroup label="'.html_encode($HcaWOM->item_types[$cur_info['item_type']]).'">';
+					$modal_body[] = '<optgroup label="'.html_encode($cur_info['type_name']).'">';
 					$optgroup = $cur_info['item_type'];
 				}
 
 				if ($task_info['item_id'] == $cur_info['id'])
-					$modal_body[] = '<option value="'.$cur_info['id'].'" selected>'.html_encode($cur_info['item_name']).'</option>';
+					$modal_body[] = '<option value="'.$cur_info['id'].'" selected class="alert-success">'.html_encode($cur_info['item_name']).'</option>';
 				else
 					$modal_body[] = '<option value="'.$cur_info['id'].'">'.html_encode($cur_info['item_name']).'</option>';
 			}
@@ -94,7 +111,9 @@ if ($task_id > 0)
 	$modal_body[] = '<span class="input-group-text w-25" for="fld_task_action">Action</span>';
 	if ($task_info['task_status'] > 2)
 	{
-		$modal_body[] = '<input type="text" value="'.$HcaWOM->task_actions[$task_info['task_action']].'" class="form-control form-control-sm fw-bold" disabled>';
+		$task_action = isset($hca_wom_problems[$task_info['task_action']]) ? html_encode($hca_wom_problems[$task_info['task_action']]) : '';
+
+		$modal_body[] = '<input type="text" value="'.$task_action.'" class="form-control form-control-sm fw-bold" disabled>';
 	}
 	else
 	{
@@ -103,14 +122,14 @@ if ($task_id > 0)
 		$item_actions = ($task_info['item_actions'] != '') ? explode(',', $task_info['item_actions']) : [];
 		if (!empty($item_actions))
 		{
-			foreach($HcaWOM->task_actions as $key => $value)
+			foreach($hca_wom_problems as $key => $value)
 			{
 				if (in_array($key, $item_actions))
 				{
 					if ($task_info['task_action'] == $key)
-						$modal_body[] = '<option value="'.$key.'" selected>'.$value.'</option>';
+						$modal_body[] = '<option value="'.$key.'" selected>'.html_encode($value).'</option>';
 					else
-						$modal_body[] = '<option value="'.$key.'">'.$value.'</option>';
+						$modal_body[] = '<option value="'.$key.'">'.html_encode($value).'</option>';
 				}
 			}
 		}
@@ -134,7 +153,7 @@ if ($task_id > 0)
 				'ON'			=> 'g.g_id=u.group_id'
 			)
 		),
-		'WHERE'		=> 'group_id > 2',
+		'WHERE'		=> 'group_id=3',
 		'ORDER BY'	=> 'g.g_id, u.realname',
 	);
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -178,7 +197,7 @@ if ($task_id > 0)
 	// Notify technician if status is 1 OPEN, 2 ACCEPTED, 3 READY FOR REVIEW
 	if ($task_info['task_status'] > 0 && $task_info['task_status'] < 4)
 	{
-		$modal_body[] = '<div class="mb-3">';
+		$modal_body[] = '<div class="mb-3 hidden">';
 		$modal_body[] = '<div class="form-check form-check-inline">';
 		$modal_body[] = '<input type="hidden" name="notify_technician" value="0">';
 		$modal_body[] = '<input class="form-check-input" type="checkbox" name="notify_technician" id="fld_notify_technician" value="1">';
@@ -193,8 +212,9 @@ if ($task_id > 0)
 	}
 	else if ($task_info['task_status'] == 3)
 	{
-		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save changes</button>';
+		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save</button>';
 		$modal_footer[] = '<button type="submit" name="close_task" class="btn btn-sm btn-success">Approve and close</button>';
+		$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-outline-success">Re-open</button>';
 	}
 	else if ($task_info['task_status'] == 0)
 	{
@@ -202,7 +222,7 @@ if ($task_id > 0)
 	}
 	else
 	{
-		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save changes</button>';
+		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save</button>';
 		$modal_footer[] = '<button type="submit" name="delete_task" class="btn btn-sm btn-danger">Delete task</button>';
 	}
 
@@ -218,8 +238,14 @@ else
 	$HcaWOM = new HcaWOM;
 
 	$query = array(
-		'SELECT'	=> 'i.*',
+		'SELECT'	=> 'i.*, tp.type_name',
 		'FROM'		=> 'hca_wom_items AS i',
+		'JOINS'		=> [
+			[
+				'INNER JOIN'	=> 'hca_wom_types AS tp',
+				'ON'			=> 'tp.id=i.item_type'
+			],
+		],
 		'ORDER BY'	=> 'i.item_type, i.item_name',
 	);
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -242,7 +268,7 @@ else
 			if ($optgroup) {
 				$modal_body[] = '</optgroup>';
 			}
-			$modal_body[] = '<optgroup label="'.html_encode($HcaWOM->item_types[$cur_info['item_type']]).'">';
+			$modal_body[] = '<optgroup label="'.html_encode($cur_info['type_name']).'">';
 			$optgroup = $cur_info['item_type'];
 		}
 		
@@ -274,7 +300,7 @@ else
 				'ON'			=> 'g.g_id=u.group_id'
 			)
 		),
-		'WHERE'		=> 'group_id > 2',
+		'WHERE'		=> 'group_id=3',
 		'ORDER BY'	=> 'g.g_id, u.realname',
 	);
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -303,7 +329,7 @@ else
 	$modal_body[] = '</select>';
 	$modal_body[] = '</div>';
 
-	$modal_body[] = '<div class="mb-3">';
+	$modal_body[] = '<div class="mb-3 hidden">';
 	$modal_body[] = '<div class="form-check form-check-inline">';
 	$modal_body[] = '<input type="hidden" name="notify_technician" value="0">';
 	$modal_body[] = '<input class="form-check-input" type="checkbox" name="notify_technician" id="fld_notify_technician" value="1">';

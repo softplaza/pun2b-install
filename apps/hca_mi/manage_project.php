@@ -3,54 +3,17 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 12)) ? true : false;
+$access = ($User->checkAccess('hca_mi', 1)) ? true : false;
 if (!$access)
 	message($lang_common['No permission']);
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 if ($id < 1)
-	message('Sorry, this Special Project does not exist or has been removed.');
+	message('Sorry, this Project does not exist or has been removed.');
 
 $HcaMi = new HcaMi;
 $work_statuses = array(1 => 'IN PROGRESS', 2 => 'ON HOLD', 3 => 'COMPLETED');
 $apt_locations = explode(',', $Config->get('o_hca_5840_locations'));
-
-$query = array(
-	'SELECT'	=> 'id, realname, email',
-	'FROM'		=> 'users',
-	'ORDER BY'	=> 'realname',
-	//'WHERE'		=> 'hca_5840_access > 0'
-);
-$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$user_info = array();
-while ($row = $DBLayer->fetch_assoc($result)) {
-	$user_info[$row['id']] = $row;
-}
-
-$query = [
-	'SELECT'	=> 'pj.*, pj.unit_number AS unit, pt.pro_name, un.unit_number',
-	'FROM'		=> 'hca_5840_projects AS pj',
-	'JOINS'		=> [
-		[
-			'INNER JOIN'	=> 'sm_property_db AS pt',
-			'ON'			=> 'pt.id=pj.property_id'
-		],
-		[
-			'LEFT JOIN'		=> 'sm_property_units AS un',
-			'ON'			=> 'un.id=pj.unit_id'
-		],
-	],
-	'WHERE'		=> 'pj.id='.$id,
-];
-$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$main_info = $DBLayer->fetch_assoc($result);
-
-// Temporary solution. Remove after set all unit IDS
-$main_info['unit_number'] = ($main_info['unit_number'] != '') ? $main_info['unit_number'] : $main_info['unit'];
-$main_info['unit_number'] = ($main_info['unit_id'] == 0) ? 'Common area' : $main_info['unit_number'];
-
-if (empty($main_info))
-	message('Sorry, this Project does not exist or has been removed.');
 
 if (isset($_POST['form_sent']))
 {
@@ -101,7 +64,8 @@ if (isset($_POST['form_sent']))
 		'maintenance_date' => isset($_POST['maintenance_date']) ? strtotime($_POST['maintenance_date']) : 0,
 		'maintenance_comment' => isset($_POST['maintenance_comment']) ? swift_trim($_POST['maintenance_comment']) : '',
 
-		'final_performed_by' => isset($_POST['final_performed_by']) ? swift_trim($_POST['final_performed_by']) : '',
+		//'final_performed_by' => isset($_POST['final_performed_by']) ? swift_trim($_POST['final_performed_by']) : '',
+		'final_performed_uid' => isset($_POST['final_performed_uid']) ? intval($_POST['final_performed_uid']) : 0,
 		'final_performed_date' => isset($_POST['final_performed_date']) ? strtotime($_POST['final_performed_date']) : 0,
 		'job_status' => isset($_POST['job_status']) ? intval($_POST['job_status']) : 0,
 		'remarks' => isset($_POST['remarks']) ? swift_trim($_POST['remarks']) : '',
@@ -131,23 +95,55 @@ if (isset($_POST['form_sent']))
 	{
 		$DBLayer->update('hca_5840_projects', $form_data, $id);
 		
+		$query = [
+			'SELECT'	=> 'pj.*, pj.unit_number AS unit, pt.pro_name, un.unit_number, u1.realname AS project_manager1, u2.realname AS project_manager2',
+			'FROM'		=> 'hca_5840_projects AS pj',
+			'JOINS'		=> [
+				[
+					'INNER JOIN'	=> 'sm_property_db AS pt',
+					'ON'			=> 'pt.id=pj.property_id'
+				],
+				[
+					'LEFT JOIN'		=> 'sm_property_units AS un',
+					'ON'			=> 'un.id=pj.unit_id'
+				],
+				[
+					'LEFT JOIN'		=> 'users AS u1',
+					'ON'			=> 'u1.id=pj.performed_uid'
+				],
+				[
+					'LEFT JOIN'		=> 'users AS u2',
+					'ON'			=> 'u2.id=pj.performed_uid2'
+				],
+				//add users proj mng 1 and 2
+			],
+			'WHERE'		=> 'pj.id='.$id,
+		];
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		$main_info = $DBLayer->fetch_assoc($result);
+		
+		// Temporary solution. Remove after set all unit IDS
+		$main_info['unit_number'] = ($main_info['unit_number'] != '') ? $main_info['unit_number'] : $main_info['unit'];
+		$main_info['unit_number'] = ($main_info['unit_number'] != '') ? $main_info['unit_number'] : 'Common area';
+
 		$old_moveout_date = isset($_POST['old_moveout_date']) ? intval($_POST['old_moveout_date']) : 0;
 		if ($old_moveout_date != $form_data['moveout_date'] && $form_data['moveout_date'] > 0)
 		{
 			$mail_subject = 'Moisture Inspection';
-			$mail_message = 'Hello. Move-out date has been changed. See details below.'."\n\n";
+			$mail_message = 'Move Out date has been changed. See details below.'."\n\n";
 			$mail_message .= 'Property: '.$main_info['pro_name']."\n\n";
 			$mail_message .= 'Unit #: '.$main_info['unit_number']."\n\n";
-			$mail_message .= 'Location: '.$form_data['location']."\n\n";
-			$mail_message .= 'Source: '.$form_data['mois_source']."\n\n";
-			$mail_message .= 'Symptoms: '.$form_data['symptoms']."\n\n";
-			$mail_message .= 'Move-Out Date: '.date('m/d/Y', $form_data['moveout_date'])."\n\n";
+			$mail_message .= 'Location: '.$main_info['location']."\n\n";
+			$mail_message .= 'Source: '.$main_info['mois_source']."\n\n";
+			$mail_message .= 'Symptoms: '.$main_info['symptoms']."\n\n";
+			$mail_message .= 'Move-Out Date: '.date('m/d/Y', $main_info['moveout_date'])."\n\n";
 			
-			if ($Config->get('o_hca_5840_mailing_list') != '' && $main_info['move_out_notified'] == 0)
+			$move_out_mailing_list = $User->getNotifyEmails('hca_mi', 5); // Move Out Date changed
+			if (!empty($move_out_mailing_list) && $main_info['move_out_notified'] == 0)
 			{
 				$SwiftMailer = new SwiftMailer;
 				$SwiftMailer->isHTML();
-				$SwiftMailer->send($Config->get('o_hca_5840_mailing_list'), $mail_subject, $mail_message);
+				$SwiftMailer->send(implode(',', $move_out_mailing_list), $mail_subject, $mail_message);
 
 				$query = array(
 					'UPDATE'	=> 'hca_5840_projects',
@@ -158,30 +154,32 @@ if (isset($_POST['form_sent']))
 			}
 		}
 		
+
 		if ($form_total_cost >= 5000)
 		{
 			$mail_subject = 'Moisture Inspection';
 			$mail_message = 'Hello. The total cost of the project exceeded $ 5,000. See details bellow.'."\n\n";
 
-			$mail_message .= 'Property: '.$form_data['property_name']."\n\n";
-			$mail_message .= 'Unit #: '.$form_data['unit_number']."\n\n";
-			$mail_message .= 'Location: '.$form_data['location']."\n\n";
-			$mail_message .= 'Report Date: '.date('m/d/Y', $form_data['mois_report_date'])."\n\n";
-			$mail_message .= 'Performed by: '.$form_data['mois_performed_by']."\n\n";
-			$mail_message .= 'Inspection Date: '.date('m/d/Y', $form_data['mois_inspection_date'])."\n\n";
-			$mail_message .= 'Source: '.$form_data['mois_source']."\n\n";
-			$mail_message .= 'Symptoms: '.$form_data['symptoms']."\n\n";
-			$mail_message .= 'Action: '.$form_data['action']."\n\n";
-			$mail_message .= 'Remarks: '.$form_data['remarks']."\n\n";
-				
+			$mail_message .= 'Property: '.$main_info['pro_name']."\n\n";
+			$mail_message .= 'Unit #: '.$main_info['unit_number']."\n\n";
+			$mail_message .= 'Location: '.$main_info['location']."\n\n";
+			$mail_message .= 'Report Date: '.date('m/d/Y', $main_info['mois_report_date'])."\n\n";
+			$mail_message .= 'Performed by: '.$main_info['project_manager1']."\n\n";
+			$mail_message .= 'Inspection Date: '.date('m/d/Y', $main_info['mois_inspection_date'])."\n\n";
+			$mail_message .= 'Source: '.$main_info['mois_source']."\n\n";
+			$mail_message .= 'Symptoms: '.$main_info['symptoms']."\n\n";
+			$mail_message .= 'Action: '.$main_info['action']."\n\n";
+			$mail_message .= 'Remarks: '.$main_info['remarks']."\n\n";
+
 			$mail_message .= 'Total cost: '.$form_total_cost."\n\n";
 			$mail_message .= 'To view all the details of the project follow this link: '.$URL->link('hca_5840_manage_invoice', $id)."\n\n";
 			
-			if ($Config->get('o_hca_5840_mailing_list') != '' && $main_info['over_price_notified'] == 0)
+			$over_budget_mailing_list = $User->getNotifyEmails('hca_mi', 1); // Over 5000$
+			if (!empty($over_budget_mailing_list) && $main_info['over_price_notified'] == 0)
 			{
 				$SwiftMailer = new SwiftMailer;
 				$SwiftMailer->isHTML();
-				$SwiftMailer->send($Config->get('o_hca_5840_mailing_list'), $mail_subject, $mail_message);
+				$SwiftMailer->send(implode(',', $over_budget_mailing_list), $mail_subject, $mail_message);
 				
 				$query = array(
 					'UPDATE'	=> 'hca_5840_projects',
@@ -196,7 +194,6 @@ if (isset($_POST['form_sent']))
 		$FlashMessenger->add_info($flash_message);
 		redirect('', $flash_message);
 	}
-
 }
 
 else if (isset($_POST['delete']))
@@ -211,6 +208,58 @@ else if (isset($_POST['delete']))
 	$flash_message = 'Project #'.$id.' has been removed';
 	$FlashMessenger->add_info($flash_message);
 	redirect($URL->link('hca_5840_projects'), $flash_message);
+}
+
+$query = [
+	'SELECT'	=> 'pj.*, pj.unit_number AS unit, pt.pro_name, un.unit_number, u1.realname AS project_manager1, u2.realname AS project_manager2',
+	'FROM'		=> 'hca_5840_projects AS pj',
+	'JOINS'		=> [
+		[
+			'INNER JOIN'	=> 'sm_property_db AS pt',
+			'ON'			=> 'pt.id=pj.property_id'
+		],
+		[
+			'LEFT JOIN'		=> 'sm_property_units AS un',
+			'ON'			=> 'un.id=pj.unit_id'
+		],
+		[
+			'LEFT JOIN'		=> 'users AS u1',
+			'ON'			=> 'u1.id=pj.performed_uid'
+		],
+		[
+			'LEFT JOIN'		=> 'users AS u2',
+			'ON'			=> 'u2.id=pj.performed_uid2'
+		],
+		//add users proj mng 1 and 2
+	],
+	'WHERE'		=> 'pj.id='.$id,
+];
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+$main_info = $DBLayer->fetch_assoc($result);
+
+// Temporary solution. Remove after set all unit IDS
+$main_info['unit_number'] = ($main_info['unit_number'] != '') ? $main_info['unit_number'] : $main_info['unit'];
+$main_info['unit_number'] = ($main_info['unit_number'] != '') ? $main_info['unit_number'] : 'Common area';
+
+if (empty($main_info))
+	message('Sorry, this project does not exist or has been removed.');
+
+$User->getUserAccess('hca_mi');
+$project_user_ids = $User->getUserAccessIDS();
+$project_user_ids[] = $User->get('id');
+$query = array(
+	'SELECT'	=> 'u.id, u.group_id, u.username, u.realname, u.email',
+	'FROM'		=> 'users AS u',
+	'WHERE'		=> 'u.id > 2',
+	'ORDER BY'	=> 'u.realname',
+);
+if (!empty($project_user_ids))
+	$query['WHERE'] = 'u.id IN ('.implode(',', $project_user_ids).')';
+
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+$users_info = array();
+while ($row = $DBLayer->fetch_assoc($result)) {
+	$users_info[] = $row;
 }
 
 $query = array(
@@ -248,7 +297,7 @@ require SITE_ROOT.'header.php';
 .unfilled input, .unfilled select, .unfilled textarea{background: #ffe6e2;}
 </style>
 
-<form method="post" accept-charset="utf-8" action="">
+<form method="post" accept-charset="utf-8" action="" id="main_form">
 	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 	<div class="card">
 		<div class="card-header">
@@ -256,19 +305,20 @@ require SITE_ROOT.'header.php';
 		</div>
 		<div class="card-body">
 			<div class="row">
-				<div class="col-md-4 mb-3">
+				<div class="col-md-3 mb-3">
 					<label class="form-label" for="property_id">Property name</label>
 					<h5 class=""><?php echo html_encode($main_info['pro_name']) ?></h5>
 				</div>
-				<div class="col-md-4 mb-3">
+				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_unit_number">Unit number</label>
 					<h5 class=""><?php echo html_encode($main_info['unit_number']) ?></h5>
 				</div>
 			</div>
 
 			<div class="row">
-				<div class="col-md-4 mb-3">
+				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_location">Locations</label>
+					<a tabindex="0" class="text-info" role="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-content="To add locations, select from the dropdown list."><i class="fas fa-info-circle"></i></a>
 					<select class="form-select form-select-sm" id="fld_location" onchange="addLocation()">
 <?php
 echo '<option value="0" selected >Select one</option>'."\n";
@@ -330,27 +380,28 @@ foreach ($HcaMi->locations as $key => $value)
 			<div class="row">
 				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_mois_report_date">Date Reported</label>
-					<input type="date" name="mois_report_date" id="fld_mois_report_date" class="form-control" value="<?php echo sm_date_input($main_info['mois_report_date']) ?>">
+					<input type="date" name="mois_report_date" id="fld_mois_report_date" class="form-control" value="<?php echo sm_date_input($main_info['mois_report_date']) ?>" onclick="this.showPicker()">
 					<label class="text-danger" onclick="document.getElementById('fld_mois_report_date').value=''">Click to clear date</label>
 				</div>
 				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_mois_inspection_date">Date of Inspection</label>
-					<input type="date" name="mois_inspection_date" id="fld_mois_inspection_date" class="form-control" value="<?php echo sm_date_input($main_info['mois_inspection_date']) ?>">
+					<input type="date" name="mois_inspection_date" id="fld_mois_inspection_date" class="form-control" value="<?php echo sm_date_input($main_info['mois_inspection_date']) ?>" onclick="this.showPicker()">
 					<label class="text-danger" onclick="document.getElementById('fld_mois_inspection_date').value=''">Click to clear date</label>
 				</div>
 			</div>
 
 			<div class="row">
 				<div class="col-md-3 mb-3">
-					<label class="form-label" for="fld_performed_uid">Performed by</label>
+					<label class="form-label" for="fld_performed_uid">Project Manager 1</label>
 					<select name="performed_uid" required class="form-select" id="fld_performed_uid">
 <?php
-echo '<option value="0" selected disabled>Select a manager</option>'."\n";
-foreach ($user_info as $user) {
-	if ($main_info['performed_uid'] == $user['id'] || $main_info['mois_performed_by'] == $user['realname'])
-		echo "\t\t\t\t\t\t\t".'<option value="'.$user['id'].'" selected>'.html_encode($user['realname']).'</option>'."\n";
+echo '<option value="0" selected disabled>Select one</option>'."\n";
+foreach ($users_info as $cur_info)
+{
+	if ($main_info['performed_uid'] == $cur_info['id'] || $main_info['mois_performed_by'] == $cur_info['realname'])
+		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'" selected>'.html_encode($cur_info['realname']).'</option>'."\n";
 	else
-		echo "\t\t\t\t\t\t\t".'<option value="'.$user['id'].'">'.html_encode($user['realname']).'</option>'."\n";
+		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'">'.html_encode($cur_info['realname']).'</option>'."\n";
 }
 ?>
 					</select>
@@ -359,12 +410,13 @@ foreach ($user_info as $user) {
 					<label class="form-label" for="fld_performed_uid2">Project Manager 2</label>
 					<select name="performed_uid2" required class="form-select" id="fld_performed_uid2">
 <?php
-echo '<option value="0" selected disabled>Select a manager</option>'."\n";
-foreach ($user_info as $user) {
-	if ($main_info['performed_uid2'] == $user['id'])
-		echo "\t\t\t\t\t\t\t".'<option value="'.$user['id'].'" selected>'.html_encode($user['realname']).'</option>'."\n";
+echo '<option value="0" selected>Select one</option>'."\n";
+foreach ($users_info as $cur_info)
+{
+	if ($main_info['performed_uid2'] == $cur_info['id'])
+		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'" selected>'.html_encode($cur_info['realname']).'</option>'."\n";
 	else
-		echo "\t\t\t\t\t\t\t".'<option value="'.$user['id'].'">'.html_encode($user['realname']).'</option>'."\n";
+		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'">'.html_encode($cur_info['realname']).'</option>'."\n";
 }
 ?>
 					</select>
@@ -420,11 +472,12 @@ foreach ($HcaMi->symptoms as $key => $value)
 		</div>
 		<div class="card-body">
 			<div class="row">
-				<div class="col-md-4 mb-3">
+				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_services_vendor_id">Vendor</label>
+					<a tabindex="0" class="text-info badge-info" role="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-content="To add new Vendors go to: 'Setup' -> 'Vendors' -> 'Suggest a Vendor'"><i class="fas fa-info-circle"></i></a>
 					<select name="services_vendor_id" class="form-select" id="fld_services_vendor_id">
 <?php
-echo '<option value="" selected>Select a Vendor</option>'."\n";
+echo '<option value="" selected>Select one</option>'."\n";
 foreach ($vendors_info as $cur_info)
 {
 	if ($cur_info['group_id'] == 1 && $cur_info['enabled'] == 1)
@@ -438,23 +491,23 @@ foreach ($vendors_info as $cur_info)
 ?>
 					</select>
 				</div>
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="fld_afcc_date">Carpet/Vinyl Date</label>
+					<input type="date" name="afcc_date" id="fld_afcc_date" class="form-control" value="<?php echo sm_date_input($main_info['afcc_date']) ?>" onclick="this.showPicker()">
+					<label class="text-danger" onclick="document.getElementById('fld_afcc_date').value=''">Click to clear date</label>
+				</div>
 			</div>
 
 			<div class="row">
-				<div class="col-md-4 mb-3">
+				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_delivery_equip_date">Delivery Equip. Date</label>
-					<input type="date" name="delivery_equip_date" id="fld_delivery_equip_date" class="form-control" value="<?php echo sm_date_input($main_info['delivery_equip_date']) ?>">
+					<input type="date" name="delivery_equip_date" id="fld_delivery_equip_date" class="form-control" value="<?php echo sm_date_input($main_info['delivery_equip_date']) ?>" onclick="this.showPicker()">
 					<label class="text-danger" onclick="document.getElementById('fld_delivery_equip_date').value=''">Click to clear date</label>
 				</div>
-				<div class="col-md-4 mb-3">
+				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_pickup_equip_date">PickUp of Equip. Date</label>
-					<input type="date" name="pickup_equip_date" id="fld_pickup_equip_date" class="form-control" value="<?php echo sm_date_input($main_info['pickup_equip_date']) ?>">
+					<input type="date" name="pickup_equip_date" id="fld_pickup_equip_date" class="form-control" value="<?php echo sm_date_input($main_info['pickup_equip_date']) ?>" onclick="this.showPicker()">
 					<label class="text-danger" onclick="document.getElementById('fld_pickup_equip_date').value=''">Click to clear date</label>
-				</div>
-				<div class="col-md-4 mb-3">
-					<label class="form-label" for="fld_afcc_date">Carpet/Vinyl Dates</label>
-					<input type="date" name="afcc_date" id="fld_afcc_date" class="form-control" value="<?php echo sm_date_input($main_info['afcc_date']) ?>">
-					<label class="text-danger" onclick="document.getElementById('fld_afcc_date').value=''">Click to clear date</label>
 				</div>
 			</div>
 			<div class="mb-3">
@@ -468,11 +521,12 @@ foreach ($vendors_info as $cur_info)
 		</div>
 		<div class="card-body">
 			<div class="row">
-				<div class="col-md-4 mb-3">
+				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_asb_vendor_id">Vendor</label>
+					<a tabindex="0" class="text-info" role="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-content="To add new Vendors go to: 'Setup' -> 'Vendors' -> 'Suggest a Vendor'"><i class="fas fa-info-circle"></i></a>
 					<select name="asb_vendor_id" class="form-select" id="fld_asb_vendor_id">
 <?php
-echo '<option value="" selected>Select a Vendor</option>'."\n";
+echo '<option value="" selected>Select one</option>'."\n";
 foreach ($vendors_info as $cur_info)
 {
 	if ($cur_info['group_id'] == 2 && $cur_info['enabled'] == 1)
@@ -486,18 +540,18 @@ foreach ($vendors_info as $cur_info)
 ?>
 					</select>
 				</div>
-				<div class="col-md-4 mb-3">
+				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_asb_test_date">Test Date</label>
-					<input type="date" name="asb_test_date" id="fld_asb_test_date" class="form-control" value="<?php echo sm_date_input($main_info['asb_test_date']) ?>">
+					<input type="date" name="asb_test_date" id="fld_asb_test_date" class="form-control" value="<?php echo sm_date_input($main_info['asb_test_date']) ?>" onclick="this.showPicker()">
 					<label class="text-danger" onclick="document.getElementById('fld_asb_test_date').value=''">Click to clear date</label>
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-md-4 mb-3">
+				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_asb_po_number">PO Number</label>
 					<input type="text" name="asb_po_number" class="form-control" id="fld_asb_po_number" value="<?php echo html_encode($main_info['asb_po_number']) ?>">
 				</div>
-				<div class="col-md-4 mb-3">
+				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_asb_total_amount">Total Amount</label>
 					<input type="text" name="asb_total_amount" class="form-control" id="fld_asb_total_amount" value="<?php echo $asb_total_amount ?>">
 				</div>
@@ -513,12 +567,13 @@ foreach ($vendors_info as $cur_info)
 		</div>
 		<div class="card-body">
 			<div class="row">
-				<div class="col-md-4 mb-3">
+				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_rem_vendor_id">Vendor</label>
+					<a tabindex="0" class="text-info" role="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-content="To add new Vendors go to: 'Setup' -> 'Vendors' -> 'Suggest a Vendor'"><i class="fas fa-info-circle"></i></a>
 					<select name="rem_vendor_id" class="form-select" id="fld_rem_vendor_id">
 <?php
 $rem_vendor_selected = false;
-echo '<option value="" selected>Select a Vendor</option>'."\n";
+echo '<option value="" selected>Select one</option>'."\n";
 foreach ($vendors_info as $cur_info)
 {
 	if ($cur_info['group_id'] == 3 && $cur_info['enabled'] == 1)
@@ -535,52 +590,55 @@ foreach ($vendors_info as $cur_info)
 				</div>
 
 <?php if (!$rem_vendor_selected && $main_info['rem_vendor'] != '') : ?>
-				<div class="col-md-4 mb-3">
+				<div class="col-md-3 mb-3">
 					<label class="form-label" for="rem_vendor">Vendor</label>
 					<input type="text" name="rem_vendor" id="rem_vendor" class="form-control" value="<?php echo html_encode($main_info['rem_vendor']) ?>">
 				</div>
 <?php endif; ?>
+			</div>
 
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="rem_start_date">Start Date</label>
-						<input type="date" name="rem_start_date" id="rem_start_date" class="form-control" value="<?php echo sm_date_input($main_info['rem_start_date']) ?>">
-						<label class="text-danger" onclick="document.getElementById('rem_start_date').value=''">Click to clear date</label>
-					</div>
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="rem_end_date">End Date</label>
-						<input type="date" name="rem_end_date" id="rem_end_date" class="form-control" value="<?php echo sm_date_input($main_info['rem_end_date']) ?>">
-						<label class="text-danger" onclick="document.getElementById('rem_end_date').value=''">Click to clear date</label>
-					</div>
+			<div class="row">
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="rem_start_date">Start Date</label>
+					<input type="date" name="rem_start_date" id="rem_start_date" class="form-control" value="<?php echo sm_date_input($main_info['rem_start_date']) ?>" onclick="this.showPicker()">
+					<label class="text-danger" onclick="document.getElementById('rem_start_date').value=''">Click to clear date</label>
 				</div>
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="rem_end_date">End Date</label>
+					<input type="date" name="rem_end_date" id="rem_end_date" class="form-control" value="<?php echo sm_date_input($main_info['rem_end_date']) ?>" onclick="this.showPicker()">
+					<label class="text-danger" onclick="document.getElementById('rem_end_date').value=''">Click to clear date</label>
+				</div>
+			</div>
 
-				<div class="row">
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="rem_po_number">PO Number</label>
-						<input type="text" name="rem_po_number" id="rem_po_number" class="form-control" value="<?php echo html_encode($main_info['rem_po_number']) ?>">
-					</div>
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="rem_total_amount">Total Amount</label>
-						<input type="text" name="rem_total_amount" id="rem_total_amount" class="form-control" value="<?php echo $rem_total_amount ?>">
-					</div>
+			<div class="row">
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="rem_po_number">PO Number</label>
+					<input type="text" name="rem_po_number" id="rem_po_number" class="form-control" value="<?php echo html_encode($main_info['rem_po_number']) ?>">
 				</div>
-			
-				<div class="mb-3">
-					<label for="rem_comment">Work Performed</label>
-					<textarea name="rem_comment" id="rem_comment" class="form-control" placeholder="Leave your comment"><?php echo html_encode($main_info['rem_comment']) ?></textarea>
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="rem_total_amount">Total Amount</label>
+					<input type="text" name="rem_total_amount" id="rem_total_amount" class="form-control" value="<?php echo $rem_total_amount ?>">
 				</div>
 			</div>
 			
-			<div class="card-header">
-				<h6 class="card-title mb-0">Constructions Dates</h6>
+			<div class="mb-3">
+				<label for="rem_comment">Work Performed</label>
+				<textarea name="rem_comment" id="rem_comment" class="form-control" placeholder="Leave your comment"><?php echo html_encode($main_info['rem_comment']) ?></textarea>
 			</div>
-			<div class="card-body">
-				<div class="row">
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="fld_cons_vendor_id">Vendor</label>
-						<select name="cons_vendor_id" class="form-select" id="fld_cons_vendor_id">
+		</div>
+			
+		<div class="card-header">
+			<h6 class="card-title mb-0">Constructions Dates</h6>
+		</div>
+		<div class="card-body">
+			<div class="row">
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="fld_cons_vendor_id">Vendor</label>
+					<a tabindex="0" class="text-info" role="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-content="To add new Vendors go to: 'Setup' -> 'Vendors' -> 'Suggest a Vendor'"><i class="fas fa-info-circle"></i></a>
+					<select name="cons_vendor_id" class="form-select" id="fld_cons_vendor_id">
 <?php
 $cons_vendor_selected = false;
-echo '<option value="" selected>Select a Vendor</option>'."\n";
+echo '<option value="" selected>Select one</option>'."\n";
 foreach ($vendors_info as $cur_info)
 {
 	if ($cur_info['group_id'] == 4 && $cur_info['enabled'] == 1)
@@ -593,135 +651,164 @@ foreach ($vendors_info as $cur_info)
 	}
 }
 ?>
-						</select>
-					</div>
+					</select>
+				</div>
 
 <?php if (!$cons_vendor_selected && $main_info['cons_vendor'] != '') : ?>
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="cons_vendor">Vendor</label>
-						<input type="text" name="cons_vendor" id="cons_vendor" class="form-control" value="<?php echo html_encode($main_info['cons_vendor']) ?>">
-					</div>
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="cons_vendor">Vendor</label>
+					<input type="text" name="cons_vendor" id="cons_vendor" class="form-control" value="<?php echo html_encode($main_info['cons_vendor']) ?>">
+				</div>
 <?php endif; ?>
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="cons_start_date">Start Date</label>
-						<input type="date" name="cons_start_date" id="cons_start_date" class="form-control" value="<?php echo sm_date_input($main_info['cons_start_date']) ?>">
-						<label class="text-danger" onclick="document.getElementById('cons_start_date').value=''">Click to clear date</label>
-					</div>
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="cons_end_date">End Date</label>
-						<input type="date" name="cons_end_date" id="cons_end_date" class="form-control" value="<?php echo sm_date_input($main_info['cons_end_date']) ?>">
-						<label class="text-danger" onclick="document.getElementById('cons_end_date').value=''">Click to clear date</label>
-					</div>
-				</div>
-			
-				<div class="row">
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="cons_po_number">PO Number</label>
-						<input type="text" name="cons_po_number" id="cons_po_number" class="form-control" value="<?php echo html_encode($main_info['cons_po_number']) ?>">
-					</div>
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="cons_total_amount">Total Amount</label>
-						<input type="text" name="cons_total_amount" id="cons_total_amount" class="form-control" value="<?php echo $cons_total_amount ?>">
-					</div>
-				</div>
-			
-				<div class="mb-3">
-					<label class="form-label" for="cons_comment">Work Performed</label>
-					<textarea id="cons_comment" name="cons_comment" class="form-control" placeholder="Leave your comment"><?php echo html_encode($main_info['cons_comment']) ?></textarea>
-				</div>
 			</div>
 
-			<div class="card-header">
-				<h6 class="card-title mb-0">Relocation</h6>
-			</div>
-			<div class="card-body">
-				<div class="mb-3">
-					<label class="form-label">Total Cost</label>
-					<h5><?php echo gen_number_format($total_cost, 2) ?></h5>
+			<div class="row">
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="cons_start_date">Start Date</label>
+					<input type="date" name="cons_start_date" id="cons_start_date" class="form-control" value="<?php echo sm_date_input($main_info['cons_start_date']) ?>" onclick="this.showPicker()">
+					<label class="text-danger" onclick="document.getElementById('cons_start_date').value=''">Click to clear date</label>
 				</div>
-				<div class="row">
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="moveout_date">Move-Out Date</label>
-						<input type="hidden" name="old_moveout_date" value="<?php echo $main_info['moveout_date'] ?>">
-						<input type="date" name="moveout_date" class="form-control" id="moveout_date" value="<?php echo sm_date_input($main_info['moveout_date']) ?>">
-						<label class="text-danger" onclick="document.getElementById('moveout_date').value=''">Click to clear date</label>
-					</div>
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="movein_date">Move-In Date</label>
-						<input type="date" name="movein_date" class="form-control" id="movein_date" value="<?php echo sm_date_input($main_info['movein_date']) ?>">
-						<label class="text-danger" onclick="document.getElementById('movein_date').value=''">Click to clear date</label>
-					</div>
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="maintenance_date">Maintenance Date</label>
-						<input type="date" name="maintenance_date" class="form-control" id="maintenance_date" value="<?php echo sm_date_input($main_info['maintenance_date']) ?>">
-						<label class="text-danger" onclick="document.getElementById('maintenance_date').value=''">Click to clear date</label>
-					</div>
-				</div>
-				<div class="mb-3">
-					<label class="form-label" for="maintenance_comment">Comment</label>
-					<textarea id="maintenance_comment" name="maintenance_comment" class="form-control" id="maintenance_comment" placeholder="Leave your comment"><?php echo html_encode($main_info['maintenance_comment']) ?></textarea>
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="cons_end_date">End Date</label>
+					<input type="date" name="cons_end_date" id="cons_end_date" class="form-control" value="<?php echo sm_date_input($main_info['cons_end_date']) ?>" onclick="this.showPicker()">
+					<label class="text-danger" onclick="document.getElementById('cons_end_date').value=''">Click to clear date</label>
 				</div>
 			</div>
 			
-			<div class="card-header">
-				<h6 class="card-title mb-0">Final Walk Information</h6>
-			</div>
-			<div class="card-body">
-				<div class="row">
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="final_performed_by">Performed by</label>
-						<select name="final_performed_by" class="form-select">
-<?php
-echo '<option value="0" selected disabled>Select a Manager</option>'."\n";
-foreach ($user_info as $user) {
-	if ($main_info['final_performed_by'] == $user['realname'])
-		echo "\t\t\t\t\t\t\t".'<option value="'.$user['realname'].'" selected>'.html_encode($user['realname']).'</option>'."\n";
-	else
-		echo "\t\t\t\t\t\t\t".'<option value="'.$user['realname'].'">'.html_encode($user['realname']).'</option>'."\n";
-}
-?>
-						</select>
-					</div>
-					<div class="col-md-4 mb-3">
-						<label class="form-label" for="final_performed_date">Performed Date</label>
-						<input type="date" name="final_performed_date" class="form-control" id="final_performed_date" value="<?php echo sm_date_input($main_info['final_performed_date']) ?>">
-					</div>
-<?php if ($User->checkAccess('hca_mi', 17)): ?>
-					<div class="col-md-4 mb-3">
-						<label class="form-label">Job Status</label>
-						<select name="job_status" class="form-select" required>
-<?php
-foreach ($work_statuses as $key => $status) {
-	if ($main_info['job_status'] == $key)
-		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.html_encode($status).'</option>'."\n";
-	else
-		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.html_encode($status).'</option>'."\n";
-}
-?>
-						</select>
-					</div>
-<?php endif; ?>
+			<div class="row">
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="cons_po_number">PO Number</label>
+					<input type="text" name="cons_po_number" id="cons_po_number" class="form-control" value="<?php echo html_encode($main_info['cons_po_number']) ?>">
 				</div>
-			
-				<div class="mb-3">
-					<label class="form-label" for="remarks">Remarks</label>
-					<textarea id="remarks" name="remarks" class="form-control" placeholder="Leave your comment"><?php echo html_encode($main_info['remarks']) ?></textarea>
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="cons_total_amount">Total Amount</label>
+					<input type="text" name="cons_total_amount" id="cons_total_amount" class="form-control" value="<?php echo $cons_total_amount ?>">
 				</div>
 			</div>
-
-			<div class="card-body bg-info form-actions-fixed-bottom">
-				<button type="submit" name="form_sent" class="btn btn-primary">Update Project</button>
-
-<?php if ($User->checkAccess('hca_mi', 18)): ?>
-				<button type="submit" name="delete" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this project?')">Delete Project</button>
-<?php endif; ?>
-
+		
+			<div class="mb-3">
+				<label class="form-label" for="cons_comment">Work Performed</label>
+				<textarea id="cons_comment" name="cons_comment" class="form-control" placeholder="Leave your comment"><?php echo html_encode($main_info['cons_comment']) ?></textarea>
 			</div>
 		</div>
-	</form>
 
-<?php if ($access): ?>
+		<div class="card-header">
+			<h6 class="card-title mb-0">Relocation</h6>
+		</div>
+		<div class="card-body">
+
+			<div class="mb-3">
+				<label class="form-label">Total Cost</label>
+				<h5><?php echo gen_number_format($total_cost, 2) ?></h5>
+			</div>
+
+			<div class="row">
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="moveout_date">Move-Out Date</label>
+					<input type="hidden" name="old_moveout_date" value="<?php echo $main_info['moveout_date'] ?>">
+					<input type="date" name="moveout_date" class="form-control" id="moveout_date" value="<?php echo sm_date_input($main_info['moveout_date']) ?>" onclick="this.showPicker()">
+					<label class="text-danger" onclick="document.getElementById('moveout_date').value=''">Click to clear date</label>
+				</div>
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="movein_date">Move-In Date</label>
+					<input type="date" name="movein_date" class="form-control" id="movein_date" value="<?php echo sm_date_input($main_info['movein_date']) ?>" onclick="this.showPicker()">
+					<label class="text-danger" onclick="document.getElementById('movein_date').value=''">Click to clear date</label>
+				</div>
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="maintenance_date">Maintenance Date</label>
+					<input type="date" name="maintenance_date" class="form-control" id="maintenance_date" value="<?php echo sm_date_input($main_info['maintenance_date']) ?>" onclick="this.showPicker()">
+					<label class="text-danger" onclick="document.getElementById('maintenance_date').value=''">Click to clear date</label>
+				</div>
+			</div>
+			<div class="mb-3">
+				<label class="form-label" for="maintenance_comment">Comment</label>
+				<textarea id="maintenance_comment" name="maintenance_comment" class="form-control" id="maintenance_comment" placeholder="Leave your comment"><?php echo html_encode($main_info['maintenance_comment']) ?></textarea>
+			</div>
+
+			<div class="row">
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="fld_final_performed_uid">Performed by</label>
+					<select name="final_performed_uid" class="form-select" id="fld_final_performed_uid">
+<?php
+echo '<option value="0" selected>Select one</option>'."\n";
+foreach ($users_info as $cur_info)
+{
+	if ($main_info['final_performed_uid'] == $cur_info['id'] || $main_info['final_performed_by'] == $cur_info['realname'])
+		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'" selected>'.html_encode($cur_info['realname']).'</option>'."\n";
+	else
+		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'">'.html_encode($cur_info['realname']).'</option>'."\n";
+}
+?>
+					</select>
+				</div>
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="final_performed_date">Performed Date</label>
+					<input type="date" name="final_performed_date" class="form-control" id="final_performed_date" value="<?php echo sm_date_input($main_info['final_performed_date']) ?>" onclick="this.showPicker()">
+				</div>
+			</div>
+
+			<div class="mb-3">
+				<label class="form-label" for="fld_remarks">Remarks</label>
+				<textarea id="fld_remarks" name="remarks" class="form-control" placeholder="Leave your comment"><?php echo html_encode($main_info['remarks']) ?></textarea>
+			</div>
+
+			<div class="row">
+				<div class="col-md-3 mb-3">
+					<label class="form-label">Job Status</label>
+					<select name="job_status" class="form-select" required>
+<?php
+	foreach ($work_statuses as $key => $status) {
+		if ($main_info['job_status'] == $key)
+			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.html_encode($status).'</option>'."\n";
+		else
+			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.html_encode($status).'</option>'."\n";
+	}
+?>
+					</select>
+				</div>
+			</div>
+
+			<div class="mb-3">
+<?php if ($User->checkPermissions('hca_mi', 7)): ?>
+				<button type="submit" name="form_sent" class="btn btn-primary">Update Project</button>
+<?php endif; ?>
+
+<?php if ($User->checkPermissions('hca_mi', 8)): ?>
+				<button type="submit" name="delete" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this project?')">Delete Project</button>
+<?php endif; ?>
+			</div>
+
+<?php if ($User->checkPermissions('hca_mi', 7)): ?>
+			<div class="toast" id="toastButtonActions" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
+				<div class="toast-header badge-info fw-bold border">
+					<strong class="me-auto">You have unsaved changes on this page.</strong>
+					<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+				</div>
+				<div class="toast-body badge-info d-flex justify-content-around">
+					<button type="submit" name="form_sent" class="btn btn-sm btn-primary">Save changes</button>
+					<a href="<?=$URL->link('hca_5840_projects', ['active', 0])?>" class="btn btn-sm btn-secondary text-white ">Cancel</a>
+				</div>
+			</div>
+<?php endif; ?>
+
+		</div>
+	</div>
+</form>
+
 <script>
+document.addEventListener('DOMContentLoaded', function()
+{
+	var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+	var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+		return new bootstrap.Popover(popoverTriggerEl)
+	});
+
+	$("#main_form").change(function() {
+		$("#toastButtonActions").addClass('show position-fixed bottom-0 end-0');
+	});
+
+}, false);
+
 function addLocation(){
 	//get all added
 
@@ -739,30 +826,9 @@ function addLocation(){
 }
 function clearLocation(id){
 	$("div").remove("#location_"+id);
-}
-function getUnits(){
-	var csrf_token = "<?php echo generate_form_token($URL->link('hca_5840_ajax_get_units')) ?>";
-	var id = $("#property_id").val();
-	jQuery.ajax({
-		url:	"<?php echo $URL->link('hca_5840_ajax_get_units') ?>",
-		type:	"POST",
-		dataType: "json",
-		data: ({id:id,csrf_token:csrf_token}),
-		success: function(re){
-			$("#unit_number").empty().html(re.unit_number);
-		},
-		error: function(re){
-			document.getElementById("unit_number").innerHTML = re;
-		}
-	});
-}
-function enterManually(){
-	var v = $("#unit_number select").val();
-	if(v == 0){
-		$("#unit_number").empty().html('<input type="text" name="unit_number" value="" placeholder="Enter Unit #"/>');
-	}
+	$("#toastButtonActions").addClass('show position-fixed bottom-0 end-0');
 }
 </script>
-<?php endif;
 
+<?php
 require SITE_ROOT.'footer.php';

@@ -8,7 +8,7 @@ if ($User->is_guest())
 
 $type_id = isset($_POST['type_id']) ? intval($_POST['type_id']) : 0;
 $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
-
+/*
 if ($type_id > 0)
 {
 	$query = array(
@@ -51,12 +51,23 @@ if ($type_id > 0)
 		'item_actions' => implode('', $item_actions),
 	));
 }
-
+*/
 // Get item actions
 if ($item_id > 0)
 {
 	require SITE_ROOT.'apps/hca_wom/classes/HcaWOM.php';
 	$HcaWOM = new HcaWOM;
+
+	$query = array(
+		'SELECT'	=> 'pr.*',
+		'FROM'		=> 'hca_wom_problems AS pr',
+		'ORDER BY'	=> 'pr.problem_name'
+	);
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	$hca_wom_problems = [];
+	while ($row = $DBLayer->fetch_assoc($result)) {
+		$hca_wom_problems[$row['id']] = $row['problem_name'];
+	}
 
 	$query = array(
 		'SELECT'	=> 'i.*',
@@ -67,17 +78,21 @@ if ($item_id > 0)
 	$hca_wom_items = $DBLayer->fetch_assoc($result);
 
 	$item_actions = [];
-	if (!empty($hca_wom_items))
+	if (isset($hca_wom_items['item_actions']) && ($hca_wom_items['item_actions'] != ''))
 	{
-		$item_actions = explode(',', $hca_wom_items['item_actions']);
-		//$task_items[] = '<option value="0">Select one</option>';
-		foreach ($HcaWOM->task_actions as $key => $value)
+		$actions = explode(',', $hca_wom_items['item_actions']);
+		foreach ($hca_wom_problems as $key => $value)
 		{
-			if (in_array($key, $item_actions))
+			if (in_array($key, $actions))
 				$item_actions[] = '<option value="'.$key.'">'.$value.'</option>';
 		}
 	}
-	
+	else
+	{
+		foreach ($hca_wom_problems as $key => $value)
+			$item_actions[] = '<option value="'.$key.'">'.$value.'</option>';
+	}
+
 	echo json_encode(array(
 		'item_actions' => implode('', $item_actions),
 	));

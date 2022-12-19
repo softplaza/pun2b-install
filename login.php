@@ -28,7 +28,7 @@ if (isset($_POST['form_sent']) && empty($action))
 	);
 
 	if (in_array($db_type, array('mysql', 'mysqli', 'mysql_innodb', 'mysqli_innodb')))
-		$query['WHERE'] = 'username=\''.$DBLayer->escape($form_username).'\'';
+		$query['WHERE'] = 'username=\''.$DBLayer->escape($form_username).'\' OR email=\''.$DBLayer->escape($form_username).'\'';
 	else
 		$query['WHERE'] = 'LOWER(username)=LOWER(\''.$DBLayer->escape($form_username).'\')';
 
@@ -257,19 +257,24 @@ else if ($action == 'forget' || $action == 'forget_2')
 						<div class="row g-0">
 							<div class="col">
 								<div class="card-body p-md-5 mx-md-4">
+
 									<div class="text-center">
 										<img src="<?php echo BASE_URL ?>/img/hca_logo.jpg" style="width: 185px;" alt="logo">
 										<h4 class="mt-1 mb-5 pb-1"><?php echo $Config->get('o_board_title') ?></h4>
 									</div>
+									
 									<div class="alert alert-warning" role="alert"><?=$Lang->login('new_pass_info')?></div>
+									
 									<div class="form-outline mb-4">
 										<label for="form_req_email"><?=$Lang->login('email_addr_help')?></label>
 										<input type="email" name="req_email" value="<?php if (isset($_POST['req_email'])) echo html_encode($_POST['req_email']); ?>" id="form_req_email" class="form-control" required spellcheck="false"/>
 									</div>
+
 									<div class="text-center pt-1 mb-5 pb-1">
 										<button type="submit" name="request_pass" class="btn btn-primary"><?=$Lang->login('submit_pass_request')?></button>
 										<button type="submit" name="cancel" class="btn btn-secondary" formnovalidate><?php echo $lang_common['Cancel'] ?></button>
 									</div>
+
 								</div>
 							</div>
 						</div>
@@ -322,15 +327,20 @@ require SITE_ROOT.'header.php';
 										<img src="<?php echo BASE_URL ?>/img/hca_logo.jpg" style="width: 185px;" alt="logo">
 										<h4 class="mt-1 mb-5 pb-1"><?php echo $Config->get('o_board_title') ?></h4>
 									</div>
-									<div class="form-outline mb-4">
-										<label class="form-label" for="fld_req_username">Username</label>
+
+									<label class="form-label" for="fld_req_username">Email or Username</label>
+									<div class="input-group mb-4">
+										<span class="input-group-text"><i class="icofont-user-alt-3"></i></span>
 										<input type="text" name="req_username" value="<?php if (isset($_POST['req_username'])) echo html_encode($_POST['req_username']); ?>" id="fld_req_username" class="form-control">
 									</div>
-									<div class="form-outline mb-4">
-										<label class="form-label" for="fld_req_password">Password</label>
-										<span><i id="fa_eye_fld_req_password" class="fas fa-eye-slash" onclick="showHideFieldValue('fld_req_password')"></i></span>
+
+									<label class="form-label" for="fld_req_password">Password</label>
+									<span><i id="fa_eye_fld_req_password" class="fas fa-eye-slash" onclick="showHideFieldValue('fld_req_password')"></i></span>
+									<div class="input-group mb-4">
+										<span class="input-group-text"><i class="icofont-key"></i></span>
 										<input type="password" name="req_password" value="<?php if (isset($_POST['req_password'])) echo html_encode($_POST['req_password']); ?>" id="fld_req_password" class="form-control">
 									</div>
+
 									<input type="hidden" name="save_pass" value="1" checked="checked" />
 									<div class="text-center pt-1 mb-5 pb-1">
 										<button type="submit" name="login" class="btn btn-primary">Log in</button>

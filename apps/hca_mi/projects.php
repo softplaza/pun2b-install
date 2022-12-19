@@ -3,18 +3,21 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$section = isset($_GET['section']) ? $_GET['section'] : 'active';
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-
-$access = ($User->checkAccess('hca_mi', 1)) ? true : false;
-if (!$access)
+if (!$User->checkAccess('hca_mi', 4))
 	message($lang_common['No permission']);
+
+$permission2 = ($User->checkPermissions('hca_mi', 2)) ? true : false; // view
+$permission4 = ($User->checkPermissions('hca_mi', 4)) ? true : false; // files
+$permission5 = ($User->checkPermissions('hca_mi', 5)) ? true : false; // appendix-b
+$permission6 = ($User->checkPermissions('hca_mi', 6)) ? true : false; // Send project info to email
 
 $Moisture = new Moisture;
 $HcaMi = new HcaMi;
 
 $work_statuses = array(1 => 'IN PROGRESS', 2 => 'ON HOLD', 3 => 'COMPLETED', 0 => 'DELETE');
 
+$section = isset($_GET['section']) ? $_GET['section'] : 'active';
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
 $search_by_manager = isset($_GET['performed_by']) ? swift_trim($_GET['performed_by']) : '';
 $search_by_unit = isset($_GET['unit_number']) ? swift_trim($_GET['unit_number']) : '';
@@ -32,13 +35,21 @@ if (isset($_POST['send_email']))
 	if ($project_id > 0)
 	{
 		$query = array(
-			'SELECT'	=> 'pj.*, p.manager_email, p.pro_name',
+			'SELECT'	=> 'pj.*, p.manager_email, p.pro_name, un.unit_number, u1.realname AS performed_by',
 			'FROM'		=> 'hca_5840_projects AS pj',
 			'JOINS'		=> [
 				[
 					'INNER JOIN'	=> 'sm_property_db AS p',
 					'ON'			=> 'p.id=pj.property_id'
-				]
+				],
+				[
+					'LEFT JOIN'		=> 'sm_property_units AS un',
+					'ON'			=> 'un.id=pj.unit_id'
+				],
+				[
+					'LEFT JOIN'		=> 'users AS u1',
+					'ON'			=> 'u1.id=pj.mois_performed_by'
+				],
 			],
 			'WHERE'		=> 'pj.id='.$project_id,
 		);
@@ -50,26 +61,17 @@ if (isset($_POST['send_email']))
 		
 		if (!empty($project_info))
 		{
-			if (in_array('property_name', $mailing_fields))
-				$mail_message .= 'Property: '.$project_info['pro_name']."\n\n";
-			if (in_array('unit_number', $mailing_fields))
+			$mail_message .= 'Property: '.$project_info['pro_name']."\n\n";
+			if ($project_info['unit_number'] != '')
 				$mail_message .= 'Unit #: '.$project_info['unit_number']."\n\n";
-			if (in_array('location', $mailing_fields))
-				$mail_message .= 'Location: '.$project_info['location']."\n\n";
-			if (in_array('mois_report_date', $mailing_fields))
-				$mail_message .= 'Report Date: '.format_time($project_info['mois_report_date'], 1)."\n\n";
-			if (in_array('mois_performed_by', $mailing_fields))
-				$mail_message .= 'Performed by: '.$project_info['mois_performed_by']."\n\n";
-			if (in_array('mois_inspection_date', $mailing_fields))
-				$mail_message .= 'Inspection Date: '.format_time('m/d/Y', $project_info['mois_inspection_date'], 1)."\n\n";
-			if (in_array('mois_source', $mailing_fields) && $project_info['mois_source'] != '')
-				$mail_message .= 'Source: '.$project_info['mois_source']."\n\n";
-			if (in_array('symptoms', $mailing_fields) && $project_info['symptoms'] != '')
-				$mail_message .= 'Symptoms: '.$project_info['symptoms']."\n\n";
-			if (in_array('action', $mailing_fields) && $project_info['action'] != '')
-				$mail_message .= 'Action: '.$project_info['action']."\n\n";
-			if (in_array('remarks', $mailing_fields) && $project_info['remarks'] != '')
-				$mail_message .= 'Remarks: '.$project_info['remarks']."\n\n";
+			$mail_message .= 'Location: '.$project_info['location']."\n\n";
+			$mail_message .= 'Report Date: '.format_time($project_info['mois_report_date'], 1)."\n\n";
+			$mail_message .= 'Performed by: '.$project_info['performed_by']."\n\n";
+			$mail_message .= 'Inspection Date: '.format_time('m/d/Y', $project_info['mois_inspection_date'], 1)."\n\n";
+			$mail_message .= 'Source: '.$project_info['mois_source']."\n\n";
+			$mail_message .= 'Symptoms: '.$project_info['symptoms']."\n\n";
+			$mail_message .= 'Action: '.$project_info['action']."\n\n";
+			$mail_message .= 'Remarks: '.$project_info['remarks']."\n\n";
 			
 			if (!empty($email_list))
 			{
@@ -315,6 +317,7 @@ $main_info = $projects_ids = array();
 while ($row = $DBLayer->fetch_assoc($result))
 {
 	$row['unit_number'] = ($row['unit_id'] > 0) ? $row['unit_number'] : $row['unit'];
+	$row['unit_number'] = ($row['unit_number'] != '') ? $row['unit_number'] : 'Common area';
 
 	$main_info[] = $row;
 	$projects_ids[] = $row['id'];
@@ -528,15 +531,15 @@ if (!empty($main_info))
 		else
 			$page_param['td']['mois_inspection_date_alert'] = $page_param['td']['asb_test_date_alert'] = $page_param['td']['rem_start_date_alert'] = $page_param['td']['cons_start_date_alert'] = '';
 
-		$view_files = ($User->checkAccess('hca_mi', 14) && in_array($cur_info['id'], $uploader_info)) ? '<a href="'.$URL->link('hca_5840_manage_files', $cur_info['id']).'" class="btn btn-sm btn-success text-white">Files</a>' : '';
+		$view_files = ($permission4 && in_array($cur_info['id'], $uploader_info)) ? '<a href="'.$URL->link('hca_5840_manage_files', $cur_info['id']).'" class="btn btn-sm btn-success text-white">Files</a>' : '';
 		
 		if ($access)
 		{
-			if ($User->checkAccess('hca_mi', 12))
+			if ($permission2)
 				$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_project', $cur_info['id']).'"><i class="fas fa-edit"></i> Edit project</a>');
-			if ($User->checkAccess('hca_mi', 14))
+			if ($permission4)
 				$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_files', $cur_info['id']).'"><i class="far fa-image"></i> Upload Files</a>');
-			if ($User->checkAccess('hca_mi', 15))
+			if ($permission5)
 				$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_appendixb', $cur_info['id']).'"><i class="far fa-file-pdf"></i> Create Appendix-B</a>');
 			//if ($User->checkAccess('hca_mi', 13))
 			//	$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_invoice', $cur_info['id']).'"><i class="fas fa-file-invoice-dollar"></i> Edit Invoice</a>');

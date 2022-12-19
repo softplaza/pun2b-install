@@ -3,27 +3,23 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-if (!$User->checkAccess('hca_mi', 23))
+if (!$User->checkAccess('hca_wom', 52))
 	message($lang_common['No permission']);
 
 $SwiftSettings = new SwiftSettings;
 
 // OPTIONS START
 // Set project ID
-$SwiftSettings->setId('hca_mi');
+$SwiftSettings->setId('hca_wom');
 
 // Set User or Group notifications
-$SwiftSettings->addNotifyOption(1, 'Budget over $5000'); //set in manage_project.php
-//$SwiftSettings->addNotifyOption(2, 'Project was created');
-//$SwiftSettings->addNotifyOption(3, 'Project was completed');
-//$SwiftSettings->addNotifyOption(4, 'Project was removed');
-$SwiftSettings->addNotifyOption(5, 'Move Out Date Changed'); //set in manage_project.php
-
+$SwiftSettings->addNotifyOption(1, 'Task assigned');
+$SwiftSettings->addNotifyOption(2, 'Task completed');
 // OPTIONS END
 
 $SwiftSettings->POST();
 
-$Core->set_page_id('hca_5840_admin_notifications', 'hca_5840');
+$Core->set_page_id('hca_wom_admin_notifications', 'hca_wom');
 require SITE_ROOT.'header.php';
 
 if ($User->is_admmod())

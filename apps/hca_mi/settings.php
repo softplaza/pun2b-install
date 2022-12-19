@@ -3,8 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 20)) ? true : false;
-if (!$access)
+if (!$User->checkAccess('hca_mi', 20))
 	message($lang_common['No permission']);
 
 $Moisture = new Moisture;

@@ -68,7 +68,8 @@
 	.frm-buttons,
 	.page-actions,
 	.sidebar,
-	.navbar
+	.navbar,
+	.footer-section
 	{
 		display:none !important;
 	}

@@ -3,8 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access14 = ($User->checkAccess('hca_wom', 14)) ? true : false;
-if (!$access14)
+if (!$User->checkAccess('hca_wom', 4))
 	message($lang_common['No permission']);
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -87,9 +86,15 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 }
 
 $query = array(
-	'SELECT'	=> 'i.*',
+	'SELECT'	=> 'i.*, tp.type_name',
 	'FROM'		=> 'hca_wom_items AS i',
-	'ORDER BY'	=> 'i.item_type, i.item_name',
+	'JOINS'		=> [
+		[
+			'LEFT JOIN'		=> 'hca_wom_types AS tp',
+			'ON'			=> 'tp.id=i.item_type'
+		],
+	],
+	'ORDER BY'	=> 'tp.type_name, i.item_name'
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $hca_wom_items = [];
@@ -159,17 +164,17 @@ foreach ($sm_property_db as $cur_info)
 			<div class="row">
 				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_item_id">Item</label>
-					<select name="item_id" class="form-select form-select-sm" id="fld_item_id" required>
+					<select name="item_id" class="form-select form-select-sm" id="fld_item_id" required onchange="getActions()">
 <?php
 	$optgroup = 0;
-	echo "\t\t\t\t\t\t".'<option value="" selected disabled>Select an item</option>'."\n";
+	echo "\t\t\t\t\t\t".'<option value="" selected disabled >Select an item</option>'."\n";
 	foreach ($hca_wom_items as $cur_info)
 	{
 		if ($cur_info['item_type'] != $optgroup) {
 			if ($optgroup) {
 				echo '</optgroup>';
 			}
-			echo '<optgroup label="'.html_encode($HcaWOM->item_types[$cur_info['item_type']]).'">';
+			echo '<optgroup label="'.html_encode($cur_info['type_name']).'">';
 			$optgroup = $cur_info['item_type'];
 		}
 		
@@ -181,13 +186,7 @@ foreach ($sm_property_db as $cur_info)
 				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_task_action">Action/Problem</label>
 					<select name="task_action" class="form-select form-select-sm" id="fld_task_action">
-<?php
-	echo "\t\t\t\t\t\t".'<option value="" selected disabled>Select an action</option>'."\n";
-	foreach ($HcaWOM->task_actions as $key => $value)
-	{
-		echo "\t\t\t\t\t\t".'<option value="'.$key.'">'.html_encode($value).'</option>'."\n";
-	}
-?>
+
 					</select>
 				</div>
 			</div>
@@ -218,6 +217,23 @@ function getUnits(){
 		},
 		error: function(re){
 			document.getElementById("#unit_list").innerHTML = re;
+		}
+	});
+}
+function getActions(){
+	var item_id = $("#fld_item_id").val();
+	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_get_items')) ?>";
+	jQuery.ajax({
+		url:	"<?php echo $URL->link('hca_wom_ajax_get_items') ?>",
+		type:	"POST",
+		dataType: "json",
+		data: ({item_id:item_id,csrf_token:csrf_token}),
+		success: function(re){
+			$("#fld_task_action").empty().html(re.item_actions);
+
+		},
+		error: function(re){
+			document.getElementById("#fld_task_action").innerHTML = re;
 		}
 	});
 }

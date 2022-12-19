@@ -3,11 +3,8 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access1 = ($User->checkAccess('hca_wom', 1)) ? true : false;
-if (!$access1)
+if (!$User->checkAccess('hca_wom', 2))
 	message($lang_common['No permission']);
-
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 $HcaWOM = new HcaWOM;
 

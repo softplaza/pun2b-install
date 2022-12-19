@@ -2007,8 +2007,11 @@ table .tcr{
 }
 .table th {text-align:center}
 
-/* Bootstrap improvements */
+.popover, .popover.bottom .arrow:after {
+    background:#e4feff !important;
+}
 
+/* Bootstrap improvements */
 
 
 

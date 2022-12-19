@@ -20,9 +20,9 @@ if ($id > 0)
 {
 	$toast_message = [];
 	$toast_message[] = '<div id="liveToast" class="toast position-fixed bottom-0 end-0 m-2" role="alert" aria-live="assertive" aria-atomic="true">';
-	$toast_message[] = '<div class="toast-header toast-success">';
-	$toast_message[] = '<strong class="me-auto">Message</strong>';
-	$toast_message[] = '</div>';
+	//$toast_message[] = '<div class="toast-header toast-success">';
+	//$toast_message[] = '<strong class="me-auto">Message</strong>';
+	//$toast_message[] = '</div>';
 	$toast_message[] = '<div class="toast-body toast-success">Settings updated successfully.</div>';
 	$toast_message[] = '</div>';
 
@@ -71,7 +71,7 @@ else
 	$toast_message = [];
 	$toast_message[] = '<div id="liveToast" class="toast position-fixed bottom-0 end-0 m-2" role="alert" aria-live="assertive" aria-atomic="true">';
 	$toast_message[] = '<div class="toast-header toast-danger">';
-	$toast_message[] = '<strong class="me-auto">Message</strong>';
+	$toast_message[] = '<strong class="me-auto">Error</strong>';
 	$toast_message[] = '</div>';
 	$toast_message[] = '<div class="toast-body toast-danger">Failed to update settings.</div>';
 	$toast_message[] = '</div>';

@@ -3,8 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 11)) ? true : false;
-if (!$access)
+if (!$User->checkPermissions('hca_mi', 1))
 	message($lang_common['No permission']);
 
 $HcaMi = new HcaMi;
@@ -12,29 +11,6 @@ $SwiftUploader = new SwiftUploader;
 
 $work_statuses = array(1 => 'IN PROGRESS', 2 => 'ON HOLD', 3 => 'COMPLETED');
 $apt_locations = explode(',', $Config->get('o_hca_5840_locations'));
-
-$query = array(
-	'SELECT'	=> '*',
-	'FROM'		=> 'sm_property_db',
-	'ORDER BY'	=> 'pro_name'
-);
-$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$property_info = array();
-while ($row = $DBLayer->fetch_assoc($result)) {
-	$property_info[$row['id']] = $row;
-}
-
-$query = array(
-	'SELECT'	=> 'id, realname',
-	'FROM'		=> 'users',
-	'ORDER BY'	=> 'realname',
-	//'WHERE'		=> 'hca_5840_access > 0'
-);
-$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$users_info = array();
-while ($row = $DBLayer->fetch_assoc($result)) {
-	$users_info[] = $row;
-}
 
 if (isset($_POST['form_sent']))
 {
@@ -86,6 +62,35 @@ if (isset($_POST['form_sent']))
 		$FlashMessenger->add_info($flash_message);
 		redirect($URL->link('hca_5840_manage_project', $new_pid), $flash_message);
 	}
+}
+
+$query = array(
+	'SELECT'	=> '*',
+	'FROM'		=> 'sm_property_db',
+	'ORDER BY'	=> 'pro_name'
+);
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+$property_info = array();
+while ($row = $DBLayer->fetch_assoc($result)) {
+	$property_info[] = $row;
+}
+
+$User->getUserAccess('hca_mi');
+$project_user_ids = $User->getUserAccessIDS();
+$project_user_ids[] = $User->get('id');
+$query = array(
+	'SELECT'	=> 'u.id, u.group_id, u.username, u.realname, u.email',
+	'FROM'		=> 'users AS u',
+	'WHERE'		=> 'u.id > 2',
+	'ORDER BY'	=> 'u.realname',
+);
+if (!empty($project_user_ids))
+	$query['WHERE'] = 'u.id IN ('.implode(',', $project_user_ids).')';
+
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+$users_info = array();
+while ($row = $DBLayer->fetch_assoc($result)) {
+	$users_info[] = $row;
 }
 
 $Core->set_page_title('New Project');
@@ -151,26 +156,26 @@ foreach ($HcaMi->locations as $key => $value)
 		<div class="card-body">
 
 			<div class="col-md-3 mb-3">
-				<label class="form-label" for="mois_report_date">Date Reported</label>
-				<input type="date" name="mois_report_date" id="mois_report_date" class="form-control form-control-sm" value="">
-				<label class="text-danger" onclick="document.getElementById('mois_report_date').value=''">Click to clear date</label>
+				<label class="form-label" for="fld_mois_report_date">Date Reported</label>
+				<input type="date" name="mois_report_date" id="fld_mois_report_date" class="form-control form-control-sm" value="" onclick="this.showPicker()">
+				<label class="text-danger" onclick="document.getElementById('fld_mois_report_date').value=''">Click to clear date</label>
 			</div>
 			<div class="col-md-3 mb-3">
-				<label class="form-label" for="mois_inspection_date">Date of Inspection</label>
-				<input type="date" name="mois_inspection_date" id="mois_inspection_date" class="form-control form-control-sm" value="">
-				<label class="text-danger" onclick="document.getElementById('mois_inspection_date').value=''">Click to clear date</label>
+				<label class="form-label" for="fld_mois_inspection_date">Date of Inspection</label>
+				<input type="date" name="mois_inspection_date" id="fld_mois_inspection_date" class="form-control form-control-sm" value="" onclick="this.showPicker()">
+				<label class="text-danger" onclick="document.getElementById('fld_mois_inspection_date').value=''">Click to clear date</label>
 			</div>
 			<div class="col-md-3 mb-3">
 				<label class="form-label" for="fld_performed_uid">Performed by</label>
 				<select name="performed_uid" required class="form-select form-select-sm" id="fld_performed_uid">
 <?php
-echo '<option value="0" selected disabled>Select Manager</option>'."\n";
-foreach ($users_info as $user)
+echo '<option value="0" selected disabled>Select one</option>'."\n";
+foreach ($users_info as $cur_info)
 {
-	if (isset($_POST['performed_uid']) && $_POST['performed_uid'] == $user['id'] || $User->get('id') == $user['id'])
-		echo "\t\t\t\t\t\t\t".'<option value="'.$user['id'].'" selected>'.html_encode($user['realname']).'</option>'."\n";
+	if (isset($_POST['performed_uid']) && $_POST['performed_uid'] == $cur_info['id'] || $User->get('id') == $cur_info['id'])
+		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'" selected>'.html_encode($cur_info['realname']).'</option>'."\n";
 	else
-		echo "\t\t\t\t\t\t\t".'<option value="'.$user['id'].'">'.html_encode($user['realname']).'</option>'."\n";
+		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'">'.html_encode($cur_info['realname']).'</option>'."\n";
 }
 ?>
 				</select>

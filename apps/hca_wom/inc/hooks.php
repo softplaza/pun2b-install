@@ -13,6 +13,7 @@ function hca_wom_co_modify_url_scheme()
     $urls['hca_wom_work_orders'] = 'apps/hca_wom/work_orders.php';
     $urls['hca_wom_work_orders_suggested'] = 'apps/hca_wom/work_orders_suggested.php';
     $urls['hca_wom_work_orders_report'] = 'apps/hca_wom/work_orders_report.php';
+    $urls['hca_wom_print'] = 'apps/hca_wom/print.php';
 
     // for technician
     $urls['hca_wom_task'] = 'apps/hca_wom/task.php?id=$1';
@@ -21,14 +22,17 @@ function hca_wom_co_modify_url_scheme()
 
     // ajax updates
     $urls['hca_wom_ajax_get_units'] = 'apps/hca_wom/ajax/get_units.php';
-    $urls['hca_wom_ajax_add_task'] = 'apps/hca_wom/ajax/add_task.php';//replaced on manage_task.php
-    $urls['hca_wom_ajax_manage_task'] = 'apps/hca_wom/ajax/manage_task.php';
     $urls['hca_wom_ajax_get_items'] = 'apps/hca_wom/ajax/get_items.php';
-    $urls['hca_wom_ajax_get_images'] = 'apps/hca_wom/ajax/get_images.php';
-
+    $urls['hca_wom_ajax_manage_task'] = 'apps/hca_wom/ajax/manage_task.php';
+    $urls['hca_wom_ajax_manage_tpl_task'] = 'apps/hca_wom/ajax/manage_tpl_task.php';
+    
     // management
-    $urls['hca_wom_items'] = 'apps/hca_wom/items.php?id=$1';
-    $urls['hca_wom_settings'] = 'apps/hca_wom/settings.php';
+    $urls['hca_wom_admin_access'] = 'apps/hca_wom/admin_access.php';
+    $urls['hca_wom_admin_permissions'] = 'apps/hca_wom/admin_permissions.php';
+    $urls['hca_wom_admin_notifications'] = 'apps/hca_wom/admin_notifications.php';
+    $urls['hca_wom_admin_settings'] = 'apps/hca_wom/admin_settings.php';
+    $urls['hca_wom_admin_items'] = 'apps/hca_wom/admin_items.php?id=$1';
+    $urls['hca_wom_admin_templates'] = 'apps/hca_wom/admin_templates.php?id=$1';
 
     $URL->add_urls($urls);
 }
@@ -43,14 +47,14 @@ function hca_wom_IncludeCommon()
         //$SwiftMenu->addItem(['title' => 'Facility 2', 'link' => '#', 'id' => 'hca_fs', 'icon' => '<i class="fas fa-landmark"></i>', 'level' => 10]);
 
         // Manager section
-        if ($User->checkAccess('hca_wom', 3))
-            $SwiftMenu->addItem(['title' => 'Work Orders', 'link' => $URL->link('hca_wom_work_orders'), 'id' => 'hca_wom_work_orders', 'parent_id' => 'hca_fs', 'level' => 1]);
-
         if ($User->checkAccess('hca_wom', 1))
-            $SwiftMenu->addItem(['title' => 'Quick Task Entry', 'link' => $URL->link('hca_wom_work_order_new'), 'id' => 'hca_wom_work_order_new', 'parent_id' => 'hca_fs', 'level' => 2]);
+            $SwiftMenu->addItem(['title' => 'Current Work Orders', 'link' => $URL->link('hca_wom_work_orders'), 'id' => 'hca_wom_work_orders', 'parent_id' => 'hca_fs', 'level' => 1]);
 
-        if ($User->checkAccess('hca_wom', 4))
-            $SwiftMenu->addItem(['title' => 'Suggested Work Orders', 'link' => $URL->link('hca_wom_work_orders_suggested'), 'id' => 'hca_wom_work_orders_suggested', 'parent_id' => 'hca_fs', 'level' => 2]);
+        if ($User->checkAccess('hca_wom', 2))
+            $SwiftMenu->addItem(['title' => 'New Work Order', 'link' => $URL->link('hca_wom_work_order_new'), 'id' => 'hca_wom_work_order_new', 'parent_id' => 'hca_fs', 'level' => 2]);
+
+        if ($User->checkAccess('hca_wom', 10))
+            $SwiftMenu->addItem(['title' => 'Work Orders Report', 'link' => $URL->link('hca_wom_work_orders_report'), 'id' => 'hca_wom_work_orders_report', 'parent_id' => 'hca_fs', 'level' => 3]);
 
         //if ($User->checkAccess('hca_wom', 5))
         //    $SwiftMenu->addItem(['title' => 'Work Order Templates', 'link' => $URL->link('hca_wom_work_orders_suggested'), 'id' => 'hca_wom_work_orders_suggested', 'parent_id' => 'hca_fs', 'level' => 2]);
@@ -58,35 +62,43 @@ function hca_wom_IncludeCommon()
         //if ($User->checkAccess('hca_wom', 6))
         //    $SwiftMenu->addItem(['title' => 'Recurring Work Orders', 'link' => $URL->link('hca_wom_work_orders_suggested'), 'id' => 'hca_wom_work_orders_suggested', 'parent_id' => 'hca_fs', 'level' => 2]);
 
-        if ($User->checkAccess('hca_wom', 7))
-            $SwiftMenu->addItem(['title' => 'Work Orders Report', 'link' => $URL->link('hca_wom_work_orders_report'), 'id' => 'hca_wom_work_orders_report', 'parent_id' => 'hca_fs', 'level' => 3]);
-
         // Technician section
-        if ($User->checkAccess('hca_wom', 11))
+        if ($User->checkAccess('hca_wom', 5))
             $SwiftMenu->addItem(['title' => 'To-Do List', 'link' => $URL->genLink('hca_wom_tasks', ['section' => 'active']), 'id' => 'hca_wom_tasks_active', 'parent_id' => 'hca_fs', 'level' => 3]);
-            
-        if ($User->checkAccess('hca_wom', 12))
-            $SwiftMenu->addItem(['title' => 'Unassigned', 'link' => $URL->genLink('hca_wom_tasks', ['section' => 'unassigned']), 'id' => 'hca_wom_tasks_unassigned', 'parent_id' => 'hca_fs', 'level' => 3]);
 
-        if ($User->checkAccess('hca_wom', 13))
-            $SwiftMenu->addItem(['title' => 'Completed', 'link' => $URL->genLink('hca_wom_tasks', ['section' => 'completed']), 'id' => 'hca_wom_tasks_completed', 'parent_id' => 'hca_fs', 'level' => 3]);
-            
-        if ($User->checkAccess('hca_wom', 14))
+        if ($User->checkAccess('hca_wom', 4))
             $SwiftMenu->addItem(['title' => 'Suggest New WO', 'link' => $URL->link('hca_wom_work_order_suggest'), 'id' => 'hca_wom_work_order_suggest', 'parent_id' => 'hca_fs', 'level' => 3]);
 
-        if ($User->checkAccess('hca_wom', 15))
-            $SwiftMenu->addItem(['title' => 'View Suggested WO', 'link' => $URL->link('hca_wom_work_orders_suggested'), 'id' => 'hca_wom_work_orders_suggested', 'parent_id' => 'hca_fs', 'level' => 3]);
+        if ($User->checkAccess('hca_wom', 3))
+            $SwiftMenu->addItem(['title' => 'Suggested Work Orders', 'link' => $URL->link('hca_wom_work_orders_suggested'), 'id' => 'hca_wom_work_orders_suggested', 'parent_id' => 'hca_fs', 'level' => 3]);
 
+        //if ($User->checkAccess('hca_wom', 12))
+        //    $SwiftMenu->addItem(['title' => 'Unassigned', 'link' => $URL->genLink('hca_wom_tasks', ['section' => 'unassigned']), 'id' => 'hca_wom_tasks_unassigned', 'parent_id' => 'hca_fs', 'level' => 3]);
 
-        if ($User->checkAccess('hca_wom', 90) || $User->checkAccess('hca_wom', 100))
+        //if ($User->checkAccess('hca_wom', 13))
+        //    $SwiftMenu->addItem(['title' => 'Completed', 'link' => $URL->genLink('hca_wom_tasks', ['section' => 'completed']), 'id' => 'hca_wom_tasks_completed', 'parent_id' => 'hca_fs', 'level' => 3]);
+
+        if ($User->checkAccess('hca_wom', 50) || $User->checkAccess('hca_wom', 53) || $User->checkAccess('hca_wom', 54) || $User->checkAccess('hca_wom', 55))
         {
-            $SwiftMenu->addItem(['title' => 'WO Management', 'link' => '#', 'id' => 'hca_wom_management', 'parent_id' => 'hca_fs', 'level' => 90]);
+            $SwiftMenu->addItem(['title' => 'WO Management', 'link' => '#', 'id' => 'hca_wom_management', 'parent_id' => 'hca_fs', 'level' => 4]);
 
-            if ($User->checkAccess('hca_wom', 90))
-                $SwiftMenu->addItem(['title' => 'WO Items', 'link' => $URL->link('hca_wom_items', 0), 'id' => 'hca_wom_items', 'parent_id' => 'hca_wom_management', 'level' => 90]);
+            if ($User->checkAccess('hca_wom', 50))
+                $SwiftMenu->addItem(['title' => 'Access', 'link' => $URL->link('hca_wom_admin_access'), 'id' => 'hca_wom_admin_access', 'parent_id' => 'hca_wom_management', 'level' => 50]);
 
-            if ($User->checkAccess('hca_wom', 100))
-                $SwiftMenu->addItem(['title' => 'WO Settings', 'link' => $URL->link('hca_wom_settings'), 'id' => 'hca_wom_settings', 'parent_id' => 'hca_wom_management', 'level' => 100]);
+            //if ($User->checkAccess('hca_wom', 51))
+            //    $SwiftMenu->addItem(['title' => 'Permissions', 'link' => $URL->link('hca_wom_admin_permissions'), 'id' => 'hca_wom_admin_permissions', 'parent_id' => 'hca_wom_management', 'level' => 51]);
+
+            //if ($User->checkAccess('hca_wom', 52))
+            //    $SwiftMenu->addItem(['title' => 'Notifications', 'link' => $URL->link('hca_wom_admin_notifications'), 'id' => 'hca_wom_admin_notifications', 'parent_id' => 'hca_wom_management', 'level' => 52]);
+
+            if ($User->checkAccess('hca_wom', 53))
+                $SwiftMenu->addItem(['title' => 'Settings', 'link' => $URL->link('hca_wom_admin_settings'), 'id' => 'hca_wom_admin_settings', 'parent_id' => 'hca_wom_management', 'level' => 53]);
+
+            if ($User->checkAccess('hca_wom', 54))
+                $SwiftMenu->addItem(['title' => 'Work Order Templates', 'link' => $URL->link('hca_wom_admin_templates', 0), 'id' => 'hca_wom_admin_templates', 'parent_id' => 'hca_wom_management', 'level' => 54]);
+
+            if ($User->checkAccess('hca_wom', 55))
+                $SwiftMenu->addItem(['title' => 'Work Order Items', 'link' => $URL->link('hca_wom_admin_items', 0), 'id' => 'hca_wom_admin_items', 'parent_id' => 'hca_wom_management', 'level' => 55]);
         }
     }
 }

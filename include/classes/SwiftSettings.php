@@ -4,6 +4,11 @@
  * @author SwiftManager.Org
  * @copyright (C) 2022 SwiftManager license GPL
  * @package SwiftSettings
+ * 
+ * USE FOLLOVING FUNCTIONS TO CHECK ACCESS / PERMISSIONS / NOTIFICATIONS
+ * $User->checkAccess(app_id, key);
+ * $User->checkPermissions(app_id, key);
+ * 
 **/
 
 class SwiftSettings
@@ -210,6 +215,21 @@ class SwiftSettings
 			$FlashMessenger->add_info($flash_message);
 			redirect('', $flash_message);
 		}
+		else if (isset($_POST['delete_group_permissions']))
+		{
+			$gid = intval(key($_POST['delete_group_permissions']));
+		
+			$query = array(
+				'DELETE'	=> 'user_permissions',
+				'WHERE'		=> 'p_to=\''.$DBLayer->escape($this->rules_to).'\' AND p_gid='.$gid,
+			);
+			$DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		
+			// Add flash message
+			$flash_message = 'Permissions for group #'.$gid.' have been deleted.';
+			$FlashMessenger->add_info($flash_message);
+			redirect('', $flash_message);
+		}
 		else if (isset($_POST['delete_notifications']))
 		{
 			$user_id = intval(key($_POST['delete_notifications']));
@@ -241,29 +261,6 @@ class SwiftSettings
 			redirect('', $flash_message);
 		}
 
-		else if (isset($_POST['fix_access']))
-		{
-			$user_id = intval(key($_POST['fix_access']));
-			$access_keys = $_POST['access_keys'][$user_id];
-		
-			foreach($this->access_options as $key => $title)
-			{
-				$data = [
-					'a_uid'		=> $user_id,
-					'a_to'		=> $this->rules_to,
-					'a_key'		=> $key,
-					'a_value'	=> 0
-				];
-				if (!in_array($key, $access_keys))
-					$DBLayer->insert('user_access', $data);
-			}
-			
-			// Add flash message
-			$flash_message = 'User permissions fixed.';
-			$FlashMessenger->add_info($flash_message);
-			redirect('', $flash_message);
-		}
-		
 		else if (isset($_POST['fix_group_access']))
 		{
 			$group_id = intval(key($_POST['fix_group_access']));
@@ -286,11 +283,84 @@ class SwiftSettings
 			$FlashMessenger->add_info($flash_message);
 			redirect('', $flash_message);
 		}
+
+		else if (isset($_POST['fix_extra_group_access']))
+		{
+			$group_id = intval(key($_POST['fix_extra_group_access']));
+			$access_keys = isset($_POST['access_keys'][$group_id]) ? $_POST['access_keys'][$group_id] : [];
 		
+			$keys = [];
+			foreach($this->access_options as $key => $title)
+			{
+					$keys[] = $key;
+			}
+			
+			$query = array(
+				'DELETE'	=> 'user_access',
+				'WHERE'		=> 'a_key NOT IN ('.implode(',', $keys).') AND a_to=\''.$DBLayer->escape($this->rules_to).'\' AND a_gid='.$group_id,
+			);
+			if (!empty($keys))
+				$DBLayer->query_build($query) or error(__FILE__, __LINE__);
+
+			// Add flash message
+			$flash_message = 'User extra access fixed.';
+			$FlashMessenger->add_info($flash_message);
+			redirect('', $flash_message);
+		}
+
+
+		else if (isset($_POST['fix_missing_access']))
+		{
+			$user_id = intval(key($_POST['fix_missing_access']));
+			$access_keys = isset($_POST['access_keys'][$user_id]) ? $_POST['access_keys'][$user_id] : [];
+		
+			foreach($this->access_options as $key => $title)
+			{
+				$data = [
+					'a_uid'		=> $user_id,
+					'a_to'		=> $this->rules_to,
+					'a_key'		=> $key,
+					'a_value'	=> 0
+				];
+				if (!in_array($key, $access_keys))
+					$DBLayer->insert('user_access', $data);
+			}
+			
+			// Add flash message
+			$flash_message = 'User access fixed.';
+			$FlashMessenger->add_info($flash_message);
+			redirect('', $flash_message);
+		}
+		
+		else if (isset($_POST['fix_extra_access']))
+		{
+			$user_id = intval(key($_POST['fix_extra_access']));
+			$access_keys = isset($_POST['access_keys'][$user_id]) ? $_POST['access_keys'][$user_id] : [];
+		
+			$keys = [];
+			foreach($this->access_options as $key => $title)
+			{
+				//if (!in_array($key, $access_keys))
+					$keys[] = $key;
+			}
+			
+			$query = array(
+				'DELETE'	=> 'user_access',
+				'WHERE'		=> 'a_key NOT IN ('.implode(',', $keys).') AND a_to=\''.$DBLayer->escape($this->rules_to).'\' AND a_uid='.$user_id,
+			);
+			if (!empty($keys))
+				$DBLayer->query_build($query) or error(__FILE__, __LINE__);
+
+			// Add flash message
+			$flash_message = 'User extra access fixed.';
+			$FlashMessenger->add_info($flash_message);
+			redirect('', $flash_message);
+		}
+
 		else if (isset($_POST['fix_permissions']))
 		{
 			$user_id = intval(key($_POST['fix_permissions']));
-			$permissions_keys = $_POST['permissions_keys'][$user_id];
+			$permissions_keys = isset($_POST['permissions_keys'][$user_id]) ? $_POST['permissions_keys'][$user_id] : [];
 		
 			foreach($this->permissions_options as $key => $title)
 			{
@@ -310,11 +380,34 @@ class SwiftSettings
 			redirect('', $flash_message);
 		}
 
+		else if (isset($_POST['fix_group_permissions']))
+		{
+			$group_id = intval(key($_POST['fix_group_permissions']));
+			$permissions_keys = isset($_POST['permissions_keys'][$group_id]) ? $_POST['permissions_keys'][$group_id] : [];
+		
+			foreach($this->permissions_options as $key => $title)
+			{
+				$data = [
+					'p_gid'		=> $group_id,
+					'p_to'		=> $this->rules_to,
+					'p_key'		=> $key,
+					'p_value'	=> 0
+				];
+				if (!in_array($key, $permissions_keys))
+					$DBLayer->insert('user_permissions', $data);
+			}
+			
+			// Add flash message
+			$flash_message = 'Permissions updated.';
+			$FlashMessenger->add_info($flash_message);
+			redirect('', $flash_message);
+		}
+
 		// Add User Notifications
 		else if (isset($_POST['fix_notifications']))
 		{
 			$user_id = intval(key($_POST['fix_notifications']));
-			$notifications_keys = $_POST['notifications_keys'][$user_id];
+			$notifications_keys = isset($_POST['notifications_keys'][$user_id]) ? $_POST['notifications_keys'][$user_id] : [];
 		
 			foreach($this->notifications_options as $key => $title)
 			{
@@ -358,29 +451,6 @@ class SwiftSettings
 			$FlashMessenger->add_info($flash_message);
 			redirect('', $flash_message);
 		}
-
-		else if (isset($_POST['save_settings']))
-		{
-			$Config->update($_POST['form']);
-			
-			if (isset($_POST['hca_vcr_groups']) && !empty($_POST['hca_vcr_groups']))
-			{
-				foreach ($_POST['hca_vcr_groups'] as $user_id => $val)
-				{
-					$query = array(
-						'UPDATE'	=> 'users',
-						'SET'		=> 'hca_vcr_groups=\''.$DBLayer->escape($val).'\'',
-						'WHERE'		=> 'id='.$user_id
-					);
-					$DBLayer->query_build($query) or error(__FILE__, __LINE__);
-				}
-			}
-			
-			// Add flash message
-			$flash_message = 'Settings has been updated';
-			$FlashMessenger->add_info($flash_message);
-			redirect('', $flash_message);
-		}
 	}
 
 	function createRule()
@@ -404,7 +474,7 @@ class SwiftSettings
 		while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
 			$users_info[] = $fetch_assoc;
 		}
-	?>
+?>
 	
 	<form method="post" accept-charset="utf-8" action="">
 		<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
@@ -426,35 +496,35 @@ class SwiftSettings
 	
 					<?php if (!empty($this->permissions_options)) : ?>
 						<div class="form-check form-check-inline">
-							<input class="form-check-input" type="radio" name="type" id="radio2" value="2" onchange="switchSection(1)">
+							<input class="form-check-input" type="radio" name="type" id="radio2" value="2" required onchange="switchSection(1)">
 							<label class="form-check-label fw-bold" for="radio2">User permissions</label>
 						</div>
 					<?php endif; ?>
 	
 					<?php if (!empty($this->notifications_options)) : ?>
 						<div class="form-check form-check-inline">
-							<input class="form-check-input" type="radio" name="type" id="radio3" value="3" onchange="switchSection(1)">
+							<input class="form-check-input" type="radio" name="type" id="radio3" value="3" required onchange="switchSection(1)">
 							<label class="form-check-label fw-bold" for="radio3">User notifications</label>
 						</div>
 					<?php endif; ?>
 	
 					<?php if (!empty($this->access_options)) : ?>
 						<div class="form-check form-check-inline">
-							<input class="form-check-input" type="radio" name="type" id="radio4" value="4" onchange="switchSection(2)">
+							<input class="form-check-input" type="radio" name="type" id="radio4" value="4" required onchange="switchSection(2)">
 							<label class="form-check-label fw-bold" for="radio4">Group access</label>
 						</div>
 					<?php endif; ?>
 	
 					<?php if (!empty($this->permissions_options)) : ?>
 						<div class="form-check form-check-inline">
-							<input class="form-check-input" type="radio" name="type" id="radio5" value="5" onchange="switchSection(2)">
+							<input class="form-check-input" type="radio" name="type" id="radio5" value="5" required onchange="switchSection(2)">
 							<label class="form-check-label fw-bold" for="radio5">Group permissions</label>
 						</div>
 					<?php endif; ?>
 	
 					<?php if (!empty($this->notifications_options)) : ?>
 						<div class="form-check form-check-inline">
-							<input class="form-check-input" type="radio" name="type" id="radio6" value="6" onchange="switchSection(2)">
+							<input class="form-check-input" type="radio" name="type" id="radio6" value="6" required onchange="switchSection(2)">
 							<label class="form-check-label fw-bold" for="radio6">Group notifications</label>
 						</div>
 					<?php endif; ?>
@@ -571,24 +641,31 @@ class SwiftSettings
 				echo '<tr>';
 				echo '<td><h6>'.html_encode($username).'</h6></td>';
 		
-				$a = 0;
+				$i = 0;
+				$output = [];
 				foreach($this->access_options as $key => $title)
 				{
 					$cur_info = $this->get_group_access($access_info, $gid, $key);
 		
 					if (!empty($cur_info) && $cur_info['a_key'] == $key)
 					{
-						echo '<input type="hidden" name="access_keys['.$gid.'][]" value="'.$key.'">';
+						$output[] = '<input type="hidden" name="access_keys['.$gid.'][]" value="'.$key.'">';
 		
 						$checked = ($cur_info['a_value'] == 1) ? 'checked' : '';
-						echo '<td><div class="form-check form-switch"><input type="checkbox" class="form-check-input start-50" onchange="updateRules(1, '.$cur_info['id'].')" id="access_'.$cur_info['id'].'" '.$checked.'></div></td>';
+						$output[] = '<td><div class="form-check form-switch"><input type="checkbox" class="form-check-input start-50" onchange="updateRules(1, '.$cur_info['id'].')" id="access_'.$cur_info['id'].'" '.$checked.'></div></td>';
 		
-						++$a;
+						++$i;
 					}
+					else
+						$output[] = '<td><div class="form-check form-switch"><input type="checkbox" class="form-check-input start-50 bg-secondary" disabled></div></td>';
 				}
-		
-				if ($num_options > $a)
-					echo '<td><button type="submit" name="fix_group_access['.$gid.']" class="badge bg-success ms-1">Update</button></td>';
+
+				echo implode("\n", $output);
+
+				if ($this->checkExtraGroupKeys($access_info, 'a_key', $gid))
+					echo '<td><button type="submit" name="fix_extra_group_access['.$gid.']" class="badge bg-success ms-1">Fix extra</button></td>';
+				else if ($num_options > $i)
+					echo '<td><button type="submit" name="fix_group_access['.$gid.']" class="badge bg-success ms-1">Fix missing</button></td>';
 				else
 					echo '<td><button type="submit" name="delete_group_access['.$gid.']" class="badge bg-danger float-end" onclick="return confirm(\'Are you sure you want to delete all permissions for this user?\')">Delete</button></td>';
 		
@@ -656,26 +733,35 @@ class SwiftSettings
 				echo '<tr>';
 				echo '<td><h6><a href="'.$URL->link('user', $user_id).'">'.html_encode($username).'</a></h6></td>';
 
-				$a = 0;
+				$i = 0;
+				$output = [];
 				foreach($this->access_options as $key => $title)
 				{
 					$cur_info = $this->get_user_access($access_info, $user_id, $key);
 
 					if (!empty($cur_info) && $cur_info['a_key'] == $key)
 					{
-						echo '<input type="hidden" name="access_keys['.$user_id.'][]" value="'.$key.'">';
+						$output[] = '<input type="hidden" name="access_keys['.$user_id.'][]" value="'.$key.'">';
 
 						$checked = ($cur_info['a_value'] == 1) ? 'checked' : '';
-						echo '<td><div class="form-check form-switch"><input type="checkbox" class="form-check-input start-50" onchange="updateRules(1, '.$cur_info['id'].')" id="access_'.$cur_info['id'].'" '.$checked.'></div></td>';
+						$output[] = '<td><div class="form-check form-switch"><input type="checkbox" class="form-check-input start-50" onchange="updateRules(1, '.$cur_info['id'].')" id="access_'.$cur_info['id'].'" '.$checked.'></div></td>';
 
-						++$a;
+						++$i;
 					}
+					else
+						$output[] = '<td><div class="form-check form-switch"><input type="checkbox" class="form-check-input start-50 bg-secondary" disabled></div></td>';
 				}
 
-				if ($num_options > $a)
-					echo '<td><button type="submit" name="fix_access['.$user_id.']" class="badge bg-success ms-1">Update</button></td>';
+				echo implode("\n", $output);
+
+				if ($this->checkExtraUserKeys($access_info, 'a_key', $user_id))
+					echo '<td><button type="submit" name="fix_extra_access['.$user_id.']" class="badge bg-success ms-1">Fix extra</button></td>';
+				else if ($num_options > $i)
+					echo '<td><button type="submit" name="fix_missing_access['.$user_id.']" class="badge bg-success ms-1">Fix missing</button></td>';
 				else
+				{
 					echo '<td><button type="submit" name="delete_access['.$user_id.']" class="badge bg-danger float-end" onclick="return confirm(\'Are you sure you want to delete all permissions for this user?\')">Delete</button></td>';
+				}
 
 				echo '</tr>';
 			}
@@ -687,6 +773,31 @@ class SwiftSettings
 		}
 	}
 
+	// Returns TRUE if key not exists
+	// 1- array of DB, 2 - 'a_key'
+	function checkExtraUserKeys($access_info, $key, $uid)
+	{
+		foreach($access_info as $cur_info)
+		{
+			$keys = array_keys($this->access_options);
+			if (isset($cur_info[$key]) && !in_array($cur_info[$key], $keys) && $uid == $cur_info['a_uid'])
+				return true;
+		}
+		return false;
+	}
+
+	// Returns TRUE if key not exists
+	// 1- array of DB, 2 - 'a_key'
+	function checkExtraGroupKeys($access_info, $key, $gid)
+	{
+		foreach($access_info as $cur_info)
+		{
+			$keys = array_keys($this->access_options);
+			if (isset($cur_info[$key]) && !in_array($cur_info[$key], $keys) && $gid == $cur_info['a_gid'])
+				return true;
+		}
+		return false;
+	}
 
 	// Group Prms
 	function getGroupPermissions()
@@ -759,9 +870,9 @@ class SwiftSettings
 				}
 
 				if ($num_options > $a)
-					echo '<td><button type="submit" name="fix_permissions['.$id.']" class="badge bg-success ms-1">Update</button></td>';
+					echo '<td><button type="submit" name="fix_group_permissions['.$id.']" class="badge bg-success ms-1">Update</button></td>';
 				else
-					echo '<td><button type="submit" name="delete_permissions['.$id.']" class="badge bg-danger float-end" onclick="return confirm(\'Are you sure you want to delete all permissions for this user?\')">Delete</button></td>';
+					echo '<td><button type="submit" name="delete_group_permissions['.$id.']" class="badge bg-danger float-end" onclick="return confirm(\'Are you sure you want to delete all permissions for this user?\')">Delete</button></td>';
 
 				echo '</tr>';
 			}
@@ -1044,7 +1155,7 @@ class SwiftSettings
 			}
 		}
 		// Move this function in CORE & use it for json updates
-		function schowToastMessage()
+		function showToastMessage()
 		{
 			const toastLiveExample = document.getElementById('liveToast');
 			const toast = new bootstrap.Toast(toastLiveExample);
@@ -1073,17 +1184,17 @@ class SwiftSettings
 				data: ({type:type,id:id,val:val,csrf_token:csrf_token}),
 				success: function(re){
 					$("#toast_container").empty().html(re.toast_message);
-					schowToastMessage();
+					showToastMessage();
 				},
 				error: function(re){
 					var msg = '<div id="liveToast" class="toast position-fixed bottom-0 end-0 m-2" role="alert" aria-live="assertive" aria-atomic="true">';
 					msg += '<div class="toast-header toast-danger">';
-					msg += '<strong class="me-auto">Message</strong>';
+					msg += '<strong class="me-auto">Error</strong>';
 					msg += '</div>';
 					msg += '<div class="toast-body toast-danger">Failed to update settings.</div>';
 					msg += '</div>';
 					$("#toast_container").empty().html(msg);
-					schowToastMessage();
+					showToastMessage();
 				}
 			});	
 		}

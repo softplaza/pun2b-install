@@ -3,8 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access11 = ($User->checkAccess('hca_wom', 11)) ? true : false;
-if (!$access11)
+if (!$User->checkAccess('hca_wom', 5))
 	message($lang_common['No permission']);
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -52,9 +51,9 @@ if (isset($_POST['complete']))
 
 		// !!! CHECK ALL COMPLETED TASKS BEFORE SENT EMAIL
 		$wo_tasks = $HcaWOM->getWOTasks($task_info['work_order_id']);
-		$are_tasks_closed = $HcaWOM->areTasksClosed($wo_tasks);
+		$are_tasks_closed = $HcaWOM->areTasksCompleted($wo_tasks);
 
-		if (isset($task_info['requested_email']) && $are_tasks_closed)
+		if (isset($task_info['requested_email']) && $are_tasks_closed && ($Config->get('o_hca_wom_notify_managers') == 1))
 		{
 			$SwiftMailer = new SwiftMailer;
 			//$SwiftMailer->isHTML();
@@ -78,7 +77,8 @@ if (isset($_POST['complete']))
 		// Add flash message
 		$flash_message = 'Task #'.$id.' has been completed.';
 		$FlashMessenger->add_info($flash_message);
-		redirect('', $flash_message);
+		redirect($URL->genLink('hca_wom_tasks', ['section' => 'active']), $flash_message);
+		//redirect('', $flash_message);
 	}
 }
 
@@ -92,15 +92,15 @@ require SITE_ROOT.'header.php';
 		<div class="col-md-4">
 
 			<div class="card-header">
-				<h6 class="card-title mb-0">Task # <?php echo $task_info['id'] ?></h6>
-				<h6 class="card-title mb-0 hidden">Work Order #<?php echo $task_info['work_order_id'] ?></h6>
+				<h6 class="card-title mb-0">Work Order #<?php echo $task_info['work_order_id'] ?></h6>
+				<h6 class="card-title mb-0 hidden">Task #<?php echo $task_info['id'] ?></h6>
 			</div>
 
 			<div class="card">
 				<div class="card-body">
 					<div class="mb-2 d-flex justify-content-between">
 						<h5 class="mb-0"><?php echo html_encode($task_info['pro_name']) ?></h5>
-						<h5 class="mb-0">Unit: <?php echo ($task_info['unit_id'] > 0) ? html_encode($task_info['unit_number']) : 'Common area'; ?></h5>
+						<h5 class="mb-0"><?php echo ($task_info['unit_id'] > 0) ? 'Unit: '.html_encode($task_info['unit_number']) : 'Common area'; ?></h5>
 					</div>
 
 				<?php if ($task_info['task_status'] == 4): ?>
@@ -129,13 +129,10 @@ require SITE_ROOT.'header.php';
 				</div>
 			</div>
 
-<?php
-$task_action = isset($HcaWOM->task_actions[$task_info['task_action']]) ? $HcaWOM->task_actions[$task_info['task_action']] : '';
-?>
 			<div class="card">
 				<div class="card-body">
 					<div class="d-flex justify-content-between mb-2">
-						<h6 class="mb-0"><?php echo html_encode($task_info['item_name']).' ('.$task_action ?>)</h6>
+						<h6 class="mb-0"><?php echo html_encode($task_info['item_name']).' ('.html_encode($task_info['problem_name']) ?>)</h6>
 						<h6 class="mb-0">Priority: <?php echo (isset($HcaWOM->priority[$task_info['priority']]) ? $HcaWOM->priority[$task_info['priority']] : 'Low') ?></h6>
 					</div>
 
@@ -154,7 +151,7 @@ if (isset($_POST['time_start']))
 else if ($task_info['time_start'] != '00:00:00')
 	$time_start = format_date($task_info['time_start'], 'H:i');
 else
-	$time_start = date('H:i');
+	$time_start = '';//date('H:i');
 
 if (isset($_POST['time_end']))
 	$time_end = $_POST['time_end'];
@@ -163,15 +160,18 @@ else if ($task_info['time_end'] != '00:00:00')
 else
 	$time_end = '';
 ?>
+
 			<div class="card">
 				<div class="card-body">
 					<div class="input-group mb-2">
-						<span class="input-group-text w-25">Start</span>
-						<input class="form-control" type="time" name="time_start" id="fld_time_start" value="<?php echo $time_start ?>" required>
+						<div class="input-group-text w-25 px-1">Clock-In</div>
+						<input class="form-control" type="time" name="time_start" id="fld_time_start" value="<?php echo $time_start ?>" required onclick="this.showPicker()">
+						<button type="button" class="btn btn-primary hidden" onclick="setTimeNow('fld_time_start')">Now</button>
 					</div>
 					<div class="input-group">
-						<span class="input-group-text w-25">End&nbsp;</span>
-						<input class="form-control" type="time" name="time_end" id="fld_time_end" value="<?php echo $time_end ?>" required>
+						<div class="input-group-text w-25 px-1">Clock-Out</div>
+						<input class="form-control" type="time" name="time_end" id="fld_time_end" value="<?php echo $time_end ?>" required onclick="this.showPicker()">
+						<button type="button" class="btn btn-primary hidden" onclick="setTimeNow('fld_time_end')">Now</button>
 					</div>
 				</div>
 			</div>
@@ -184,7 +184,7 @@ if ($task_info['task_status'] < 4)
 	$SwiftUploader->uploadImage('hca_wom_tasks', $id);
 }
 ?>
-					<h6 class="mb-0 badge bg-primary"><?=$SwiftUploader->getUploadedImagesLink('hca_wom_tasks', $id)?></h6>
+					<h6 class="mb-0"><?=$SwiftUploader->getUploadedImagesLink('hca_wom_tasks', $id)?></h6>
 					
 				</div>
 			</div>
@@ -213,18 +213,16 @@ if ($task_info['task_status'] < 4)
 			<div class="card">
 				<div class="card-body">
 					<label class="form-label" for="fld_tech_comment">Closing comments</label>
-					<textarea type="text" name="tech_comment" class="form-control" id="fld_tech_comment" placeholder="Required if task not completed" required><?php echo (isset($_POST['tech_comment']) ? html_encode($_POST['tech_comment']) : html_encode($task_info['tech_comment'])) ?></textarea>
+					<textarea type="text" name="tech_comment" class="form-control" id="fld_tech_comment" placeholder="Required if task not completed" <?php echo ($task_info['completed'] == 0 ? ' required' : '') ?>><?php echo (isset($_POST['tech_comment']) ? html_encode($_POST['tech_comment']) : html_encode($task_info['tech_comment'])) ?></textarea>
 				</div>
 			</div>
 
 			<div class="card">
 				<div class="card-body">
-
 					<div class="d-flex justify-content-between mb-3">
 						<button type="submit" name="complete" class="btn btn-primary" <?php echo ($task_info['task_status'] == 4) ? 'disabled' : '' ?>><i class="fa-solid fa-circle-check"></i> Save and Close</button>
 						<a href="<?php echo $URL->genLink('hca_wom_tasks', ['section' => 'active']) ?>" class="btn btn-secondary text-white"><i class="fa-solid fa-circle-xmark"></i> To-Do List</a>
 					</div>
-
 				</div>
 			</div>
 
@@ -253,6 +251,17 @@ if ($task_info['task_status'] < 4)
 </div>
 
 <script>
+function setTimeNow(id){
+	var date = new Date();
+
+    hour = date.getHours();
+    min  = date.getMinutes();  
+	
+	h = (hour < 10 ? "0" : "") + hour;
+	m = (min < 10 ? "0" : "") + min;
+
+	$('#'+id).val(h+':'+m);
+}
 function checkCompletion(){
 	if(document.getElementById('fld_completed').checked) {
 		$("#fld_tech_comment").prop('required', false);

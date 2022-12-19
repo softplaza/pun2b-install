@@ -73,7 +73,7 @@ class Templator
 
 		$this->tpl_main = file_get_contents($this->tpl_path);
 
-		if (PAGE_ID == 'print')
+		//if (PAGE_ID == 'print')
 			$Loader->add_css(BASE_URL.'/style/print.css?v='.time(), array('type' => 'url', 'group' => SPM_CSS_GROUP_SYSTEM, 'media' => 'print'));
 	}
 

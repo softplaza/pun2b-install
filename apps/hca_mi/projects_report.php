@@ -151,8 +151,6 @@ if (!empty($search_query))
 
 	while ($row = $DBLayer->fetch_assoc($result))
 	{
-		$row['unit_number'] = ($row['unit_number'] != '') ? $row['unit_number'] : $row['unit'];
-
 		$projects_info[] = $row;
 		$projects_ids[] = $row['id'];
 	}
@@ -369,7 +367,10 @@ if (!empty($projects_info))
 			$td = $page_param['td'] = [];
 
 			$td['property_info']['pro_name'] = '<p>'.html_encode($cur_info['pro_name']).'</p>';
-			$td['property_info'][] = !empty($cur_info['unit_number'])? '<p>Unit: '.html_encode($cur_info['unit_number']).'</p>' : '';
+			
+			$cur_info['unit_number'] = ($cur_info['unit_number'] != '') ? '<p>Unit: '.html_encode($cur_info['unit_number']).'</p>' : '<p class="text-danger">'.html_encode($cur_info['unit']).'</p>';
+			$td['property_info'][] = $cur_info['unit_number'];
+
 			$td['property_info'][] = '<p>'.str_replace(',', ', ', $cur_info['location']).'</p>';
 			
 			$page_param['td']['mois_report_date'] = format_time($cur_info['mois_report_date'], 1);

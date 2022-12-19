@@ -3,8 +3,11 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access4 = ($User->checkAccess('hca_wom', 4)) ? true : false;
-$access15 = ($User->checkAccess('hca_wom', 15)) ? true : false;
+if (!$User->checkAccess('hca_wom', 3))
+	message($lang_common['No permission']);
+
+$perms8 = ($User->checkPermissions('hca_wom', 8)) ? true : false;
+$perms9 = ($User->checkPermissions('hca_wom', 9)) ? true : false;
 
 $search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
 
@@ -98,7 +101,7 @@ $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $PagesNavigator->set_total($DBLayer->result($result));
 
 $query = [
-	'SELECT'	=> 't.*, w.priority, w.property_id, p.pro_name, pu.unit_number, u1.realname AS requested_name, u1.email AS requested_email, i.item_name', // u1.realname AS assigned_name, u1.email AS assigned_email,
+	'SELECT'	=> 't.*, w.priority, w.property_id, p.pro_name, pu.unit_number, u1.realname AS requested_name, u1.email AS requested_email, i.item_name, pb.problem_name', // u1.realname AS assigned_name, u1.email AS assigned_email,
 	'FROM'		=> 'hca_wom_tasks AS t',
 	'JOINS'		=> [
 		[
@@ -120,6 +123,10 @@ $query = [
 		[
 			'LEFT JOIN'		=> 'hca_wom_items AS i',
 			'ON'			=> 'i.id=t.item_id'
+		],
+		[
+			'LEFT JOIN'		=> 'hca_wom_problems AS pb',
+			'ON'			=> 'pb.id=t.task_action'
 		],
 	],
 	'LIMIT'		=> $PagesNavigator->limit(),
@@ -217,7 +224,7 @@ if (!empty($hca_wom_tasks))
 
 		$task_title = [];
 		$task_title[] = '<span class="fw-bold">'.html_encode($cur_info['item_name']).'</span>';
-		$task_title[] = isset($HcaWOM->task_actions[$cur_info['task_action']]) ? ' (<span class="">'.$HcaWOM->task_actions[$cur_info['task_action']].'</span>)' : '';
+		$task_title[] = '<span class="">('.html_encode($cur_info['problem_name']).')</span>';
 
 		if ($property_id != $cur_info['property_id'])
 		{
@@ -233,8 +240,10 @@ if (!empty($hca_wom_tasks))
 				<td class="min-100 ta-center"><?php echo html_encode($cur_info['requested_name']) ?></td>
 				<td class="min-100 ta-center"><?php echo format_time($cur_info['time_created'], 1) ?></td>
 				<td class="ta-center">
-<?php if ($access4) : ?>
+<?php if ($perms8) : ?>
 					<button type="submit" name="approve_task[<?=$cur_info['id']?>]" class="badge bg-success">Approve</button>
+<?php endif; ?>
+<?php if ($perms9) : ?>
 					<button type="submit" name="reject_task[<?=$cur_info['id']?>]" class="badge bg-danger" onclick="return confirm('Are you sure you want to reject it?')">Reject</button>
 <?php endif; ?>
 				</td>

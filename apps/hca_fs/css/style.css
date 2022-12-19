@@ -153,7 +153,7 @@
 /* weekly_shedule.php */
 #weekly_schedule .day-off{display: block;text-align: center;padding: 0.6em 0;font-size: 14px;}
 #weekly_schedule table{table-layout:initial;}
-#weekly_schedule thead th {padding: 4px !important;border: 1px solid #adafc7;background: #c0e6fc;text-align: center;text-transform: uppercase;}
+#weekly_schedule thead th {text-transform: uppercase;}
 #weekly_schedule tbody td {padding: 2px;}
 #weekly_schedule td p {padding: 0;}
 #weekly_schedule .th-tr1 th{position: -webkit-sticky;position: sticky;top: 0;z-index: 200;height: 25px;}

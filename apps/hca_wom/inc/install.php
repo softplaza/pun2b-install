@@ -12,7 +12,7 @@ $schema = array(
 		'template_type'			=> $DBLayer->dt_int('TINYINT(1)'),
 		'enter_permission'		=> $DBLayer->dt_int('TINYINT(1)'),
 		'has_animal'			=> $DBLayer->dt_int('TINYINT(1)'),
-		'wo_status'				=> $DBLayer->dt_int('TINYINT(1)'),//??
+		'wo_status'				=> $DBLayer->dt_int('TINYINT(1)'),
 		'requested_by'			=> $DBLayer->dt_int(),
 		'created_by'			=> $DBLayer->dt_int(),
 		'dt_created'			=> $DBLayer->dt_datetime(),
@@ -56,6 +56,25 @@ $schema = [
 ];
 $DBLayer->create_table('hca_wom_tasks', $schema);
 
+// Management
+$schema = [
+	'FIELDS'		=> [
+		'id'					=> $DBLayer->dt_serial(),
+		'type_name'				=> $DBLayer->dt_varchar(),
+	],
+	'PRIMARY KEY'	=> ['id']
+];
+$DBLayer->create_table('hca_wom_types', $schema);
+
+$schema = [
+	'FIELDS'		=> [
+		'id'					=> $DBLayer->dt_serial(),
+		'problem_name'			=> $DBLayer->dt_varchar(),
+	],
+	'PRIMARY KEY'	=> ['id']
+];
+$DBLayer->create_table('hca_wom_problems', $schema);
+
 $schema = [
 	'FIELDS'		=> [
 		'id'					=> $DBLayer->dt_serial(),
@@ -70,6 +89,37 @@ $DBLayer->create_table('hca_wom_items', $schema);
 
 $schema = [
 	'FIELDS'		=> [
+		'id'					=> $DBLayer->dt_serial(),
+		'property_id'			=> $DBLayer->dt_int(),
+		'template_type'			=> $DBLayer->dt_int('TINYINT(1)'),
+		'tpl_name'				=> $DBLayer->dt_varchar(),
+		'priority'				=> $DBLayer->dt_int('TINYINT(1)'),
+		'enter_permission'		=> $DBLayer->dt_int('TINYINT(1)'),
+		'has_animal'			=> $DBLayer->dt_int('TINYINT(1)'),
+		'wo_message'			=> $DBLayer->dt_varchar(),
+		'created'				=> $DBLayer->dt_int(),
+		'created_by'			=> $DBLayer->dt_int(),
+		'updated'				=> $DBLayer->dt_int(),
+		'updated_by'			=> $DBLayer->dt_int(),
+	],
+	'PRIMARY KEY'	=> ['id']
+];
+$DBLayer->create_table('hca_wom_tpl_wo', $schema);
+
+$schema = [
+	'FIELDS'		=> [
+		'id'					=> $DBLayer->dt_serial(),
+		'tpl_id'				=> $DBLayer->dt_int(),
+		'item_id'				=> $DBLayer->dt_int(),
+		'task_action'			=> $DBLayer->dt_int('TINYINT(3)'),
+		'task_message'			=> $DBLayer->dt_varchar(),
+	],
+	'PRIMARY KEY'	=> ['id']
+];
+$DBLayer->create_table('hca_wom_tpl_tasks', $schema);
+
+$schema = [
+	'FIELDS'		=> [
 		'id'						=> $DBLayer->dt_serial(),
 		'wo_id'						=> $DBLayer->dt_int(),
 		'task_id'					=> $DBLayer->dt_int(),
@@ -80,3 +130,6 @@ $schema = [
 	'PRIMARY KEY'	=> ['id']
 ];
 $DBLayer->create_table('hca_wom_actions', $schema);
+
+config_add('o_hca_wom_notify_technician', '0');
+config_add('o_hca_wom_notify_managers', '0');

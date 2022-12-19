@@ -6558,8 +6558,11 @@ class Mpdf implements \Psr\Log\LoggerAwareInterface
 			$lastfontreqstyle = (isset($font[count($font) - 1]['ReqFontStyle']) ? $font[count($font) - 1]['ReqFontStyle'] : '');
 			$lastfontstyle = (isset($font[count($font) - 1]['style']) ? $font[count($font) - 1]['style'] : '');
 		} else {
-			$lastfontreqstyle = null; // php > 8.1 got error
-			$lastfontstyle = null; // php > 8.1 got error
+			$lastfontreqstyle = null; 
+			$lastfontstyle = null; 
+
+			$lastfontreqstyle = !empty($lastfontreqstyle) ? $lastfontreqstyle : ''; // added to support php > 8.1
+			$lastfontstyle = !empty($lastfontstyle) ? $lastfontstyle : ''; // added to support php > 8.1
 		}
 		if ($blockdir == 'ltr' && strpos($lastfontreqstyle, "I") !== false && strpos($lastfontstyle, "I") === false) { // Artificial italic
 			$lastitalic = $this->FontSize * 0.15 * Mpdf::SCALE;
