@@ -3,8 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 3)) ? true : false;
-if (!$access)
+if (!$User->checkAccess('hca_mi'))
 	message($lang_common['No permission']);
 
 $HcaMi = new HcaMi;
@@ -21,7 +20,6 @@ $PagesNavigator->set_total($DBLayer->result($result));
 $query = array(
 	'SELECT'	=> 'f.*, pj.unit_number, pj.location, pj.leak_type, pj.symptom_type, pj.symptoms, pj.mois_source, pj.action, pj.remarks, p.pro_name',
 	'FROM'		=> 'hca_5840_forms AS f',
-	'WHERE'		=> 'f.mailed_time>0 AND f.submited_time=0',
 	'JOINS'		=> [
 		[
 			'INNER JOIN'	=> 'hca_5840_projects AS pj',
@@ -36,7 +34,7 @@ $query = array(
 			'ON'			=> 'u1.id=pj.performed_uid'
 		],
 	],
-
+	'WHERE'		=> 'f.mailed_time>0 AND f.submited_time=0',
 	'ORDER BY'	=> 'f.mailed_time DESC',
 	'LIMIT'		=> $PagesNavigator->limit(),
 );
@@ -49,9 +47,15 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 $PagesNavigator->num_items($forms_info);
 
 //$Core->set_page_title('Sent forms');
-$Core->set_page_id('hca_5840_forms_mailed', 'hca_5840');
+$Core->set_page_id('hca_mi_forms_mailed', 'hca_mi');
 require SITE_ROOT.'header.php';
+?>
 
+<div class="card-header">
+	<h6 class="card-title mb-0">Not confirmed forms of Property Managers</h6>
+</div>
+
+<?php
 if (!empty($forms_info))
 {
 ?>
@@ -100,7 +104,7 @@ if (!empty($forms_info))
 					<p><?php echo $cur_info['msg_from_manager'] ?></p>
 				</td>
 				<td class="">
-					<p style="color:red">Waiting for manager confirmation</p>
+					<p class="text-danger"><a href="<?php echo $URL->link('hca_5840_form', [$cur_info['id'], $cur_info['link_hash']]) ?>">Waiting for manager confirmation</a></p>
 				</td>
 			</tr>
 <?php

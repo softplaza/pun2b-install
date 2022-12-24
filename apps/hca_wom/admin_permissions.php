@@ -23,7 +23,7 @@ $SwiftSettings->addPermissionOption(9, 'Reject suggested');
 
 $SwiftSettings->POST();
 
-$Core->set_page_id('hca_wom_admin_permissions', 'hca_wom');
+$Core->set_page_id('hca_wom_admin_permissions', 'hca_fs');
 require SITE_ROOT.'header.php';
 
 if ($User->is_admmod())

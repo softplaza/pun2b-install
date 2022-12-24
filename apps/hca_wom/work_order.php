@@ -125,7 +125,7 @@ else if (isset($_POST['add_task']))
 		// Get old data
 
 
-		// Update task of Work Order
+		// Create task of Work Order
 		$new_tid = $DBLayer->insert_values('hca_wom_tasks', $form_data);
 
 		$query = array(
@@ -393,7 +393,7 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 $SwiftMenu->addNavAction('<li><a class="dropdown-item" href="'.$URL->genLink('hca_wom_print', ['section' => 
 'work_order', 'id' => $id]).'" target="_blank"><i class="fas fa-file-pdf fa-1x" aria-hidden="true"></i> Print as PDF</a></li>');
 
-$Core->set_page_id('hca_wom_work_order', 'hca_wom');
+$Core->set_page_id('hca_wom_work_order', 'hca_fs');
 require SITE_ROOT.'header.php';
 
 $query = [
@@ -462,6 +462,8 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	<div class="card mb-3">
 		<div class="card-header d-flex justify-content-between">
 			<h6 class="card-title mb-0">Work Order #<?php echo $wo_info['id'] ?></h6>
+			<h6 class="card-title mb-0"><a href="<?=$URL->genLink('hca_wom_print', ['section' => 
+'work_order', 'id' => $id])?>" target="_blank" class="text-white"><i class="fas fa-file-pdf"></i> Print WO</a></h6>
 		</div>
 		<div class="card-body">
 
@@ -535,10 +537,11 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	</div>
 
 
-<div class="card-header d-flex justify-content-between">
-	<h6 class="card-title mb-0">Tasks</h6>
+<div class="card-header">
 <?php if ($access7): ?>
 	<span class="badge bg-primary" role="button" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="manageTask(0)"><i class="fas fa-plus"></i> new task</span>
+<?php else: ?>
+	<h6 class="card-title mb-0">Tasks</h6>
 <?php endif; ?>
 </div>
 <?php
@@ -554,9 +557,9 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 			<th>Action</th>
 			<th>Details</th>
 			<th>Assigned to</th>
+			<th>Completion Date & Time</th>
 			<th>Closing Comments</th>
 			<th>Status</th>
-			<th></th>
 		</tr>
 	</thead>
 	<tbody>
@@ -579,18 +582,28 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 			else if ($cur_info['task_status'] == 0)
 				$task_status = '<span class="badge badge-danger">Canceled</span>';
 
+			$start = ($cur_info['time_start'] != '00:00:00' ? format_date($cur_info['time_start'], 'H:i') : '');
+			$end   = ($cur_info['time_end'] != '00:00:00' ? format_date($cur_info['time_end'], 'H:i') : '');
+			$interval = (($start != '' && $end != '') ? $start.' - '.$end : '');
+
 			$edit = ($access7) ? '<span class="badge bg-primary" role="button" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="manageTask('.$cur_info['id'].')"><i class="fas fa-edit"></i> edit</span>' : '';
 ?>
 		<tr>
-			<td class="ta-center">#<?=$cur_info['id']?></td>
+			<td class="ta-center">
+				<p>#<?=$cur_info['id']?></p>
+				<p><?php echo $edit ?></p>
+			</td>
 			<td class="min-100 ta-center"><?php echo html_encode($cur_info['type_name']) ?></td>
 			<td class="min-100 ta-center"><?php echo html_encode($cur_info['item_name']) ?></td>
 			<td class="min-100 ta-center"><?php echo html_encode($cur_info['problem_name']) ?></td>
 			<td class="min-100"><?php echo html_encode($cur_info['task_message']) ?></td>
 			<td class="min-100 ta-center"><?php echo html_encode($cur_info['assigned_name']) ?></td>
+			<td class="min-100 ta-center">
+				<p><?php echo format_date($cur_info['dt_completed'], 'm/d/Y') ?></p>
+				<p><?php echo $interval ?></p>
+			</td>
 			<td class="min-100"><?php echo html_encode($cur_info['tech_comment']) ?></td>
 			<td class="min-100 ta-center"><?php echo $task_status ?></td>
-			<td class="min-100 ta-center"><?php echo $edit ?></td>
 		</tr>
 <?php
 		++$i;

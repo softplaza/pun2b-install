@@ -3,8 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access20 = ($User->checkAccess('hca_mi', 2)) ? true : false;
-if (!$access20)
+if (!$User->checkAccess('hca_mi'))
 	message($lang_common['No permission']);
 
 $HcaMiPropertyReport = new HcaMiPropertyReport;
@@ -18,7 +17,7 @@ $Loader->add_js(BASE_URL.'/vendor/KBmapMarkers/js/KBmapmarkers.js?'.time(), arra
 $Loader->add_js(BASE_URL.'/vendor/KBmapMarkers/js/KBmapmarkersCords.js?'.time(), array('type' => 'url', 'async' => false, 'group' => 100 , 'weight' => 75));
 $Loader->add_css(BASE_URL.'/vendor/KBmapMarkers/css/KBmapmarkers.css?'.time());
 
-$Core->set_page_id('hca_5840_projects_report', 'hca_5840');
+$Core->set_page_id('hca_mi_projects_report', 'hca_mi');
 require SITE_ROOT.'header.php';
 
 if ($search_by_property_id == 0)

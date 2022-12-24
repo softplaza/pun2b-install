@@ -59,14 +59,14 @@ class Hca5840Chart
 	];
 
 	public $symptoms_colors = [
-		0 => 'window.theme.primary',
+		0 => 'window.theme.danger',
 		1 => 'window.theme.warning',
 		2 => 'window.theme.info',
-		3 => 'window.theme.success',
+		3 => 'window.theme.primary',
 		4 => 'window.theme.secondary',
-		5 => 'window.theme.danger',
-		6 => 'window.theme.light',
-		7 => 'window.theme.dark',
+		5 => 'window.theme.light',
+		6 => 'window.theme.dark',
+		7 => 'window.theme.success',
 	];
 
 	function __construct(){}
@@ -172,6 +172,8 @@ class Hca5840Chart
 
 	function addSoM($key)
 	{
+		//global $HcaMi;
+		//foreach($HcaMi->leak_types as $id => $title)
 		foreach($this->leak_types as $id => $title)
 		{
 			if ($key == $id)

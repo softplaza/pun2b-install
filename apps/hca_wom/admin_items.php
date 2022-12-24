@@ -150,7 +150,7 @@ else if (isset($_POST['delete']))
 
 if ($id > 0)
 {
-	$Core->set_page_id('hca_wom_admin_items', 'hca_wom');
+	$Core->set_page_id('hca_wom_admin_items', 'hca_fs');
 	require SITE_ROOT.'header.php';
 
 	$query = array(
@@ -256,7 +256,7 @@ foreach($hca_wom_problems as $key => $value)
 	require SITE_ROOT.'footer.php';
 }
 
-$Core->set_page_id('hca_wom_admin_items', 'hca_wom');
+$Core->set_page_id('hca_wom_admin_items', 'hca_fs');
 require SITE_ROOT.'header.php';
 ?>
 

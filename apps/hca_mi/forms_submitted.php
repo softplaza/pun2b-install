@@ -3,11 +3,10 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 3)) ? true : false;
-if (!$access)
+if (!$User->checkAccess('hca_mi'))
 	message($lang_common['No permission']);
 
-$errors = array();
+$HcaMi = new HcaMi;
 
 if (isset($_POST['approve']))
 {
@@ -24,6 +23,8 @@ if (isset($_POST['approve']))
 	$DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	
 	$flash_message = 'Form has been confirmed by manager of project: '.$User->get('realname');
+	//$HcaMi->addAction($id, $flash_message); // required project id
+
 	$FlashMessenger->add_info($flash_message);
 	redirect('', $flash_message);
 }
@@ -68,26 +69,21 @@ if (!empty($projects_ids))
 }
 
 //$Core->set_page_title('Submitted forms');
-$Core->set_page_id('hca_5840_forms_submitted', 'hca_5840');
+$Core->set_page_id('hca_mi_forms_submitted', 'hca_mi');
 require SITE_ROOT.'header.php';
 ?>
 
-<style>
-tbody td {padding: 1px 10px !important;}
-.info{vertical-align:top;}
-.comment{width:15%;min-width:170px;vertical-align:top;}
-.button{text-align: center;width: 10%;}
-.time{color: gray;font-style: italic;font-size: smaller;text-decoration: underline;}
-</style>
-	
-<div class="main-content main-frm">
+<div class="card-header">
+	<h6 class="card-title mb-0">Completed forms of Property Managers</h6>
+</div>
+
 <?php
 if (!empty($forms_info))
 {
 ?>
 	<form method="post" accept-charset="utf-8" action="">
 		<div class="hidden">
-			<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
+			<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 		</div>
 		<table class="table table-striped table-bordered">
 			<thead class="new-msgs">
@@ -128,7 +124,8 @@ if (!empty($forms_info))
 						<span class="time"><?php echo format_time($cur_info['submited_time']) ?>:</span>
 						<p><?php echo $cur_info['msg_from_manager'] ?></p>
 					</td>
-					<td class="button"><span class="submit primary"><input type="submit" name="approve[<?php echo $cur_info['id']; ?>]" value="Ok" onclick="return confirm('Are you sure you want to mark this message as confirmed?')"></span>
+					<td class="button">
+						<span class="submit primary"><input type="submit" name="approve[<?php echo $cur_info['id']; ?>]" value="Ok" onclick="return confirm('Are you sure you want to mark this message as confirmed?')"></span>
 					</td>
 				</tr>
 <?php

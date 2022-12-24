@@ -3,9 +3,10 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 2)) ? true : false;
-if (!$access)
+if (!$User->checkAccess('hca_mi'))
 	message($lang_common['No permission']);
+
+$permission2 = ($User->checkPermissions('hca_mi', 2)) ? true : false; // view
 
 $SwiftUploader = new SwiftUploader;
 $Moisture = new Moisture;
@@ -141,11 +142,12 @@ $query = array(
 		],
 	],
 	'ORDER BY'	=> 'p.pro_name, LENGTH(pj.unit_number)',
-	'WHERE'		=> 'job_status!=0',
+	//'WHERE'		=> 'job_status!=0',
 //		'LIMIT'		=> $PagesNavigator->limit(),
 );
 if (!empty($search_query))
 {
+	$search_query[] = '(pj.job_status=1 OR pj.job_status=3)'; // in-progress OR completed
 	$query['WHERE'] = implode(' AND ', $search_query);
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 
@@ -180,7 +182,7 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	$property_info[] = $row;
 }
 
-$Core->set_page_id('hca_5840_projects_report', 'hca_5840');
+$Core->set_page_id('hca_mi_projects_report', 'hca_mi');
 require SITE_ROOT.'header.php';
 ?>
 
@@ -285,7 +287,7 @@ if (!empty($projects_info))
 
 <div class="card">
 	<div class="card-header">
-		<h6 class="card-title mb-0">Months</h6>
+		<h6 class="card-title mb-0">Number of Projects per Month</h6>
 	</div>
 	<div class="card-body py-3">
 		<div class="chart chart-sm">
@@ -295,7 +297,7 @@ if (!empty($projects_info))
 </div>
 <div class="card">
 	<div class="card-header">
-		<h6 class="card-title mb-0">Properties</h6>
+		<h6 class="card-title mb-0">Number of Projects per Property</h6>
 	</div>
 	<div class="card-body py-3">
 		<div class="chart chart-sm">
@@ -305,7 +307,7 @@ if (!empty($projects_info))
 </div>
 <div class="card">
 	<div class="card-header">
-		<h6 class="card-title mb-0">Source of moisture & Symptoms</h6>
+		<h6 class="card-title mb-0">Source of moisture & Symptoms (The total number of symptoms in all projects)</h6>
 	</div>
 	<div class="card-body py-3">
 		<div class="chart chart-sm">
@@ -326,7 +328,7 @@ if (!empty($projects_info))
 			<tr>
 				<th class="th1">Property/Unit#</th>
 				<th>Date Reported</th>
-				<th>Move-Out Date</th>
+				<th>Move Out Date</th>
 				<th>Date of inspection</th>
 				<th>Source of moisture</th>
 				<th>Symptoms</th>
@@ -339,10 +341,10 @@ if (!empty($projects_info))
 <?php
 	$time_now = time();
 	$job_titles = [
-		1 => '<span class="badge bg-warning">IN PROGRESS</span>', 
-		2 => '<span class="badge bg-secondary">ON HOLD</span>', 
-		3 => '<span class="badge bg-success">COMPLETED</span>', 
-		0 => '<span class="badge bg-danger">DELETED</span>'
+		1 => '<span class="badge badge-warning">IN PROGRESS</span>', 
+		2 => '<span class="badge badge-secondary">ON HOLD</span>', 
+		3 => '<span class="badge badge-success">COMPLETED</span>', 
+		0 => '<span class="badge badge-danger">REMOVED</span>'
 	];
 
 	if (!empty($projects_ids))
@@ -388,7 +390,7 @@ if (!empty($projects_info))
 
 			$td['property_info'][] = ($User->checkAccess('hca_mi', 14) && in_array($cur_info['id'], $uploader_info)) ? '<a href="'.$URL->link('hca_5840_manage_files', $cur_info['id']).'" class="btn btn-sm btn-success text-white">Files</a>' : '';
 
-			if ($access)
+			if ($permission2)
 			{
 				if ($User->checkAccess('hca_mi', 12))
 					$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_project', $cur_info['id']).'"><i class="fas fa-edit"></i> Edit project</a>');
@@ -511,7 +513,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		data: {
 			labels: [<?php echo implode(', ', $monthly_names) ?>],
 			datasets: [{
-				label: "Cases",
+				label: "Projects",
 				fill: true,
 				backgroundColor: gradient,
 				borderColor: window.theme.primary,
@@ -573,11 +575,11 @@ document.addEventListener("DOMContentLoaded", function() {
 		data: {
 			labels: [<?php echo implode(', ', $property_names) ?>],
 			datasets: [{
-				label: "Cases",
-				backgroundColor: window.theme.primary,
-				borderColor: window.theme.primary,
-				hoverBackgroundColor: window.theme.primary,
-				hoverBorderColor: window.theme.primary,
+				label: "Projects",
+				backgroundColor: window.theme.info,
+				borderColor: window.theme.info,
+				hoverBackgroundColor: window.theme.info,
+				hoverBorderColor: window.theme.info,
 				data: [<?php echo implode(', ', $property_counters) ?>],
 				barPercentage: .75,
 				categoryPercentage: .5
@@ -634,6 +636,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		type: "bar",
 		data: {
 			labels: [<?php echo implode(', ', $symptom_names) ?>],
+
 			datasets: [{
 				data: [<?php echo implode(', ', $symptom_counters) ?>],
 				backgroundColor: [
@@ -647,6 +650,7 @@ foreach($Hca5840Chart->symptoms_colors as $key => $color){
 			}]
 		},
 		options: {
+			//indexAxis: 'y',
 			responsive: !window.MSInputMethodContext,
 			maintainAspectRatio: false,
 			legend: {
@@ -685,6 +689,7 @@ foreach($Hca5840Chart->symptoms_colors as $key => $color){
 					});               
 				}
 			}
+
 		}
 	});
 });

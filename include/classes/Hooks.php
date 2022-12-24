@@ -8,7 +8,7 @@
 class Hooks
 {
 	private $apps_path = SITE_ROOT.'apps';
-	private $apps_info = [];
+	var $apps_info = [];
 	private $hooks_used = [];
 	private $hooks_unused = [];
 	private $hooks_all = [];

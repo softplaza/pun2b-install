@@ -102,7 +102,7 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	$hca_wom_items[] = $row;
 }
 
-$Core->set_page_id('hca_wom_work_order_suggest', 'hca_wom');
+$Core->set_page_id('hca_wom_work_order_suggest', 'hca_fs');
 require SITE_ROOT.'header.php';
 ?>
 

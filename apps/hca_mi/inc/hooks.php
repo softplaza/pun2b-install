@@ -18,6 +18,7 @@ function hca_mi_co_modify_url_scheme()
     $urls['hca_5840_manage_files'] = 'apps/'.$app_id.'/manage_files.php?id=$1';
     $urls['hca_5840_manage_invoice'] = 'apps/'.$app_id.'/manage_invoice.php?id=$1';
     $urls['hca_5840_manage_appendixb'] = 'apps/'.$app_id.'/manage_appendixb.php?id=$1';
+    $urls['hca_mi_project_tracking'] = 'apps/'.$app_id.'/project_tracking.php?id=$1';
     
     $urls['hca_5840_form'] = 'apps/'.$app_id.'/form.php?id=$1&hash=$2';
     $urls['hca_5840_forms_mailed'] = 'apps/'.$app_id.'/forms_mailed.php';
@@ -25,7 +26,7 @@ function hca_mi_co_modify_url_scheme()
     $urls['hca_5840_forms_confirmed'] = 'apps/'.$app_id.'/forms_confirmed.php';
     
     // Admin
-    $urls['hca_5840_settings'] = 'apps/'.$app_id.'/settings.php';
+    $urls['hca_5840_admin_settings'] = 'apps/'.$app_id.'/admin_settings.php';
     $urls['hca_5840_admin_vendors'] = 'apps/'.$app_id.'/admin_vendors.php';
     $urls['hca_5840_admin_access'] = 'apps/'.$app_id.'/admin_access.php';
     $urls['hca_5840_admin_permissions'] = 'apps/'.$app_id.'/admin_permissions.php';
@@ -52,63 +53,67 @@ function hca_mi_IncludeCommon()
     if ($User->checkAccess('hca_mi'))
         $SwiftMenu->addItem(['title' => 'Moisture Inspections', 'link' => '#', 'id' => 'hca_mi', 'icon' => '<i class="fas fa-tint-slash"></i>', 'level' => 12]);
 
-    if ($User->checkAccess('hca_mi', 11))
-        $SwiftMenu->addItem(['title' => '+ New Project', 'link' => $URL->link('hca_5840_new_project'), 'id' => 'hca_5840_new_project', 'parent_id' => 'hca_mi', 'level' => 1]);
+    if ($User->checkPermissions('hca_mi', 2))
+        $SwiftMenu->addItem(['title' => '+ New Project', 'link' => $URL->link('hca_5840_new_project'), 'id' => 'hca_mi_new_project', 'parent_id' => 'hca_mi', 'level' => 1]);
 
-    if ($User->checkAccess('hca_mi', 1))
+    if ($User->checkAccess('hca_mi', 4))
     {
-        $SwiftMenu->addItem(['title' => 'Projects', 'link' => $URL->link('hca_5840_projects', ['active', 0]), 'id' => 'hca_5840_projects', 'parent_id' => 'hca_mi', 'level' => 2]);
-        $SwiftMenu->addItem(['title' => 'In progress', 'link' => $URL->link('hca_5840_projects', ['active', 0]), 'id' => 'hca_5840_projects_active', 'parent_id' => 'hca_5840_projects']);
-        $SwiftMenu->addItem(['title' => 'On Hold', 'link' => $URL->link('hca_5840_projects', ['on_hold', 0]), 'id' => 'hca_5840_projects_on_hold', 'parent_id' => 'hca_5840_projects']);
-        $SwiftMenu->addItem(['title' => 'Completed', 'link' => $URL->link('hca_5840_projects', ['completed', 0]), 'id' => 'hca_5840_projects_completed', 'parent_id' => 'hca_5840_projects']);
+        $SwiftMenu->addItem(['title' => 'Projects', 'link' => $URL->link('hca_5840_projects', ['active', 0]), 'id' => 'hca_mi_projects', 'parent_id' => 'hca_mi', 'level' => 2]);
+        
+        $SwiftMenu->addItem(['title' => 'In-Progress', 'link' => $URL->link('hca_5840_projects', ['active', 0]), 'id' => 'hca_mi_projects_active', 'parent_id' => 'hca_mi_projects']);
+        $SwiftMenu->addItem(['title' => 'On Hold', 'link' => $URL->link('hca_5840_projects', ['on_hold', 0]), 'id' => 'hca_mi_projects_on_hold', 'parent_id' => 'hca_mi_projects']);
+        $SwiftMenu->addItem(['title' => 'Completed', 'link' => $URL->link('hca_5840_projects', ['completed', 0]), 'id' => 'hca_mi_projects_completed', 'parent_id' => 'hca_mi_projects']);
     }
 
-    if ($User->checkAccess('hca_mi', 2))
-    {
-        $SwiftMenu->addItem(['title' => 'Report', 'link' => $URL->link('hca_5840_projects_report', 'view'), 'id' => 'hca_5840_projects_report', 'parent_id' => 'hca_mi', 'level' => 3]);
+    if ($User->checkAccess('hca_mi', 5))
+        $SwiftMenu->addItem(['title' => 'Report', 'link' => $URL->link('hca_5840_projects_report', 'view'), 'id' => 'hca_mi_projects_report', 'parent_id' => 'hca_mi', 'level' => 3]);
 
+    if ($User->checkAccess('hca_mi', 6))
         $SwiftMenu->addItem(['title' => 'Property Report', 'link' => $URL->link('hca_mi_property_report'), 'id' => 'hca_mi_property_report', 'parent_id' => 'hca_mi', 'level' => 3]);
-    }
-
-    if ($User->checkAccess('hca_mi', 3))
+    
+    if ($User->checkAccess('hca_mi', 7))
     {
-        $SwiftMenu->addItem(['title' => 'Messages', 'link' => $URL->link('hca_5840_forms_submitted'), 'id' => 'hca_5840_forms', 'parent_id' => 'hca_mi', 'level' => 4]);
-        $SwiftMenu->addItem(['title' => 'Sent', 'link' => $URL->link('hca_5840_forms_mailed'), 'id' => 'hca_5840_forms_mailed', 'parent_id' => 'hca_5840_forms']);
-        $SwiftMenu->addItem(['title' => 'Submitted', 'link' => $URL->link('hca_5840_forms_submitted'), 'id' => 'hca_5840_forms_submitted', 'parent_id' => 'hca_5840_forms']);
-        $SwiftMenu->addItem(['title' => 'Completed', 'link' => $URL->link('hca_5840_forms_confirmed'), 'id' => 'hca_5840_forms_confirmed', 'parent_id' => 'hca_5840_forms']);
+        $SwiftMenu->addItem(['title' => 'Messages', 'link' => $URL->link('hca_5840_forms_submitted'), 'id' => 'hca_mi_forms', 'parent_id' => 'hca_mi', 'level' => 4]);
+        $SwiftMenu->addItem(['title' => 'Sent', 'link' => $URL->link('hca_5840_forms_mailed'), 'id' => 'hca_mi_forms_mailed', 'parent_id' => 'hca_mi_forms']);
+        $SwiftMenu->addItem(['title' => 'Submitted', 'link' => $URL->link('hca_5840_forms_submitted'), 'id' => 'hca_mi_forms_submitted', 'parent_id' => 'hca_mi_forms']);
+        $SwiftMenu->addItem(['title' => 'Completed', 'link' => $URL->link('hca_5840_forms_confirmed'), 'id' => 'hca_mi_forms_confirmed', 'parent_id' => 'hca_mi_forms']);
     }
 
     if ($id > 0)
     {
-        $SwiftMenu->addItem(['title' => 'Project Management', 'link' => '#', 'id' => 'hca_5840_management', 'parent_id' => 'hca_mi', 'level' => 5]);
-        if ($User->checkAccess('hca_mi', 12))
-            $SwiftMenu->addItem(['title' => 'Edit Project', 'link' => $URL->link('hca_5840_manage_project', $id), 'id' => 'hca_5840_manage_project', 'parent_id' => 'hca_5840_management']);
-        //if ($User->checkAccess('hca_mi', 13))
-        //    $SwiftMenu->addItem(['title' => 'Edit Invoice', 'link' => $URL->link('hca_5840_manage_invoice', $id), 'id' => 'hca_5840_manage_invoice', 'parent_id' => 'hca_5840_management']);
-        if ($User->checkAccess('hca_mi', 14))
-            $SwiftMenu->addItem(['title' => 'Uploaded Files', 'link' => $URL->link('hca_5840_manage_files', $id), 'id' => 'hca_5840_manage_files', 'parent_id' => 'hca_5840_management']);
-        if ($User->checkAccess('hca_mi', 15))
-            $SwiftMenu->addItem(['title' => 'Appendix-B', 'link' => $URL->link('hca_5840_manage_appendixb', $id), 'id' => 'hca_5840_manage_appendixb', 'parent_id' => 'hca_5840_management']);
+        $SwiftMenu->addItem(['title' => 'Current Project', 'link' => '#', 'id' => 'hca_mi_management', 'parent_id' => 'hca_mi', 'level' => 5]);
+
+        $SwiftMenu->addItem(['title' => 'Edit Project', 'link' => $URL->link('hca_5840_manage_project', $id), 'id' => 'hca_mi_manage_project', 'parent_id' => 'hca_mi_management']);
+
+        $SwiftMenu->addItem(['title' => 'Files', 'link' => $URL->link('hca_5840_manage_files', $id), 'id' => 'hca_mi_manage_files', 'parent_id' => 'hca_mi_management']);
+
+        $SwiftMenu->addItem(['title' => 'Invoice', 'link' => $URL->link('hca_5840_manage_invoice', $id), 'id' => 'hca_mi_manage_invoice', 'parent_id' => 'hca_mi_management']);
+
+        if ($User->is_admin())
+            $SwiftMenu->addItem(['title' => 'Project Tracking', 'link' => $URL->link('hca_mi_project_tracking', $id), 'id' => 'hca_mi_project_tracking', 'parent_id' => 'hca_mi_management']);
     }
 
     if ($User->checkAccess('hca_mi', 20) || $User->checkAccess('hca_mi', 21) || $User->checkAccess('hca_mi', 22) || $User->checkAccess('hca_mi', 23) || $User->checkAccess('hca_mi', 24))
     {
-        $SwiftMenu->addItem(['title' => 'Setup', 'link' => '#', 'id' => 'hca_5840_admin', 'parent_id' => 'hca_mi', 'level' => 20]);
+        $SwiftMenu->addItem(['title' => 'Setup', 'link' => '#', 'id' => 'hca_mi_admin', 'parent_id' => 'hca_mi', 'level' => 20]);
 
         if ($User->checkAccess('hca_mi', 20))
-            $SwiftMenu->addItem(['title' => 'Settings', 'link' => $URL->link('hca_5840_settings'), 'id' => 'hca_5840_settings', 'parent_id' => 'hca_5840_admin', 'level' => 0]);
+            $SwiftMenu->addItem(['title' => 'Settings', 'link' => $URL->link('hca_5840_admin_settings'), 'id' => 'hca_mi_admin_settings', 'parent_id' => 'hca_mi_admin', 'level' => 0]);
 
         if ($User->checkAccess('hca_mi', 21))
-            $SwiftMenu->addItem(['title' => 'Access', 'link' => $URL->link('hca_5840_admin_access'), 'id' => 'hca_5840_admin_access', 'parent_id' => 'hca_5840_admin', 'level' => 1]);
+            $SwiftMenu->addItem(['title' => 'Access', 'link' => $URL->link('hca_5840_admin_access'), 'id' => 'hca_mi_admin_access', 'parent_id' => 'hca_mi_admin', 'level' => 1]);
 
         if ($User->checkAccess('hca_mi', 22))
-            $SwiftMenu->addItem(['title' => 'Permissions', 'link' => $URL->link('hca_5840_admin_permissions'), 'id' => 'hca_5840_admin_permissions', 'parent_id' => 'hca_5840_admin', 'level' => 2]);
+            $SwiftMenu->addItem(['title' => 'Permissions', 'link' => $URL->link('hca_5840_admin_permissions'), 'id' => 'hca_mi_admin_permissions', 'parent_id' => 'hca_mi_admin', 'level' => 2]);
 
         if ($User->checkAccess('hca_mi', 23))
-            $SwiftMenu->addItem(['title' => 'Notifications', 'link' => $URL->link('hca_5840_admin_notifications'), 'id' => 'hca_5840_admin_notifications', 'parent_id' => 'hca_5840_admin', 'level' => 3]);
+            $SwiftMenu->addItem(['title' => 'Notifications', 'link' => $URL->link('hca_5840_admin_notifications'), 'id' => 'hca_mi_admin_notifications', 'parent_id' => 'hca_mi_admin', 'level' => 3]);
 
         if ($User->checkAccess('hca_mi', 24))
-            $SwiftMenu->addItem(['title' => 'Vendors', 'link' => $URL->link('hca_5840_admin_vendors'), 'id' => 'hca_5840_admin_vendors', 'parent_id' => 'hca_5840_admin', 'level' => 4]);
+            $SwiftMenu->addItem(['title' => 'Vendors', 'link' => $URL->link('hca_5840_admin_vendors'), 'id' => 'hca_mi_admin_vendors', 'parent_id' => 'hca_mi_admin', 'level' => 4]);
+
+        if ($User->checkAccess('hca_mi', 21))
+            $SwiftMenu->addItem(['title' => 'Missing Projects', 'link' => $URL->link('hca_5840_projects', ['missing', 0]), 'id' => 'hca_mi_projects_missing', 'parent_id' => 'hca_mi_admin']);
     }
 }
 

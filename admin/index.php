@@ -108,7 +108,7 @@ if ($count_users_week > 0)
 	}
 }
 
-$Core->set_page_id('admin_index', 'management');
+$Core->set_page_id('admin_index', 'admin');
 require SITE_ROOT.'header.php';
 ?>
 

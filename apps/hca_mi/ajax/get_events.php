@@ -42,7 +42,7 @@ else
 
 	$modal_body[] = '<div class="mb-3">';
 	$modal_body[] = '<label class="form-label">Date & time</label>';
-	$modal_body[] = '<input type="datetime-local" name="time" value="" class="form-control">';
+	$modal_body[] = '<input type="datetime-local" name="time" value="'.date('Y-m-d\TH:i').'" class="form-control">';
 	$modal_body[] = '</div>';
 
 	$modal_body[] = '<div class="mb-3">';

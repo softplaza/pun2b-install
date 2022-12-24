@@ -17,7 +17,7 @@ if (isset($_POST['update']))
 	redirect('', $flash_message);
 }
 
-$Core->set_page_id('hca_wom_admin_settings', 'hca_5840');
+$Core->set_page_id('hca_wom_admin_settings', 'hca_fs');
 require SITE_ROOT.'header.php';
 ?>	
 

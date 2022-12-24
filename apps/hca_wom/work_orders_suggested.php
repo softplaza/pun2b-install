@@ -157,7 +157,7 @@ while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
 	$property_info[] = $fetch_assoc;
 }
 
-$Core->set_page_id('hca_wom_work_orders_suggested', 'hca_wom');
+$Core->set_page_id('hca_wom_work_orders_suggested', 'hca_fs');
 require SITE_ROOT.'header.php';
 ?>
 <nav class="navbar search-bar">

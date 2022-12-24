@@ -4,6 +4,7 @@ if (!defined('APP_INSTALL')) die();
 
 $schema = array(
 	'FIELDS'	=> array(
+		'id'					=> $DBLayer->dt_serial(),
 		'sent_time'			=> $DBLayer->dt_int(),
 		'sent_from'			=> $DBLayer->dt_int(),
 		'from_email'		=> $DBLayer->dt_varchar(),
@@ -14,8 +15,6 @@ $schema = array(
 		'email_type'		=> $DBLayer->dt_varchar(),
 		'response'			=> $DBLayer->dt_varchar()
 	),
+	'PRIMARY KEY'	=> ['id']
 );
-$DBLayer->create_table('sm_sent_emails', $schema);
-
-$DBLayer->add_field('sm_sent_emails', 'response', 'VARCHAR(255)', false, '');
-$DBLayer->add_field('sm_sent_emails', 'from_email', 'VARCHAR(255)', false, '');
+$DBLayer->create_table('swift_emails', $schema);

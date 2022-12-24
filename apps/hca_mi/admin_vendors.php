@@ -86,7 +86,7 @@ else if (isset($_POST['delete_filter']))
 	}
 }
 
-$Core->set_page_id('hca_5840_admin_vendors', 'hca_5840');
+$Core->set_page_id('hca_mi_admin_vendors', 'hca_mi');
 require SITE_ROOT.'header.php';
 
 // VENDORS SETTINGS

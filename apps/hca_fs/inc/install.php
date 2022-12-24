@@ -117,7 +117,9 @@ $schema = [
 ];
 $DBLayer->create_table('hca_fs_tasks', $schema);
 
-$DBLayer->add_field('groups', 'hca_fs', 'TINYINT(1)', false, '0'); // DO NOT REMOVE!!!
+// DO NOT REMOVE!!!
+$DBLayer->add_field('groups', 'hca_fs', 'TINYINT(1)', false, '0'); 
+
 //$DBLayer->add_field('users', 'hca_fs_access', 'TINYINT(1)', false, '0');
 $DBLayer->add_field('users', 'hca_fs_mailing', 'VARCHAR(255)', false, '');
 $DBLayer->add_field('users', 'hca_fs_perms', 'VARCHAR(255)', false, '');

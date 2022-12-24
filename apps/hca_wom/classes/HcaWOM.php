@@ -6,6 +6,11 @@ class HcaWOM
 	var $cur_task_info = [];
 	var $wo_tasks_info = [];
 
+	var $request_type = [
+		1 => 'Property Work Order',
+		2 => 'In-House Request',
+	];
+
 	var $template_type = [
 		1 => 'Standard',
 		2 => 'Make Ready',

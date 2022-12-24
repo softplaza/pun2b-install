@@ -9,7 +9,10 @@ if ($User->is_guest())
 $section = isset($_GET['section']) ? $_GET['section'] : '';
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-$Core->set_page_id('print', 'hca_wom');
+if ($id < 1)
+	message('Wrong Work Order number.');
+
+$Core->set_page_id('print', 'hca_fs');
 require SITE_ROOT.'header.php';
 
 if ($section == 'work_order')
@@ -26,7 +29,7 @@ if ($section == 'work_order')
 				'ON'			=> 'p.id=w.property_id'
 			],
 			[
-				'INNER JOIN'	=> 'users AS u2',
+				'LEFT JOIN'		=> 'users AS u2',
 				'ON'			=> 'u2.id=w.closed_by'
 			],
 			[
@@ -38,6 +41,8 @@ if ($section == 'work_order')
 	];
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	$wo_info = $DBLayer->fetch_assoc($result);
+
+
 
 	$query = [
 		'SELECT'	=> 't.*, i.item_name, i.item_actions, it.type_name, pb.problem_name, u1.realname AS assigned_name',
@@ -73,7 +78,7 @@ if ($section == 'work_order')
 	$mPDF->AddPage();
 
 	$content = [];
-	$content[] = '<h4 style="text-align:center;margin-bottom:3em;">PROPERTY MAINTENANCE WORK ORDER #'.$wo_info['id'].'</h4>';
+	$content[] = '<h4 style="text-align:center;margin-bottom:3em;">PROPERTY MAINTENANCE WORK ORDER #'.$id.'</h4>';
 
 	$content[] = '<table cellpadding="2" autosize="1" width="100%" style="border-spacing:0;overflow:wrap;font-size:13px;margin-bottom:3em">';
 	$content[] = '<tr>';
@@ -106,9 +111,9 @@ if ($section == 'work_order')
 	{
 		$content[] = '<table cellpadding="3" autosize="1" width="100%" style="border-spacing:0;overflow:wrap;font-size:14px;">';
 		$content[] = '<tr>';
-		$content[] = '<td style="font-weight:bold;text-align:center;width:40%">Tasks</td>';
+		$content[] = '<td style="font-weight:bold;width:40%">Tasks</td>';
 		$content[] = '<td style="font-weight:bold;text-align:center;">Completed by</td>';
-		$content[] = '<td style="font-weight:bold;text-align:center;">Completed</td>';
+		$content[] = '<td style="font-weight:bold;text-align:center;">Date</td>';
 		$content[] = '<td style="font-weight:bold;text-align:center;">Status</td>';
 		$content[] = '</tr>';
 		$content[] = '</table>';
@@ -137,11 +142,15 @@ if ($section == 'work_order')
 			$content[] = '<td colspan="4" style="'.$td_style_last_row.'"><span style="font-weight:bold">Description</span>: '.html_encode($cur_info['task_message']).'</td>';
 			$content[] = '</tr>';
 
+			$start = new DateTime($cur_info['time_start']);
+			$end   = new DateTime($cur_info['time_end']);
+			$interval = $start->diff($end);
+
 			$content[] = '<tr>';
 			$content[] = '<td style=""></td>';
 			$content[] = '<td style="width:150px"></td>';
 			$content[] = '<td style="text-align:right;font-weight:bold;width:150px;">Hours:</td>';
-			$content[] = '<td style="width:100px">0:00</td>';
+			$content[] = '<td style="width:100px">'.$interval->format('%H:%I').'</td>';
 			$content[] = '</tr>';
 
 			$content[] = '</table>';

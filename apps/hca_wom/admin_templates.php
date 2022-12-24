@@ -146,7 +146,7 @@ else if (isset($_POST['delete_task']))
 	}
 }
 
-$Core->set_page_id('hca_wom_admin_templates', 'hca_wom');
+$Core->set_page_id('hca_wom_admin_templates', 'hca_fs');
 require SITE_ROOT.'header.php';
 
 if ($id > 0)

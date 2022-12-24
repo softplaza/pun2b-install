@@ -3,10 +3,10 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 15)) ? true : false;
-if (!$access)
+if (!$User->checkAccess('hca_mi'))
 	message($lang_common['No permission']);
 
+$HcaMi = new HcaMi;
 $Moisture = new Moisture;
 $SwiftUploader = new SwiftUploader;
 
@@ -100,6 +100,8 @@ if (isset($_POST['create_pdf']) && isset($_POST['form']))
 		$DBLayer->update('hca_5840_projects', $form_data, $id);
 		
 		$flash_message = 'Appendix-B has been created as PDF file.';
+		$HcaMi->addAction($id, $flash_message);
+
 		$FlashMessenger->add_info($flash_message);
 		redirect($URL->link('hca_5840_manage_files', $id), $flash_message);
 	}
@@ -114,7 +116,7 @@ $inspector_init_arr = explode(' ', $mois_performed_name);
 $inspector_init = isset($inspector_init_arr[0]) ? substr($inspector_init_arr[0], 0, 1).'.' : '';
 $inspector_init .= isset($inspector_init_arr[1]) ? substr($inspector_init_arr[1], 0, 1).'.' : '';
 
-$Core->set_page_id('hca_5840_manage_appendixb', 'hca_5840');
+$Core->set_page_id('hca_mi_manage_appendixb', 'hca_mi');
 require SITE_ROOT.'header.php';
 
 ?>
@@ -144,14 +146,17 @@ p{font-size:1.2em;}
 </style>
 
 <form method="post" accept-charset="utf-8" action="">
-	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
-
+	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 	<div class="card">
-		<div class="card-header">
+		<div class="card-header d-flex justify-content-between">
 			<h6 class="card-title mb-0">Appendix B - Internal Moisture Intrusion Checklist</h6>
+			<div>
+				<a href="<?=$URL->link('hca_5840_manage_project', $id)?>" class="badge bg-primary text-white">Project</a>
+				<a href="<?=$URL->link('hca_5840_manage_files', $id)?>" class="badge bg-primary text-white">Files</a>
+				<a href="<?=$URL->link('hca_5840_manage_invoice', $id)?>" class="badge bg-primary text-white">Invoice</a>
+			</div>
 		</div>
 		<div class="card-body">
-
 			<div class="pdf-content">
 				<div class="pdf-head">
 					<p><strong>Perform as soon as possible after moisture intrusion problems are reported.</strong></p>

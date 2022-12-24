@@ -3,8 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 1)) ? true : false;
-if (!$access)
+if (!$User->checkAccess('hca_mi'))
 	message($lang_common['No permission']);
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -18,58 +17,62 @@ $apt_locations = explode(',', $Config->get('o_hca_5840_locations'));
 if (isset($_POST['form_sent']))
 {
 	$form_data = [
-		'mois_report_date' => isset($_POST['mois_report_date']) ? strtotime($_POST['mois_report_date']) : 0,
-		'mois_inspection_date' => isset($_POST['mois_inspection_date']) ? strtotime($_POST['mois_inspection_date']) : 0,
-		'performed_uid' => isset($_POST['performed_uid']) ? intval($_POST['performed_uid']) : 0,
-		'performed_uid2' => isset($_POST['performed_uid2']) ? intval($_POST['performed_uid2']) : 0,
+		'mois_report_date' 		=> isset($_POST['mois_report_date']) ? strtotime($_POST['mois_report_date']) : 0,
+		'mois_inspection_date' 	=> isset($_POST['mois_inspection_date']) ? strtotime($_POST['mois_inspection_date']) : 0,
+		'performed_uid' 		=> isset($_POST['performed_uid']) ? intval($_POST['performed_uid']) : 0,
+		'performed_uid2' 		=> isset($_POST['performed_uid2']) ? intval($_POST['performed_uid2']) : 0,
 
-		'leak_type' => isset($_POST['leak_type']) ? intval($_POST['leak_type']) : 0,
-		'symptom_type' => isset($_POST['symptom_type']) ? intval($_POST['symptom_type']) : 0,
+		'leak_type' 			=> isset($_POST['leak_type']) ? intval($_POST['leak_type']) : 0,
+		'symptom_type' 			=> isset($_POST['symptom_type']) ? intval($_POST['symptom_type']) : 0,
 
-		'symptoms' => isset($_POST['symptoms']) ? swift_trim($_POST['symptoms']) : '',
-		'action' => isset($_POST['action']) ? swift_trim($_POST['action']) : '',
+		'symptoms' 				=> isset($_POST['symptoms']) ? swift_trim($_POST['symptoms']) : '',
+		'action' 				=> isset($_POST['action']) ? swift_trim($_POST['action']) : '',
 
-		'services_vendor_id' => isset($_POST['services_vendor_id']) ? intval($_POST['services_vendor_id']) : 0,
-		'delivery_equip_date' => isset($_POST['delivery_equip_date']) ? strtotime($_POST['delivery_equip_date']) : 0,
-		'pickup_equip_date' => isset($_POST['pickup_equip_date']) ? strtotime($_POST['pickup_equip_date']) : 0,
-		'afcc_date' => isset($_POST['afcc_date']) ? strtotime($_POST['afcc_date']) : 0,
-		'afcc_comment' => isset($_POST['afcc_comment']) ? swift_trim($_POST['afcc_comment']) : '',
+		'services_vendor_id' 	=> isset($_POST['services_vendor_id']) ? intval($_POST['services_vendor_id']) : 0,
+		'delivery_equip_date' 	=> isset($_POST['delivery_equip_date']) ? strtotime($_POST['delivery_equip_date']) : 0,
+		'pickup_equip_date' 	=> isset($_POST['pickup_equip_date']) ? strtotime($_POST['pickup_equip_date']) : 0,
+		'afcc_date' 			=> isset($_POST['afcc_date']) ? strtotime($_POST['afcc_date']) : 0,
+		'afcc_comment' 			=> isset($_POST['afcc_comment']) ? swift_trim($_POST['afcc_comment']) : '',
 
-		'asb_vendor' => isset($_POST['asb_vendor']) ? swift_trim($_POST['asb_vendor']) : '',
-		'asb_vendor_id' => isset($_POST['asb_vendor_id']) ? intval($_POST['asb_vendor_id']) : 0,
-		'asb_test_date' => isset($_POST['asb_test_date']) ? strtotime($_POST['asb_test_date']) : 0,
-		'asb_po_number' => isset($_POST['asb_po_number']) ? swift_trim($_POST['asb_po_number']) : '',
-		'asb_total_amount' => is_numeric($_POST['asb_total_amount']) ? swift_trim($_POST['asb_total_amount']) : 0,
-		'asb_comment' => isset($_POST['asb_comment']) ? swift_trim($_POST['asb_comment']) : '',
+		'asb_vendor' 			=> isset($_POST['asb_vendor']) ? swift_trim($_POST['asb_vendor']) : '',
+		'asb_vendor_id' 		=> isset($_POST['asb_vendor_id']) ? intval($_POST['asb_vendor_id']) : 0,
+		'asb_test_date' 		=> isset($_POST['asb_test_date']) ? strtotime($_POST['asb_test_date']) : 0,
+		'asb_po_number' 		=> isset($_POST['asb_po_number']) ? swift_trim($_POST['asb_po_number']) : '',
+		'asb_total_amount' 		=> is_numeric($_POST['asb_total_amount']) ? swift_trim($_POST['asb_total_amount']) : 0,
+		'asb_comment' 			=> isset($_POST['asb_comment']) ? swift_trim($_POST['asb_comment']) : '',
 
-		'rem_vendor' => isset($_POST['rem_vendor']) ? swift_trim($_POST['rem_vendor']) : '',
-		'rem_vendor_id' => isset($_POST['rem_vendor_id']) ? intval($_POST['rem_vendor_id']) : 0,
-		'rem_start_date' => isset($_POST['rem_start_date']) ? strtotime($_POST['rem_start_date']) : 0,
-		'rem_end_date' => isset($_POST['rem_end_date']) ? strtotime($_POST['rem_end_date']) : 0,
-		'rem_po_number' => isset($_POST['rem_po_number']) ? swift_trim($_POST['rem_po_number']) : '',
-		'rem_budget' => isset($_POST['rem_budget']) ? intval($_POST['rem_budget']) : 0,
-		'rem_total_amount' => is_numeric($_POST['rem_total_amount']) ? swift_trim($_POST['rem_total_amount']) : 0,
-		'rem_comment' => isset($_POST['rem_comment']) ? swift_trim($_POST['rem_comment']) : '',
+		'rem_vendor' 			=> isset($_POST['rem_vendor']) ? swift_trim($_POST['rem_vendor']) : '',
+		'rem_vendor_id' 		=> isset($_POST['rem_vendor_id']) ? intval($_POST['rem_vendor_id']) : 0,
+		'rem_start_date' 		=> isset($_POST['rem_start_date']) ? strtotime($_POST['rem_start_date']) : 0,
+		'rem_end_date' 			=> isset($_POST['rem_end_date']) ? strtotime($_POST['rem_end_date']) : 0,
+		'rem_po_number' 		=> isset($_POST['rem_po_number']) ? swift_trim($_POST['rem_po_number']) : '',
+		'rem_budget' 			=> isset($_POST['rem_budget']) ? intval($_POST['rem_budget']) : 0,
+		'rem_total_amount' 		=> is_numeric($_POST['rem_total_amount']) ? swift_trim($_POST['rem_total_amount']) : 0,
+		'rem_comment' 			=> isset($_POST['rem_comment']) ? swift_trim($_POST['rem_comment']) : '',
 
-		'cons_vendor' => isset($_POST['cons_vendor']) ? swift_trim($_POST['cons_vendor']) : '',
-		'cons_vendor_id' => isset($_POST['cons_vendor_id']) ? intval($_POST['cons_vendor_id']) : 0,
-		'cons_start_date' => isset($_POST['cons_start_date']) ? strtotime($_POST['cons_start_date']) : 0,
-		'cons_end_date' => isset($_POST['cons_end_date']) ? strtotime($_POST['cons_end_date']) : 0,
-		'cons_po_number' => isset($_POST['cons_po_number']) ? swift_trim($_POST['cons_po_number']) : '',
-		'cons_total_amount' => isset($_POST['cons_total_amount']) ? swift_trim($_POST['cons_total_amount']) : 0,
-		'cons_comment' => isset($_POST['cons_comment']) ? swift_trim($_POST['cons_comment']) : '',
+		'cons_vendor' 			=> isset($_POST['cons_vendor']) ? swift_trim($_POST['cons_vendor']) : '',
+		'cons_vendor_id' 		=> isset($_POST['cons_vendor_id']) ? intval($_POST['cons_vendor_id']) : 0,
+		'cons_start_date' 		=> isset($_POST['cons_start_date']) ? strtotime($_POST['cons_start_date']) : 0,
+		'cons_end_date' 		=> isset($_POST['cons_end_date']) ? strtotime($_POST['cons_end_date']) : 0,
+		'cons_po_number' 		=> isset($_POST['cons_po_number']) ? swift_trim($_POST['cons_po_number']) : '',
+		'cons_total_amount' 	=> isset($_POST['cons_total_amount']) ? swift_trim($_POST['cons_total_amount']) : 0,
+		'cons_comment' 			=> isset($_POST['cons_comment']) ? swift_trim($_POST['cons_comment']) : '',
 
-		'moveout_date' => isset($_POST['moveout_date']) ? strtotime($_POST['moveout_date']) : 0,
-		'movein_date' => isset($_POST['movein_date']) ? strtotime($_POST['movein_date']) : 0,
-		'maintenance_date' => isset($_POST['maintenance_date']) ? strtotime($_POST['maintenance_date']) : 0,
-		'maintenance_comment' => isset($_POST['maintenance_comment']) ? swift_trim($_POST['maintenance_comment']) : '',
+		'moveout_date'			=> isset($_POST['moveout_date']) ? strtotime($_POST['moveout_date']) : 0,
+		'movein_date' 			=> isset($_POST['movein_date']) ? strtotime($_POST['movein_date']) : 0,
+		'maintenance_date' 		=> isset($_POST['maintenance_date']) ? strtotime($_POST['maintenance_date']) : 0,
+		'maintenance_comment' 	=> isset($_POST['maintenance_comment']) ? swift_trim($_POST['maintenance_comment']) : '',
 
-		//'final_performed_by' => isset($_POST['final_performed_by']) ? swift_trim($_POST['final_performed_by']) : '',
-		'final_performed_uid' => isset($_POST['final_performed_uid']) ? intval($_POST['final_performed_uid']) : 0,
-		'final_performed_date' => isset($_POST['final_performed_date']) ? strtotime($_POST['final_performed_date']) : 0,
-		'job_status' => isset($_POST['job_status']) ? intval($_POST['job_status']) : 0,
-		'remarks' => isset($_POST['remarks']) ? swift_trim($_POST['remarks']) : '',
+		//'final_performed_by' 	=> isset($_POST['final_performed_by']) ? swift_trim($_POST['final_performed_by']) : '',
+		'final_performed_uid' 	=> isset($_POST['final_performed_uid']) ? intval($_POST['final_performed_uid']) : 0,
+		'final_performed_date' 	=> isset($_POST['final_performed_date']) ? strtotime($_POST['final_performed_date']) : 0,
+		'job_status' 			=> isset($_POST['job_status']) ? intval($_POST['job_status']) : 0,
+		'remarks' 				=> isset($_POST['remarks']) ? swift_trim($_POST['remarks']) : '',
+		'time_updated'			=> time(),
+		'updated_by'			=> $User->get('id'), // last updated
 	];
+
+	if (isset($_POST['unit_id'])) $form_data['unit_id'] = intval($_POST['unit_id']);
 
 	$location = $locations = [];
 	foreach ($HcaMi->locations as $key => $value)
@@ -122,9 +125,9 @@ if (isset($_POST['form_sent']))
 		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 		$main_info = $DBLayer->fetch_assoc($result);
 		
-		// Temporary solution. Remove after set all unit IDS
-		$main_info['unit_number'] = ($main_info['unit_number'] != '') ? $main_info['unit_number'] : $main_info['unit'];
-		$main_info['unit_number'] = ($main_info['unit_number'] != '') ? $main_info['unit_number'] : 'Common area';
+		// Extension
+		$main_info['unit_number'] = ($main_info['unit_number'] == 0 && $main_info['unit'] == '') ? 'Common area' : $main_info['unit_number'];
+		$main_info['unit_number'] = ($main_info['unit_number'] == 0 && $main_info['unit'] != '') ? $main_info['unit'] : $main_info['unit_number'];
 
 		$old_moveout_date = isset($_POST['old_moveout_date']) ? intval($_POST['old_moveout_date']) : 0;
 		if ($old_moveout_date != $form_data['moveout_date'] && $form_data['moveout_date'] > 0)
@@ -191,6 +194,8 @@ if (isset($_POST['form_sent']))
 		}
 		
 		$flash_message = 'Project #'.$id.' has been updated';
+		$HcaMi->addAction($id, $flash_message);
+
 		$FlashMessenger->add_info($flash_message);
 		redirect('', $flash_message);
 	}
@@ -206,12 +211,14 @@ else if (isset($_POST['delete']))
 	$DBLayer->query_build($query) or error(__FILE__, __LINE__);
 
 	$flash_message = 'Project #'.$id.' has been removed';
+	$HcaMi->addAction($id, $flash_message);
+
 	$FlashMessenger->add_info($flash_message);
-	redirect($URL->link('hca_5840_projects'), $flash_message);
+	redirect($URL->link('hca_5840_projects', ['active', 0]), $flash_message);
 }
 
 $query = [
-	'SELECT'	=> 'pj.*, pj.unit_number AS unit, pt.pro_name, un.unit_number, u1.realname AS project_manager1, u2.realname AS project_manager2',
+	'SELECT'	=> 'pj.*, pj.unit_number AS unit, pt.pro_name, un.unit_number, u1.realname AS created_name, u2.realname AS updated_name',
 	'FROM'		=> 'hca_5840_projects AS pj',
 	'JOINS'		=> [
 		[
@@ -224,11 +231,11 @@ $query = [
 		],
 		[
 			'LEFT JOIN'		=> 'users AS u1',
-			'ON'			=> 'u1.id=pj.performed_uid'
+			'ON'			=> 'u1.id=pj.created_by'
 		],
 		[
 			'LEFT JOIN'		=> 'users AS u2',
-			'ON'			=> 'u2.id=pj.performed_uid2'
+			'ON'			=> 'u2.id=pj.updated_by'
 		],
 		//add users proj mng 1 and 2
 	],
@@ -288,7 +295,7 @@ $total_cost = $asb_total_amount + $rem_total_amount + $cons_total_amount;
 if ($total_cost >= 5000)
 	$Core->add_warning('The total cost of the project exceeded $ 5,000.00');
 
-$Core->set_page_id('hca_5840_manage_project', 'hca_5840');
+$Core->set_page_id('hca_mi_manage_project', 'hca_mi');
 require SITE_ROOT.'header.php';
 ?>
 
@@ -300,19 +307,83 @@ require SITE_ROOT.'header.php';
 <form method="post" accept-charset="utf-8" action="" id="main_form">
 	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 	<div class="card">
-		<div class="card-header">
+		<div class="card-header d-flex justify-content-between">
 			<h6 class="card-title mb-0">Property information</h6>
+			<div>
+				<a href="<?=$URL->link('hca_5840_manage_files', $id)?>" class="badge bg-primary text-white">Files</a>
+				<a href="<?=$URL->link('hca_5840_manage_invoice', $id)?>" class="badge bg-primary text-white">Invoice</a>
+				<a href="<?=$URL->link('hca_5840_manage_appendixb', $id)?>" class="badge bg-primary text-white">+ Appendix-B</a>
+			</div>
 		</div>
 		<div class="card-body">
+
+<?php 
+if ($main_info['job_status'] == 0)
+	echo '<div class="alert alert-danger" role="alert">This project was removed. To activate the project, change the status and save the changes.</div>';
+?>
+
 			<div class="row">
 				<div class="col-md-3 mb-3">
 					<label class="form-label" for="property_id">Property name</label>
 					<h5 class=""><?php echo html_encode($main_info['pro_name']) ?></h5>
 				</div>
-				<div class="col-md-3 mb-3">
-					<label class="form-label" for="fld_unit_number">Unit number</label>
-					<h5 class=""><?php echo html_encode($main_info['unit_number']) ?></h5>
+				<div class="col-md-2 mb-3">
+					<label class="form-label">Unit number</label>
+					<h5 class="<?=($main_info['unit_id'] == 0 ? 'text-danger' : '')?>"><?php echo html_encode($main_info['unit_number']) ?></h5>
 				</div>
+
+<?php if ($User->is_admin()): ?>
+				<div class="col-md-2 mb-3">
+					<label class="form-label" for="fld_unit_id">Setup Unit #</label>
+					<select name="unit_id" required class="form-select" id="fld_unit_id">
+						<option value="0" selected>Common area</option>
+<?php
+$query = array(
+	'SELECT'	=> 'u.id, u.unit_number',
+	'FROM'		=> 'sm_property_units AS u',
+	'WHERE'		=> 'u.property_id='.$main_info['property_id'],
+	'ORDER BY'	=> 'u.id',
+);
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+$units_info = $json_array = array();
+while ($row = $DBLayer->fetch_assoc($result)) {
+	$units_info[] = $row;
+}
+
+foreach ($units_info as $cur_info)
+{
+	if (isset($_POST['unit_id']) && $_POST['unit_id'] == $cur_info['id'] || $main_info['unit_id'] == $cur_info['id'])
+		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'" selected>'.html_encode($cur_info['unit_number']).'</option>'."\n";
+	else
+		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'">'.html_encode($cur_info['unit_number']).'</option>'."\n";
+}
+?>
+					</select>
+				</div>
+
+				<div class="col-sm-4 d-flex justify-content-end">
+					<div>
+						<div>
+							<span class="text-muted">Created by:</span>
+							<span class="text-muted fw-bold"><?php echo html_encode($main_info['created_name']) ?></span>
+						</div>
+						<div>
+							<span class="text-muted">Created on</span>
+							<span class="text-muted fw-bold"><?php echo format_time($main_info['time_created'], 1) ?></span>
+						</div>
+						<div>
+							<span class="text-muted">Updated by:</span>
+							<span class="text-muted fw-bold"><?php echo html_encode($main_info['updated_name']) ?></span>
+						</div>
+						<div>
+							<span class="text-muted">Last updated:</span>
+							<span class="text-muted fw-bold"><?php echo format_time($main_info['time_updated'], 0) ?></span>
+						</div>
+					</div>
+				</div>
+
+<?php endif; ?>
+
 			</div>
 
 			<div class="row">
@@ -337,7 +408,8 @@ foreach ($HcaMi->locations as $key => $value)
 $locations = explode(',', $main_info['locations']);
 $old_locations = explode(',', str_replace(' ', '', $main_info['location']));
 
-foreach ($HcaMi->locations as $key => $value)
+foreach ($HcaMi->locations as $key => $value) // ! save by key
+//foreach($apt_locations as $key => $value) // not use
 {
 	if ($main_info['locations'] != '')
 	{
@@ -392,7 +464,7 @@ foreach ($HcaMi->locations as $key => $value)
 
 			<div class="row">
 				<div class="col-md-3 mb-3">
-					<label class="form-label" for="fld_performed_uid">Project Manager 1</label>
+					<label class="form-label" for="fld_performed_uid">Project Manager</label>
 					<select name="performed_uid" required class="form-select" id="fld_performed_uid">
 <?php
 echo '<option value="0" selected disabled>Select one</option>'."\n";
@@ -405,6 +477,9 @@ foreach ($users_info as $cur_info)
 }
 ?>
 					</select>
+<?php if ($main_info['mois_performed_by'] != '') : ?>
+					<label class="text-muted"><?php echo html_encode($main_info['mois_performed_by']) ?></label>
+<?php endif; ?>
 				</div>
 				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_performed_uid2">Project Manager 2</label>
@@ -474,17 +549,17 @@ foreach ($HcaMi->symptoms as $key => $value)
 			<div class="row">
 				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_services_vendor_id">Vendor</label>
-					<a tabindex="0" class="text-info badge-info" role="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-content="To add new Vendors go to: 'Setup' -> 'Vendors' -> 'Suggest a Vendor'"><i class="fas fa-info-circle"></i></a>
+					<a tabindex="0" class="text-info" role="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-content="To add new Vendors go to: 'Setup' -> 'Vendors' -> 'Suggest a Vendor'"><i class="fas fa-info-circle"></i></a>
 					<select name="services_vendor_id" class="form-select" id="fld_services_vendor_id">
 <?php
-echo '<option value="" selected>Select one</option>'."\n";
+echo '<option value="0" selected>Select one</option>'."\n";
 foreach ($vendors_info as $cur_info)
 {
 	if ($cur_info['group_id'] == 1 && $cur_info['enabled'] == 1)
 	{
-		if ($main_info['services_vendor_id'] == $cur_info['id']) {
+		if ($main_info['services_vendor_id'] == $cur_info['id'])
 			echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'" selected>'.html_encode($cur_info['vendor_name']).'</option>'."\n";
-		} else
+		else
 			echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'">'.html_encode($cur_info['vendor_name']).'</option>'."\n";
 	}
 }
@@ -526,19 +601,26 @@ foreach ($vendors_info as $cur_info)
 					<a tabindex="0" class="text-info" role="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-content="To add new Vendors go to: 'Setup' -> 'Vendors' -> 'Suggest a Vendor'"><i class="fas fa-info-circle"></i></a>
 					<select name="asb_vendor_id" class="form-select" id="fld_asb_vendor_id">
 <?php
+$asb_vendor_selected = false;
 echo '<option value="" selected>Select one</option>'."\n";
 foreach ($vendors_info as $cur_info)
 {
 	if ($cur_info['group_id'] == 2 && $cur_info['enabled'] == 1)
 	{
-		if ($main_info['asb_vendor'] == $cur_info['vendor_name'] || $main_info['asb_vendor_id'] == $cur_info['id']) {
+		if ($main_info['asb_vendor'] == $cur_info['vendor_name'] || $main_info['asb_vendor_id'] == $cur_info['id'])
+		{
 			echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'" selected>'.html_encode($cur_info['vendor_name']).'</option>'."\n";
-		} else
+			$asb_vendor_selected = true;
+		}
+		else
 			echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'">'.html_encode($cur_info['vendor_name']).'</option>'."\n";
 	}
 }
 ?>
 					</select>
+<?php if (!$asb_vendor_selected && $main_info['asb_vendor'] != '') : ?>
+					<input type="text" name="asb_vendor" id="asb_vendor" class="form-control" value="<?php echo html_encode($main_info['asb_vendor']) ?>">
+<?php endif; ?>
 				</div>
 				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_asb_test_date">Test Date</label>
@@ -573,7 +655,7 @@ foreach ($vendors_info as $cur_info)
 					<select name="rem_vendor_id" class="form-select" id="fld_rem_vendor_id">
 <?php
 $rem_vendor_selected = false;
-echo '<option value="" selected>Select one</option>'."\n";
+echo '<option value="0" selected>Select one</option>'."\n";
 foreach ($vendors_info as $cur_info)
 {
 	if ($cur_info['group_id'] == 3 && $cur_info['enabled'] == 1)
@@ -587,14 +669,11 @@ foreach ($vendors_info as $cur_info)
 }
 ?>
 					</select>
-				</div>
-
 <?php if (!$rem_vendor_selected && $main_info['rem_vendor'] != '') : ?>
-				<div class="col-md-3 mb-3">
-					<label class="form-label" for="rem_vendor">Vendor</label>
 					<input type="text" name="rem_vendor" id="rem_vendor" class="form-control" value="<?php echo html_encode($main_info['rem_vendor']) ?>">
-				</div>
 <?php endif; ?>
+
+				</div>
 			</div>
 
 			<div class="row">
@@ -652,14 +731,10 @@ foreach ($vendors_info as $cur_info)
 }
 ?>
 					</select>
-				</div>
-
 <?php if (!$cons_vendor_selected && $main_info['cons_vendor'] != '') : ?>
-				<div class="col-md-3 mb-3">
-					<label class="form-label" for="cons_vendor">Vendor</label>
 					<input type="text" name="cons_vendor" id="cons_vendor" class="form-control" value="<?php echo html_encode($main_info['cons_vendor']) ?>">
-				</div>
 <?php endif; ?>
+				</div>
 			</div>
 
 			<div class="row">
@@ -757,12 +832,16 @@ foreach ($users_info as $cur_info)
 					<label class="form-label">Job Status</label>
 					<select name="job_status" class="form-select" required>
 <?php
-	foreach ($work_statuses as $key => $status) {
-		if ($main_info['job_status'] == $key)
-			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.html_encode($status).'</option>'."\n";
-		else
-			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.html_encode($status).'</option>'."\n";
-	}
+if ($main_info['job_status'] == 0)
+	echo '<option value="0" selected>REMOVED</option>'."\n";
+
+foreach ($work_statuses as $key => $status)
+{
+	if ($main_info['job_status'] == $key)
+		echo '<option value="'.$key.'" selected>'.html_encode($status).'</option>'."\n";
+	else
+		echo '<option value="'.$key.'">'.html_encode($status).'</option>'."\n";
+}
 ?>
 					</select>
 				</div>

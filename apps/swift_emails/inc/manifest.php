@@ -6,13 +6,13 @@ if (!defined('DB_CONFIG')) die();
 // Basic App information
 $app_info = [
 	// id as directory name
-	'id'			=> 'sm_sent_emails',
+	'id'			=> 'swift_emails',
 	// Application's name
-	'title'			=> 'Sent Emails',
+	'title'			=> 'Swift Emails',
 	// Application's description
-	'description' 	=> 'Collect of sent emails from site.',
+	'description' 	=> 'Records of sent emails from the site.',
 	// Application's author
-	'author'		=> 'SwiftManage.Com',
+	'author'		=> 'SwiftProjectManager.Com',
 	// Last version of application
 	'version'		=> '1.16'
 ];

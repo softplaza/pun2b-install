@@ -171,7 +171,7 @@ else if (isset($_POST['cancel']))
 	redirect($URL->link('apps_management'), $flash_message);
 }
 
-$Core->set_page_id('apps_management', 'management');
+$Core->set_page_id('apps_management', 'admin');
 require SITE_ROOT.'header.php';
 ?>
 

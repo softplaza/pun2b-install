@@ -27,13 +27,13 @@ $apps_info = array (
     'url' => 'https://swiftmanager.localhost/dev/apps/mpdf/',
     'path' => '../apps/mpdf/',
   ),
-  'sm_sent_emails' => 
+  'swift_emails' => 
   array (
-    'id' => 'sm_sent_emails',
-    'title' => 'Sent Emails',
+    'id' => 'swift_emails',
+    'title' => 'Swift Emails',
     'disabled' => '0',
-    'url' => 'https://swiftmanager.localhost/dev/apps/sm_sent_emails/',
-    'path' => '../apps/sm_sent_emails/',
+    'url' => 'https://swiftmanager.localhost/dev/apps/swift_emails/',
+    'path' => '../apps/swift_emails/',
   ),
   'fancybox' => 
   array (

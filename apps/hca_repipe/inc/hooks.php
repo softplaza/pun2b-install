@@ -27,12 +27,12 @@ function hca_repipe_IncludeCommon()
     if ($User->checkAccess('hca_repipe'))
     {
         if ($User->checkAccess('hca_repipe', 4))
-            $SwiftMenu->addItem(['title' => 'Re-Pipe Projects', 'link' => $URL->link('hca_repipe_projects'), 'id' => 'hca_repipe', 'parent_id' => 'hca_mi', 'icon' => '<i class="fas fa-check-double"></i>', 'level' => 19]);
+            $SwiftMenu->addItem(['title' => 'Re-Pipe Projects', 'id' => 'hca_repipe', 'parent_id' => 'hca_mi', 'icon' => '<i class="fas fa-check-double"></i>', 'level' => 19]);
 
         if ($User->checkAccess('hca_repipe', 1))
             $SwiftMenu->addItem(['title' => '+ New Re-Pipe', 'link' => $URL->link('hca_repipe_project', 0), 'id' => 'hca_repipe_project', 'parent_id' => 'hca_repipe', 'level' => 1]);
 
-        //$SwiftMenu->addItem(['title' => 'Re-Pipe List', 'link' => $URL->link('hca_repipe_projects'), 'id' => 'hca_repipe_projects', 'parent_id' => 'hca_repipe', 'level' => 2]);
+        $SwiftMenu->addItem(['title' => 'Re-Pipe Project List', 'link' => $URL->link('hca_repipe_projects'), 'id' => 'hca_repipe_projects', 'parent_id' => 'hca_repipe', 'level' => 2]);
 
         if ($User->checkAccess('hca_repipe', 20))
             $SwiftMenu->addItem(['title' => 'Re-Pipe Settings', 'link' => $URL->link('hca_repipe_settings'), 'id' => 'hca_repipe_settings', 'parent_id' => 'hca_repipe', 'level' => 25]);

@@ -5,8 +5,7 @@ if (!defined('SITE_ROOT') )
 
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->is_admmod()) ? true : false;
-if (!$access)
+if (!$User->checkAccess('hca_mi'))
 	message($lang_common['No permission']);
 
 $id = isset($_POST['id']) ? intval($_POST['id']) : 0;

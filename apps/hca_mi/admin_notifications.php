@@ -23,7 +23,7 @@ $SwiftSettings->addNotifyOption(5, 'Move Out Date Changed'); //set in manage_pro
 
 $SwiftSettings->POST();
 
-$Core->set_page_id('hca_5840_admin_notifications', 'hca_5840');
+$Core->set_page_id('hca_mi_admin_notifications', 'hca_mi');
 require SITE_ROOT.'header.php';
 
 if ($User->is_admmod())

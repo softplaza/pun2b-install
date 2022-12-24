@@ -73,7 +73,7 @@ while ($row = $DBLayer->fetch_assoc($result))
 }
 $PagesNavigator->num_items($main_info);
 
-$Core->set_page_id('sm_errors_report', 'management');
+$Core->set_page_id('sm_errors_report', 'admin');
 require SITE_ROOT.'header.php';
 ?>
 <style>

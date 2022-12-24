@@ -25,6 +25,7 @@ function hca_wom_co_modify_url_scheme()
     $urls['hca_wom_ajax_get_items'] = 'apps/hca_wom/ajax/get_items.php';
     $urls['hca_wom_ajax_manage_task'] = 'apps/hca_wom/ajax/manage_task.php';
     $urls['hca_wom_ajax_manage_tpl_task'] = 'apps/hca_wom/ajax/manage_tpl_task.php';
+    $urls['hca_wom_ajax_get_wo_template'] = 'apps/hca_wom/ajax/get_wo_template.php';
     
     // management
     $urls['hca_wom_admin_access'] = 'apps/hca_wom/admin_access.php';

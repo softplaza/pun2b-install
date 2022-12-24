@@ -60,7 +60,7 @@ if (!$DBLayer->table_exists('sm_calendar_events'))
 				'default'		=> '0'
 			),
 			
-			//FOR REMOVING
+			//TO REMOVING
 			'poster_name'		=> array(//remove
 				'datatype'		=> 'VARCHAR(100)',
 				'allow_null'	=> false,

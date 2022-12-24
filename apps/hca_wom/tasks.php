@@ -31,7 +31,7 @@ $search_query = [];
 if ($section == 'unassigned')
 	$search_query[] = 't.task_status=1';
 else if ($section == 'active')
-	$search_query[] = 't.task_status<3';
+	$search_query[] = 't.task_status < 3 AND t.task_status > 0';
 else
 	$search_query[] = 't.task_status>2';
 
@@ -120,11 +120,11 @@ while ($row = $DBLayer->fetch_assoc($result))
 $PagesNavigator->num_items($hca_wom_tasks);
 
 if ($section == 'unassigned')
-	$Core->set_page_id('hca_wom_tasks_unassigned', 'hca_wom');
+	$Core->set_page_id('hca_wom_tasks_unassigned', 'hca_fs');
 else if ($section == 'active')
-	$Core->set_page_id('hca_wom_tasks_active', 'hca_wom');
+	$Core->set_page_id('hca_wom_tasks_active', 'hca_fs');
 else
-	$Core->set_page_id('hca_wom_tasks_completed', 'hca_wom');
+	$Core->set_page_id('hca_wom_tasks_completed', 'hca_fs');
 
 require SITE_ROOT.'header.php';
 

@@ -79,7 +79,7 @@ $PagesNavigator->num_items($main_info);
 //$Loader->addJS(BASE_URL.'/admin/js/admin.js', array('type' => 'url', 'async' => false, 'group' => -100 , 'weight' => 75));
 
 $Core->set_page_title('Actions of Users');
-$Core->set_page_id('sm_user_actions', 'management');
+$Core->set_page_id('sm_user_actions', 'admin');
 
 //$SwiftTemplator->startContent('admin_table');
 

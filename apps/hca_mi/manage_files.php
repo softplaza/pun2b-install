@@ -3,33 +3,19 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-$access = ($User->checkAccess('hca_mi', 14)) ? true : false;
-if (!$access)
+if (!$User->checkAccess('hca_mi'))
 	message($lang_common['No permission']);
+
+$permission4 = ($User->checkPermissions('hca_mi', 4)) ? true : false; // upload files
+$permission6 = ($User->checkPermissions('hca_mi', 6)) ? true : false; // upload files
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 if ($id < 1)
 	message('Sorry, this Project does not exist or has been removed.');
 
-//Get cur form info
-$query = array(
-	'SELECT'	=> 'pj.*, pt.manager_email, pt.pro_name',
-	'FROM'		=> 'hca_5840_projects AS pj',
-	'JOINS'		=> array(
-		array(
-			'LEFT JOIN'		=> 'sm_property_db AS pt',
-			'ON'			=> 'pt.id=pj.property_id'
-		)
-	),
-	'WHERE'		=> 'pj.id='.$id,
-);
-$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$project_info = $DBLayer->fetch_assoc($result);
-
-if (empty($project_info))
-	message('Sorry, this Project does not exist or has been removed.');
-
+$HcaMi = new HcaMi;
 $SwiftUploader = new SwiftUploader;
+
 if (isset($_POST['upload_file']))
 {
 	$SwiftUploader->checkAllowed();
@@ -38,6 +24,8 @@ if (isset($_POST['upload_file']))
     $SwiftUploader->uploadFiles('hca_5840_projects', $id);
 
 	$flash_message = 'Files has been uploaded to project #'.$id;
+	$HcaMi->addAction($id, $flash_message);
+
 	$FlashMessenger->add_info($flash_message);
 	redirect('', $flash_message);
 }
@@ -67,6 +55,8 @@ else if (isset($_POST['delete_files']))
 			$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 			
 			$flash_message = 'Selected files of project #'.$id.' have been deleted.';
+			$HcaMi->addAction($id, $flash_message);
+
 			$FlashMessenger->add_info($flash_message);
 			redirect('', $flash_message);
 		}
@@ -112,10 +102,45 @@ else if (isset($_POST['send_files']))
 		$SwiftMailer->send($emails, 'Moisture Project', $mail_message);
 
 		$flash_message = 'Files of project #'.$id.' has been sent to '.$emails;
+		$HcaMi->addAction($id, $flash_message);
+
 		$FlashMessenger->add_info($flash_message);
 		redirect('', $flash_message);
 	}
 }
+
+//Get project info
+$query = [
+	'SELECT'	=> 'pj.*, pj.unit_number AS unit, pt.pro_name, pt.manager_email, un.unit_number, u1.realname AS project_manager1, u2.realname AS project_manager2',
+	'FROM'		=> 'hca_5840_projects AS pj',
+	'JOINS'		=> [
+		[
+			'INNER JOIN'	=> 'sm_property_db AS pt',
+			'ON'			=> 'pt.id=pj.property_id'
+		],
+		[
+			'LEFT JOIN'		=> 'sm_property_units AS un',
+			'ON'			=> 'un.id=pj.unit_id'
+		],
+		[
+			'LEFT JOIN'		=> 'users AS u1',
+			'ON'			=> 'u1.id=pj.performed_uid'
+		],
+		[
+			'LEFT JOIN'		=> 'users AS u2',
+			'ON'			=> 'u2.id=pj.performed_uid2'
+		],
+		//add users proj mng 1 and 2
+	],
+	'WHERE'		=> 'pj.id='.$id,
+];
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+$project_info = $DBLayer->fetch_assoc($result);
+$project_info['unit_number'] = ($project_info['unit_number'] == 0 && $project_info['unit'] == '') ? 'Common area' : $project_info['unit_number'];
+$project_info['unit_number'] = ($project_info['unit_number'] == 0 && $project_info['unit'] != '') ? $project_info['unit'] : $project_info['unit_number'];
+
+if (empty($project_info))
+	message('Sorry, this Project does not exist or has been removed.');
 
 $query = array(
 	'SELECT'	=> 'id, file_name, base_name, file_ext, file_path, file_type, load_time',
@@ -134,7 +159,7 @@ while ($row = $DBLayer->fetch_assoc($result))
 		$media_info[] = $row;
 }
 
-$Core->set_page_id('hca_5840_manage_files', 'hca_5840');
+$Core->set_page_id('hca_mi_manage_files', 'hca_mi');
 require SITE_ROOT.'header.php';
 ?>
 
@@ -146,51 +171,52 @@ require SITE_ROOT.'header.php';
 }
 .cur-img img {height: 150px;}
 .cur-file {
-	width:80px;
+	width:150px;
 	display: inline-block;
 	padding: 1.5em;
 	vertical-align: top;
 }
 .cur-file p {word-break: break-all;}
-.holder_default {
-	width:500px;
-	height:150px;
-	border: 3px dashed #ccc;
-}
 </style>
 
-<?php if($access): ?>
-	<form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data">
-		<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
-		<div class="card">
-			<div class="card-header">
-				<h6 class="card-title mb-0">File upload form</h6>
-			</div>
-			<div class="card-body">
-
-<?php $SwiftUploader->setForm();?>
-
-				<button type="submit" name="upload_file" class="btn btn-primary" id="btn_upload_file">Upload File</button>
+<?php if($permission4): ?>
+<form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data">
+	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
+	<div class="card">
+		<div class="card-header d-flex justify-content-between">
+			<h6 class="card-title mb-0">File upload form</h6>
+			<div>
+				<a href="<?=$URL->link('hca_5840_manage_project', $id)?>" class="badge bg-primary text-white">Project</a>
+				<a href="<?=$URL->link('hca_5840_manage_invoice', $id)?>" class="badge bg-primary text-white">Invoice</a>
+				<a href="<?=$URL->link('hca_5840_manage_appendixb', $id)?>" class="badge bg-primary text-white">new Appendix-B</a>
 			</div>
 		</div>
-	</form>
+		<div class="card-body">
+
+			<?php $SwiftUploader->setForm(); ?>
+
+			<button type="submit" name="upload_file" class="btn btn-primary" id="btn_upload_file">Upload File</button>
+
+		</div>
+	</div>
+</form>
 <?php endif; ?>
 
-	<form method="post" accept-charset="utf-8" action="">
-		<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
-<?php
-	$SwiftUploader->getProjectFiles('hca_5840_projects', $id);
-?>
-		<div class="card">
-			<div class="card-header">
-				<h6 class="card-title mb-0">Uploaded Images</h6>
-			</div>
-			<div class="card-body">
+<form method="post" accept-charset="utf-8" action="">
+	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
+
+	<?php $SwiftUploader->getProjectFiles('hca_5840_projects', $id); ?>
+
 <?php
 if (!empty($images_info))
 {
 ?>
-				<div class="uploaded-images">
+	<div class="card">
+		<div class="card-header">
+			<h6 class="card-title mb-0">Uploaded Images</h6>
+		</div>
+		<div class="card-body">
+			<div class="uploaded-images">
 <?php
 	foreach($images_info as $cur_file)
 	{
@@ -205,29 +231,22 @@ if (!empty($images_info))
 		echo "\n\t".implode("\n\t\t", $file_view);
 	}
 ?>
-				</div>
-<?php
-}
-else
-{
-?>
-				<div class="alert alert-warning" role="alert">You don't have any uploaded images associated with this project yet.</div>
-<?php
-}
-?>
 			</div>
 		</div>
-		
-		<div class="card">
-			<div class="card-header">
-				<h6 class="card-title mb-0">Uploaded Documents</h6>
-			</div>
-			<div class="card-body">
+	</div>
 <?php
+}
+
+
 if (!empty($files_info))
 {
 ?>
-				<div class="uploaded-files">
+	<div class="card">
+		<div class="card-header">
+			<h6 class="card-title mb-0">Uploaded Documents</h6>
+		</div>
+		<div class="card-body">
+			<div class="uploaded-files">
 <?php
 	foreach($files_info as $cur_file)
 	{
@@ -243,29 +262,22 @@ if (!empty($files_info))
 		echo "\n\t".implode("\n\t\t", $file_view);
 	}
 ?>
-				</div>
-<?php
-}
-else
-{
-?>
-				<div class="alert alert-warning" role="alert">You don't have any uploaded documents associated with this project yet.</div>
-<?php
-}
-?>
 			</div>
 		</div>
-
-		<div class="card">
-			<div class="card-header">
-				<h6 class="card-title mb-0">Uploaded Media Files</h6>
-			</div>
-			<div class="card-body">
+	</div>
 <?php
+}
+
+
 if (!empty($media_info))
 {
 ?>
-				<div class="uploaded-videos">
+	<div class="card">
+		<div class="card-header">
+			<h6 class="card-title mb-0">Uploaded Media Files</h6>
+		</div>
+		<div class="card-body">
+			<div class="uploaded-videos">
 <?php
 	foreach($media_info as $cur_file)
 	{
@@ -280,47 +292,47 @@ if (!empty($media_info))
 		echo "\n\t".implode("\n\t\t", $file_view);
 	}
 ?>
-				</div>
-<?php
-}
-else
-{
-?>
-				<div class="alert alert-warning" role="alert">You don't have any uploaded Media Files associated with this project yet.</div>
-<?php
-}
-?>
 			</div>
 		</div>
-		
-		<div class="card">
-			<div class="card-header">
-				<h6 class="card-title mb-0">Send files to Email</h6>
+	</div>
+<?php
+}
+?>
+
+<?php if ($permission6): ?>
+	<div class="card">
+		<div class="card-header">
+			<h6 class="card-title mb-0">Send files to Email</h6>
+		</div>
+		<div class="card-body">
+			<div class="alert alert-warning py-1" role="alert">
+				<p class="fw-bold">Important!</p>
+				<p>Before sending an e-mail, please make sure that you have selected the files to be sent by e-mail.</p>
 			</div>
-			<div class="card-body">
 <?php
 $mail_message = [];
-$mail_message[] = 'Hello,';
 $mail_message[] = 'This is the Moisture Inspection Report.'."\n";
 $mail_message[] = 'Property: '.$project_info['pro_name'];
-$mail_message[] = 'Unit #: '.$project_info['unit_number']."\n\n";
+if ($project_info['unit_number'] != '')
+	$mail_message[] = 'Unit #: '.$project_info['unit_number']."\n\n";
 ?>
-				<div class="mb-3">
-					<label class="form-label" for="emails">Send to:</label>
-					<input type="text" name="emails" value="<?php echo (isset($project_info['manager_email']) ? $project_info['manager_email'] : '') ?>" class="form-control" id="emails" placeholder="Insert email addresses separated by commas">
-				</div>
-				<div class="mb-3">
-					<label class="form-label" for="mail_message">Message</label>
-					<textarea type="text" name="mail_message" class="form-control" id="mail_message" placeholder="Leave your message"><?php echo implode("\n", $mail_message) ?></textarea>
-				</div>
-				<div class="mb-3">
-					<div class="alert alert-info" role="alert">All selected files will be shared by generated security link.</div>
-				</div>
-				<button type="submit" name="send_files" class="btn btn-primary">Send files</button>
-				<button type="submit" name="delete_files" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete selected files?')">Delete files</button>
+			<div class="mb-3">
+				<label class="form-label" for="fld_emails">Send to:</label>
+				<input type="text" name="emails" value="<?php echo (isset($project_info['manager_email']) ? $project_info['manager_email'] : '') ?>" class="form-control" id="fld_emails" placeholder="Insert email addresses separated by commas" required>
+				<label class="text-muted" for="fld_emails">Insert email addresses separated by commas</label>
 			</div>
+			<div class="mb-3">
+				<label class="form-label" for="fld_mail_message">Message</label>
+				<textarea type="text" name="mail_message" class="form-control" id="fld_mail_message" required><?php echo implode("\n", $mail_message) ?></textarea>
+				<label class="text-muted" for="fld_mail_message">Write your text message. A link to view the files will be added below your message.</label>
+			</div>
+			<button type="submit" name="send_files" class="btn btn-primary">Send files</button>
+			<button type="submit" name="delete_files" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete selected files?')">Delete files</button>
 		</div>
-	</form>
+	</div>
+<?php endif; ?>
+
+</form>
 
 <?php
 require SITE_ROOT.'footer.php';

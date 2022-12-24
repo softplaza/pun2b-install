@@ -9,7 +9,7 @@ $schema = array(
 		'unit_id'				=> $DBLayer->dt_int(),
 		'wo_message'			=> $DBLayer->dt_varchar(),
 		'priority'				=> $DBLayer->dt_int('TINYINT(1)'),
-		'template_type'			=> $DBLayer->dt_int('TINYINT(1)'),
+		'template_type'			=> $DBLayer->dt_int('TINYINT(1)'), // not in use yet
 		'enter_permission'		=> $DBLayer->dt_int('TINYINT(1)'),
 		'has_animal'			=> $DBLayer->dt_int('TINYINT(1)'),
 		'wo_status'				=> $DBLayer->dt_int('TINYINT(1)'),
@@ -21,10 +21,14 @@ $schema = array(
 		'wo_closing_comment'	=> $DBLayer->dt_varchar(),
 		'num_tasks'				=> $DBLayer->dt_int(),
 		'last_task_id'			=> $DBLayer->dt_int(),
+		'request_type'			=> $DBLayer->dt_int('TINYINT(1)'),
+		'template_id'			=> $DBLayer->dt_int(),
 	),
 	'PRIMARY KEY'	=> ['id']
 );
 $DBLayer->create_table('hca_wom_work_orders', $schema);
+$DBLayer->add_field('hca_wom_work_orders', 'request_type', 'TINYINT(1)', false, '0');
+$DBLayer->add_field('hca_wom_work_orders', 'template_id', 'INT(10) UNSIGNED', false, '0');
 
 $schema = [
 	'FIELDS'		=> [
@@ -112,11 +116,13 @@ $schema = [
 		'tpl_id'				=> $DBLayer->dt_int(),
 		'item_id'				=> $DBLayer->dt_int(),
 		'task_action'			=> $DBLayer->dt_int('TINYINT(3)'),
+		'assigned_to'			=> $DBLayer->dt_int(),
 		'task_message'			=> $DBLayer->dt_varchar(),
 	],
 	'PRIMARY KEY'	=> ['id']
 ];
 $DBLayer->create_table('hca_wom_tpl_tasks', $schema);
+$DBLayer->add_field('hca_wom_tpl_tasks', 'assigned_to', 'INT(10) UNSIGNED', false, '0');
 
 $schema = [
 	'FIELDS'		=> [

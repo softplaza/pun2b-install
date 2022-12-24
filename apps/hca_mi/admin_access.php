@@ -13,7 +13,7 @@ $SwiftSettings = new SwiftSettings;
 $SwiftSettings->setId('hca_mi');
 
 // Set access to the following pages
-$SwiftSettings->addAccessOption(1, 'Current Project');
+$SwiftSettings->addAccessOption(1, 'View Current Project');
 $SwiftSettings->addAccessOption(2, 'Project Files');
 $SwiftSettings->addAccessOption(3, 'Project Invoice');
 $SwiftSettings->addAccessOption(4, 'List of Projects');
@@ -30,7 +30,7 @@ $SwiftSettings->addAccessOption(24, 'Vendor List');
 
 $SwiftSettings->POST();
 
-$Core->set_page_id('hca_5840_admin_access', 'hca_5840');
+$Core->set_page_id('hca_mi_admin_access', 'hca_mi');
 require SITE_ROOT.'header.php';
 
 if ($User->is_admmod())

@@ -8,6 +8,14 @@
 
 class HcaMi
 {
+	var $job_status = [
+		0 => 'REMOVED',
+		1 => 'IN PROGRESS', 
+		2 => 'ON HOLD', 
+		3 => 'COMPLETED', 
+		//4 => 'REMOVED',
+	];
+
 	var $locations = [
 		1 => 'L/ROOM',
 		2 => 'D/ROOM',
@@ -28,6 +36,9 @@ class HcaMi
 		17 => 'L/MASTER BATH',
 		18 => 'R/MASTER BATH',
 		19 => 'A/C CABINET',
+		20 => 'VANITY AREA',
+		21 => 'M/BEDROOM CLOSET',
+		22 => 'GARAGE'
 	];
 
 	var $leak_types = [
@@ -85,16 +96,29 @@ class HcaMi
 
 
 	function check_vendor($default_vendors, $vendor_id, $key)
-{
-	if (!empty($default_vendors))
 	{
-		foreach($default_vendors as $cur_info)
+		if (!empty($default_vendors))
 		{
-			if ($vendor_id == $cur_info['vendor_id'] && $key == $cur_info['group_id'])
-				return $cur_info;
+			foreach($default_vendors as $cur_info)
+			{
+				if ($vendor_id == $cur_info['vendor_id'] && $key == $cur_info['group_id'])
+					return $cur_info;
+			}
+			return [];
 		}
 		return [];
 	}
-	return [];
-}
+
+	function addAction($project_id, $message = '')
+	{
+		global $User, $DBLayer;
+
+		$project_actions = [
+			'project_id' => $project_id,
+			'submitted_by' => $User->get('id'),
+			'time_submitted' => time(),
+			'message' => $message,
+		];
+		$DBLayer->insert('hca_mi_actions', $project_actions);
+	}
 }

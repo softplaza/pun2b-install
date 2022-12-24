@@ -19,7 +19,7 @@ $SwiftSettings->addNotifyOption(2, 'Task completed');
 
 $SwiftSettings->POST();
 
-$Core->set_page_id('hca_wom_admin_notifications', 'hca_wom');
+$Core->set_page_id('hca_wom_admin_notifications', 'hca_fs');
 require SITE_ROOT.'header.php';
 
 if ($User->is_admmod())

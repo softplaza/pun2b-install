@@ -20,10 +20,51 @@ if ($User->checkPermissions('hca_wom', 10))
 	$SwiftUploader->access_upload_files = true;
 
 // Get current task info
-$task_info = $HcaWOM->getTaskInfo($id);
+//$task_info = $HcaWOM->getTaskInfo($id);
+$query = [
+	'SELECT'	=> 't.*, w.property_id, w.unit_id, w.wo_message, w.priority, w.enter_permission, w.has_animal, p.pro_name, pu.unit_number, u1.realname AS requested_name, u1.email AS requested_email, i.item_name, pb.problem_name, u2.realname AS assigned_name, u2.email AS assigned_email',
+	'FROM'		=> 'hca_wom_tasks AS t',
+	'JOINS'		=> [
+		[
+			'INNER JOIN'	=> 'hca_wom_work_orders AS w',
+			'ON'			=> 'w.id=t.work_order_id'
+		],
+		[
+			'INNER JOIN'	=> 'sm_property_db AS p',
+			'ON'			=> 'p.id=w.property_id'
+		],
+		[
+			'INNER JOIN'	=> 'users AS u1',
+			'ON'			=> 'u1.id=w.requested_by'
+		],
+		[
+			// LEFT if unit_id - 0
+			'LEFT JOIN'		=> 'sm_property_units AS pu',
+			'ON'			=> 'pu.id=w.unit_id'
+		],
+		[
+			'LEFT JOIN'		=> 'hca_wom_items AS i',
+			'ON'			=> 'i.id=t.item_id'
+		],
+		[
+			'LEFT JOIN'		=> 'hca_wom_problems AS pb',
+			'ON'			=> 'pb.id=t.task_action'
+		],
+		[
+			'LEFT JOIN'		=> 'users AS u2',
+			'ON'			=> 'u2.id=t.assigned_to'
+		],
+	],
+	'WHERE'		=> 't.id='.$id,
+];
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+$task_info = $DBLayer->fetch_assoc($result);
 
 if (empty($task_info))
 	message('The task does not exist or has been deleted.');
+
+if ($task_info['unit_id'] == 0 || $task_info['unit_id'] == '')
+	$task_info['unit_number'] = 'Common area';
 
 if (isset($_POST['complete']))
 {
@@ -82,7 +123,7 @@ if (isset($_POST['complete']))
 	}
 }
 
-$Core->set_page_id('hca_wom_task', 'hca_wom');
+$Core->set_page_id('hca_wom_task', 'hca_fs');
 require SITE_ROOT.'header.php';
 ?>
 

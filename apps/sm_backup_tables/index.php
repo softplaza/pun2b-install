@@ -227,7 +227,7 @@ else if ($db_type == 'mysqli')
 	}
 }
 
-$Core->set_page_id('sm_backup_tables', 'management');
+$Core->set_page_id('sm_backup_tables', 'admin');
 require SITE_ROOT.'header.php';
 ?>
 

@@ -12,11 +12,27 @@ $hash = isset($_GET['hash']) ? swift_trim($_GET['hash']) : '';
 if ($id < 1 || $hash == '')
 	message('Sorry, you came to the wrong link.');
 
+$HcaMi = new HcaMi;
+
 //Get cur form info
 $query = array(
-	'SELECT'	=> '*',
-	'FROM'		=> 'hca_5840_forms',
-	'WHERE'		=> 'id='.$id.' AND link_hash=\''.$DBLayer->escape($hash).'\'',
+	'SELECT'	=> 'f.*, pj.unit_number, pj.location, pj.leak_type, pj.symptom_type, pj.symptoms, pj.mois_source, pj.action, pj.remarks, p.pro_name, u1.realname AS project_manager1',
+	'FROM'		=> 'hca_5840_forms AS f',
+	'JOINS'		=> [
+		[
+			'INNER JOIN'	=> 'hca_5840_projects AS pj',
+			'ON'			=> 'pj.id=f.project_id'
+		],
+		[
+			'INNER JOIN'	=> 'sm_property_db AS p',
+			'ON'			=> 'p.id=pj.property_id'
+		],
+		[
+			'LEFT JOIN'		=> 'users AS u1',
+			'ON'			=> 'u1.id=pj.performed_uid'
+		],
+	],
+	'WHERE'		=> 'f.id='.$id.' AND f.link_hash=\''.$DBLayer->escape($hash).'\'',
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $form_info = $DBLayer->fetch_assoc($result);
@@ -37,7 +53,6 @@ $query = array(
 	'SELECT'	=> '*',
 	'FROM'		=> 'hca_5840_forms',
 	'WHERE'		=> 'project_id='.$form_info['project_id'],
-//	'ORDER BY'	=> 'mailed_time'
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $msg_info = array();
@@ -91,7 +106,9 @@ if (isset($_POST['update']))
 			'Remarks: '.$remarks_mail.' '."\n\n".
 			'Message from Manager: '.$manager_message_mail;
 */
-		$flash_message = 'Form has been submited by manager of property';
+		$flash_message = 'Form #'.$id.' has been submited by manager of property';
+		$HcaMi->addAction($project_info['id'], $flash_message);
+
 		$FlashMessenger->add_info($flash_message);
 		redirect('', $flash_message);
 	}
@@ -102,187 +119,94 @@ if (isset($_POST['update']))
 // Setup the form
 $page_param['fld_count'] = $page_param['group_count'] = $page_param['item_count'] = 0;
 
-$Core->set_page_id('hca_5840_form', 'hca_5840');
+$Core->set_page_id('hca_mi_form', 'hca_mi');
 require SITE_ROOT.'header.php';
-
-if ($form_info['submited_time'] == 0)
-{
 ?>
-<style>
-.main-subhead .hn span{color: red;font-weight: bold;}
-</style>
 
-	<div class="main-subhead">
-		<h2 class="hn"><span class="a-project">From: Moisture Inspection</span></h2>
+<div class="card-header">
+	<h6 class="card-title mb-0">Moisture Inspection Form</h6>
+</div>
+<div class="container">
+
+<?php if ($form_info['submited_time'] == 0): ?>
+	<div class="alert alert-warning my-3" role="alert">
+		<p class="fw-bold">Information:</p>
+		<p>Please submit this form as confirmation.</p>
 	</div>
-
-	<div class="main-content main-frm">
-		
-		<?php $Core->get_messages() ?>
-		
-		<div id="admin-alerts" class="ct-set warn-set">
-			<div class="ct-box warn-box">
-				<h6 class="ct-legend hn warn"><span>Information:</span></h6>
-				<p>Please double check information bellow and submit this form.</p>
-			</div>
-		</div>
-		
-		<form method="post" accept-charset="utf-8" action="">
-			<div class="hidden">
-				<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
-			</div>
-		
-			<fieldset class="frm-group group1">
-				
-				<div class="ct-set group-item3">
-					<div class="ct-box">
-						<h6 class="ct-legend hn"><span>Property</span></h6>
-						<p><span><strong><?php echo html_encode($project_info['property_name']) ?></strong></span></p>
-					</div>
-				</div>
-				
-				<div class="ct-set group-item3">
-					<div class="ct-box">
-						<h6 class="ct-legend hn"><span>Unit #</span></h6>
-						<p><span><strong><?php echo html_encode($project_info['unit_number']) ?></strong></span></p>
-					</div>
-				</div>
-				
-				<div class="ct-set group-item3">
-					<div class="ct-box">
-						<h6 class="ct-legend hn"><span>Location</span></h6>
-						<p><span><strong><?php echo html_encode($project_info['location']) ?></strong></span></p>
-					</div>
-				</div>
-				
-				<div class="ct-set group-item3">
-					<div class="ct-box warn-box">
-						<h6 class="ct-legend hn"><span>Notice for manager</span></h6>
-						<p><span><?php echo format_time($form_info['mailed_time'],1).': '.$form_info['msg_for_manager'] ?></span></p>
-<?php
-/*
-//SHOWS HISTORY FOR MANAGER
-foreach($msg_info as $cur_info){
-	echo '<p><span>'.format_time($cur_info['mailed_time'],0,null,null,true).': '.$cur_info['notice_for_manager'].'</span></p>';
-	if($cur_info['manager_check'] == 1)
-		echo '<p><span>'.format_time($cur_info['manager_time'],0,null,null,true).': '.$cur_info['manager_message'].'</span></p>';
-*/
-//	if($cur_info['manager_check'] == 1 && !empty($cur_info['manager_message']))
-//		echo '<p><span>'.format_time($cur_info['manager_time'],0,null,null,true).': '.$cur_info['manager_message'].'</span></p>';
-		
-//}
-
-?>
-					</div>
-				</div>
-				
-				<div class="sf-set set4">
-					<div class="sf-box checkbox">
-						<span class="fld-input"><input type="checkbox" name="manager_check" value="1" required></span>
-						<label for="fld7"><span style="color:red;">Manager action required</span>You must check this checkbox to confirm the action.</label>
-					</div>
-				</div>
-				
-				<div class="txt-set set<?php echo ++$page_param['item_count'] ?>">
-					<div class="txt-box textarea">
-						<label for="fld<?php echo ++$page_param['fld_count'] ?>"><span style="color:red;"><strong>Manager comment required</strong></span><small>Please leave your message.</small></label>
-						<div class="txt-input"><span class="fld-input"><textarea id="fld<?php echo $page_param['fld_count'] ?>" name="msg_from_manager" rows="3" cols="55" required placeholder="Enter text message here and submit this form"></textarea></span></div>
-					</div>
-				</div>
-				
-			</fieldset>
-			
-			<div class="frm-buttons">
-				<span class="submit primary"><input type="submit" name="update" value="Submit" /></span>
-			</div>
-		
-		</form>
-		
+<?php else: ?>
+	<div class="alert alert-success my-3" role="alert">
+		<p class="fw-bold">Information:</p>
+		<p>This form has already been submitted.</p>
 	</div>
-<?php
-	require SITE_ROOT.'footer.php';
-}
-else
-{
-?>
-<style>
-.main-subhead .hn span{
-    color: green;
-    font-weight: bold;
-}
-</style>
+<?php endif; ?>
 
-	<div class="main-subhead">
-		<h2 class="hn"><span class="a-project">The form was confirmed by the manager on <?php echo format_time($form_info['submited_time'], 1) ?></span></h2>
-	</div>
-	
-	<div class="main-content main-frm">
-		
-		<?php $Core->get_messages() ?>
-		
-		<div id="admin-alerts" class="ct-set warn-set">
-			<div class="ct-box warn-box">
-				<h6 class="ct-legend hn warn"><span>Information:</span></h6>
-				<p>This form has already been completed and submitted. See details below.</p>
-			</div>
-		</div>
-		
-		<fieldset class="frm-group group1">
-			
-			<div class="ct-set group-item3">
-				<div class="ct-box">
-					<h6 class="ct-legend hn"><span>Property</span></h6>
-					<p><span><strong><?php echo html_encode($project_info['property_name']) ?></strong></span></p>
-				</div>
-			</div>
-			
-			<div class="ct-set group-item3">
-				<div class="ct-box">
-					<h6 class="ct-legend hn"><span>Unit #</span></h6>
-					<p><span><strong><?php echo html_encode($project_info['unit_number']) ?></strong></span></p>
-				</div>
-			</div>
-			
-			<div class="ct-set group-item3">
-				<div class="ct-box">
-					<h6 class="ct-legend hn"><span>Location</span></h6>
-					<p><span><strong><?php echo html_encode($project_info['location']) ?></strong></span></p>
-				</div>
-			</div>
-			
-			<div class="ct-set group-item3">
-				<div class="ct-box warn-box">
-					<h6 class="ct-legend hn"><span>Notices for manager</span></h6>
+	<form method="post" accept-charset="utf-8" action="">
+		<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
+		<div class="card-body border">
+			<div class="row ">
+				<div class="col-sm-6">
+					<div class="mb-1">
+						<span>Property:</span>
+						<span class="fw-bold"><?php echo html_encode($form_info['pro_name']) ?></span>
+					</div>
+					<div class="mb-1">
+						<span>Unit #</span>
+						<span class="fw-bold"><?php echo html_encode($form_info['unit_number']) ?></span>
+					</div>
+					<div class="mb-1">
+						<span>Location:</span>
+						<span class="fw-bold"><?php echo html_encode($form_info['location']) ?></span>
+					</div>
+					<div class="mb-1">
+						<span>Project Manager:</span>
+						<span class="fw-bold"><?php echo html_encode($form_info['project_manager1']) ?></span>
+					</div>
+
+					<div class="alert alert-info my-3" role="alert">
+						<p class="fw-bold">Notice for manager:</p>
+<?php if ($form_info['submited_time'] == 0): ?>
+						<p><?php echo format_time($form_info['mailed_time'],1).': '.$form_info['msg_for_manager'] ?></p>
 <?php
+else:
 foreach($msg_info as $cur_info){
 	echo '<p><span>'.format_time($cur_info['mailed_time']).': '.$cur_info['msg_for_manager'].'</span></p>';
 }
+endif;
 ?>
+					</div>
+
+				<?php if ($form_info['submited_time'] == 0): ?>
+
+					<div class="mb-3 form-check">
+						<input class="form-check-input" type="checkbox" name="manager_check" value="1" id="fld_manager_check">
+						<label class="form-check-label" for="fld_manager_check">Mark this checkbox to confirm the action.</label>
+					</div>
+					<div class="mb-3">
+						<label class="form-label" for="fld_msg_from_manager">Comments</label>
+						<textarea id="fld_msg_from_manager" name="msg_from_manager" class="form-control" placeholder="Required field" required><?php echo html_encode($form_info['msg_from_manager']) ?></textarea>
+					</div>
+					<div class="mb-3">
+						<button type="submit" name="update" class="btn btn-primary">Submit</button>
+					</div>
+
+				<?php else: ?>
+
+					<div class="mb-3">
+						<span>Manager approved: </span>
+						<span class="fw-bold"><?php echo ($form_info['submited_time'] > 0) ? 'YES' : 'NO' ?></span>
+					</div>
+					<div class="alert alert-info my-3" role="alert">
+						<p class="fw-bold">Manager comments</p>
+						<p><?php echo html_encode($form_info['msg_from_manager']) ?></p>
+					</div>
+
+				<?php endif; ?>
+
 				</div>
 			</div>
-			
-			<div class="ct-set group-item3">
-				<div class="ct-box">
-					<h6 class="ct-legend hn"><span>Manager approved</span></h6>
-					<p><span><strong><?php echo ($form_info['submited_time'] > 0) ? 'YES' : 'NO' ?></strong></span></p>
-				</div>
-			</div>
-			
-			<div class="ct-set group-item3">
-				<div class="ct-box warn-box">
-					<h6 class="ct-legend hn"><span>Manager comments</span></h6>
+		</div>
+	</form>
+</div>
+
 <?php
-	foreach($msg_info as $cur_info) {
-		if ($cur_info['submited_time'] > 0 && !empty($cur_info['msg_from_manager']))
-			echo '<p><span>'.format_time($cur_info['submited_time']).': '.$cur_info['msg_from_manager'].'</span></p>';
-	}
-?>
-				</div>
-			</div>
-			
-		</fieldset>
-		
-	</div>
-<?php
-	require SITE_ROOT.'footer.php';
-}
+require SITE_ROOT.'footer.php';

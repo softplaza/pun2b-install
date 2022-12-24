@@ -3,7 +3,7 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-if (!$User->checkPermissions('hca_mi', 1))
+if (!$User->checkAccess('hca_mi'))
 	message($lang_common['No permission']);
 
 $HcaMi = new HcaMi;
@@ -15,18 +15,20 @@ $apt_locations = explode(',', $Config->get('o_hca_5840_locations'));
 if (isset($_POST['form_sent']))
 {
 	$form_data = [
-		'property_id' => isset($_POST['property_id']) ? intval($_POST['property_id']) : 0,
-		'unit_id' => isset($_POST['unit_id']) ? intval($_POST['unit_id']) : 0,
-
-		'mois_report_date' => isset($_POST['mois_report_date']) ? strtotime($_POST['mois_report_date']) : 0,
-		'mois_inspection_date' => isset($_POST['mois_inspection_date']) ? strtotime($_POST['mois_inspection_date']) : 0,
-		'performed_uid' => isset($_POST['performed_uid']) ? intval($_POST['performed_uid']) : 0,
-
-		'leak_type' => isset($_POST['leak_type']) ? intval($_POST['leak_type']) : 0,
-		'symptom_type' => isset($_POST['symptom_type']) ? intval($_POST['symptom_type']) : 0,
-		'symptoms' => isset($_POST['symptoms']) ? swift_trim($_POST['symptoms']) : '',
-		'action' => isset($_POST['action']) ? swift_trim($_POST['action']) : '',
-		'job_status' => 1
+		'property_id' 			=> isset($_POST['property_id']) ? intval($_POST['property_id']) : 0,
+		'unit_id' 				=> isset($_POST['unit_id']) ? intval($_POST['unit_id']) : 0,
+		'mois_report_date' 		=> isset($_POST['mois_report_date']) ? strtotime($_POST['mois_report_date']) : 0,
+		'mois_inspection_date' 	=> isset($_POST['mois_inspection_date']) ? strtotime($_POST['mois_inspection_date']) : 0,
+		'performed_uid' 		=> isset($_POST['performed_uid']) ? intval($_POST['performed_uid']) : 0,
+		'leak_type' 			=> isset($_POST['leak_type']) ? intval($_POST['leak_type']) : 0,
+		'symptom_type' 			=> isset($_POST['symptom_type']) ? intval($_POST['symptom_type']) : 0,
+		'symptoms' 				=> isset($_POST['symptoms']) ? swift_trim($_POST['symptoms']) : '',
+		'action' 				=> isset($_POST['action']) ? swift_trim($_POST['action']) : '',
+		'job_status' 			=> 1,
+		'time_created'			=> time(),
+		'created_by'			=> $User->get('id'),
+		'time_updated'			=> time(),
+		'updated_by'			=> $User->get('id'), // last updated
 	];
 
 	$location = $locations = [];
@@ -59,6 +61,8 @@ if (isset($_POST['form_sent']))
 			$SwiftUploader->uploadFiles('hca_5840_projects', $new_pid);
 
 		$flash_message = 'New project #'.$new_pid.' has been created';
+		$HcaMi->addAction($new_pid, $flash_message);
+		
 		$FlashMessenger->add_info($flash_message);
 		redirect($URL->link('hca_5840_manage_project', $new_pid), $flash_message);
 	}
@@ -94,7 +98,7 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 }
 
 $Core->set_page_title('New Project');
-$Core->set_page_id('hca_5840_new_project', 'hca_5840');
+$Core->set_page_id('hca_mi_new_project', 'hca_mi');
 require SITE_ROOT.'header.php';
 ?>
 
@@ -129,9 +133,9 @@ foreach ($property_info as $cur_info)
 			
 			<div class="col-md-4 mb-3">
 				<label class="form-label" for="fld_location">Locations</label>
-				<select class="form-select form-select-sm" id="fld_location" onchange="addLocation()">
+				<select class="form-select form-select-sm" id="fld_location" onchange="addLocation()" required>
 <?php
-echo '<option value="0" selected>Select one</option>'."\n";
+echo '<option value="" selected>Select one</option>'."\n";
 foreach ($HcaMi->locations as $key => $value)
 {
 	echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$value.'</option>'."\n";
@@ -198,7 +202,7 @@ foreach ($HcaMi->leak_types as $key => $value)
 			</div>
 			<div class="mb-3 col-md-3">
 				<label class="form-label" for="fld_symptom_type">Symptoms</label>
-				<select name="symptom_type" class="form-select form-select-sm" id="fld_symptom_type" required>
+				<select name="symptom_type" class="form-select form-select-sm" id="fld_symptom_type">
 					<option value="" selected>Select one</option>
 <?php
 foreach ($HcaMi->symptoms as $key => $value)

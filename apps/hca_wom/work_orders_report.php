@@ -164,7 +164,7 @@ while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
 	$users[] = $fetch_assoc;
 }
 
-$Core->set_page_id('hca_wom_work_orders_report', 'hca_wom');
+$Core->set_page_id('hca_wom_work_orders_report', 'hca_fs');
 require SITE_ROOT.'header.php';
 ?>
 <nav class="navbar search-bar">
@@ -270,8 +270,7 @@ if (!empty($hca_wom_work_orders))
 		<tr id="row<?php echo $cur_info['id'] ?>" class="<?php echo ($id == $cur_info['id'] ? ' anchor' : '') ?>">
 			<td class="ta-center">#<?php echo $cur_info['id'] ?></td>
 			<td>
-				<span class="fw-bold"><?php echo html_encode($cur_info['pro_name']) ?>, <?php echo html_encode($cur_info['unit_number']) ?></span>
-				<?=$manage_link?>
+				<span class="fw-bold"><a href="<?=$URL->link('hca_wom_work_order', $cur_info['id'])?>"><?php echo html_encode($cur_info['pro_name']) ?>, <?php echo html_encode($cur_info['unit_number']) ?></a></span>
 			</td>
 			<td class="min-100"><?php echo html_encode($cur_info['wo_message']) ?></td>
 			<td class="min-100 ta-center"><?php echo $priority ?></td>

@@ -107,12 +107,18 @@ class SwiftMenu
 		$actions[] = '</ul>';
 		$actions[] = '</li>';
 
+		// Gen breadcrumbs
+		//krsort($this->bread_crumbs);
+		//$top_left_side = !empty($this->bread_crumbs) ? implode(' &rArr; ', $this->bread_crumbs) : html_encode($Config->get('o_board_title'));
 
-		krsort($this->bread_crumbs);
-		$bread_crumbs = !empty($this->bread_crumbs) ? implode(' &rArr; ', $this->bread_crumbs) : html_encode($Config->get('o_board_title'));
+		// Gen list of current section menu items
+		$top_left_side = $this->genQuickJumpList();
+
 		$output[] = "\t\t\t\t\t\t".'<nav class="swift-navbar navbar-dark bg-dark" id="navbar_top">'."\n";
-		$output[] = "\t\t\t\t\t\t\t".'<a class="site-title" href="#">'.$bread_crumbs.'</a>'."\n";
 
+		// Left side of top nav bar
+		$output[] = "\t\t\t\t\t\t\t".'<a class="site-title" href="#">'.$top_left_side.'</a>'."\n";
+		// Right side of top nav bar
 		$output[] = "\t\t\t\t\t\t\t\t".'<ul class="nav float-end" style="font-size:16px">'."\n";
 
 		if (!empty($profile_links))
@@ -182,19 +188,21 @@ class SwiftMenu
 	            	// look deeper for parent while preserving the initial parent_id and row
 	                $this->findParent($row['nodes'], $parent_id, $child);
 	            }
-	        	else continue;
+	        	else
+					continue;
 	        }
 	        // child requires adoption
 	        else if ($row['parent_id'])
 	        {
 	        	// remove child from level because it will be store elsewhere and won't be its own parent 
-	        	// (reduce iterations in next loop & avoid infinite recursion)
+	        	// reduce iterations in next loop & avoid infinite recursion
 	            unset($array[$i]);
 
 	            // look for parent using parent_id while carrying the entire row as the childarray
 	            $this->findParent($array, $row['parent_id'], $row);
 	        }
-	        else continue;
+	        else
+				continue;
 	    }
 	    // return the modified array
 	    return $array;
@@ -277,6 +285,72 @@ class SwiftMenu
 		}
 
 		return $output;
+	}
+
+	function genQuickJumpList()
+	{
+		global $Core;
+
+		$output = [];
+		$output[] = '<select onchange="quickJumpTo(this)" class="form-select form-select-sm badge-secondary">';
+		$output[] = '<option selected>Quick jump to...</option>';
+		foreach($this->menu_items as $cur_item)
+		{
+			if ($Core->cur_page_section == $cur_item['parent_id'])
+			{
+				$output[] = '<option value="'.$cur_item['link'].'">'.$cur_item['title'].'</option>';
+			}
+			else if ($Core->cur_page_section == $cur_item['id'])
+			{
+				if (isset($cur_item['nodes']) && !empty($cur_item['nodes']))
+				{
+					$output[] = '<optgroup label="'.html_encode($cur_item['title']).'">';
+					foreach($cur_item['nodes'] as $nodes_item)
+					{
+						if (isset($nodes_item['nodes']) && !empty($nodes_item['nodes']))
+						{
+							$output[] = '<optgroup label="'.html_encode($nodes_item['title']).'">';
+							foreach($nodes_item['nodes'] as $sub_item)
+							{
+								$output[] = '<option value="'.$sub_item['link'].'">'.$sub_item['title'].'</option>';
+							}
+							$output[] = '</optgroup>';
+						}
+						else
+						{
+							$output[] = '<option value="'.$nodes_item['link'].'">'.$nodes_item['title'].'</option>';
+						}
+					}
+					$output[] = '</optgroup>';
+				}
+			}
+			// Search in nodes
+			else if (isset($cur_item['nodes']) && !empty($cur_item['nodes']))
+			{
+				//$output[] = '<optgroup label="'.html_encode($cur_item['title']).'">';
+				foreach($cur_item['nodes'] as $nodes_item)
+				{
+					if ($Core->cur_page_section == $nodes_item['id'])
+					{
+
+						if (isset($nodes_item['nodes']) && !empty($nodes_item['nodes']))
+						{
+							$output[] = '<optgroup label="'.html_encode($nodes_item['title']).'">';
+							foreach($nodes_item['nodes'] as $sub_item)
+							{
+								$output[] = '<option value="'.$sub_item['link'].'">'.$sub_item['title'].'</option>';
+							}
+							$output[] = '</optgroup>';
+						}
+					}
+				}
+				//$output[] = '</optgroup>';
+			}
+
+		}
+		$output[] = '</select>';
+
+		return implode('', $output);
 	}
 
 	function findActive($sub_menu)

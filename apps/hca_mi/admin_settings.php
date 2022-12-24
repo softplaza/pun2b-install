@@ -19,7 +19,7 @@ if (isset($_POST['update']))
 	redirect('', $flash_message);
 }
 
-$Core->set_page_id('hca_5840_settings', 'hca_5840');
+$Core->set_page_id('hca_mi_admin_settings', 'hca_mi');
 require SITE_ROOT.'header.php';
 ?>	
 

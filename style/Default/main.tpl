@@ -94,6 +94,8 @@ for (var i = 0; i < subArrow.length; i++)
 	});
 }
 </script>
-
+<script>
+function quickJumpTo(s){ var a=s.value; window.location.replace(a)}
+</script>
 	</body>
 </html>

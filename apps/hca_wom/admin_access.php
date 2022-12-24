@@ -35,7 +35,7 @@ $SwiftSettings->addAccessOption(55, 'Work Order Items');
 
 $SwiftSettings->POST();
 
-$Core->set_page_id('hca_wom_admin_access', 'hca_wom');
+$Core->set_page_id('hca_wom_admin_access', 'hca_fs');
 require SITE_ROOT.'header.php';
 
 if ($User->is_admmod())
