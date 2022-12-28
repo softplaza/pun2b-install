@@ -36,7 +36,8 @@ function hca_fs_co_modify_url_scheme()
     $urls['hca_fs_emergency_zones'] = 'apps/hca_fs/emergency_zones.php?sort_by=2';
 
     $urls['hca_fs_ajax_get_weekly_shedule_request'] = 'apps/hca_fs/ajax/get_weekly_shedule_request.php';
-
+    // ajax requests
+    $urls['hca_fs_ajax_assign_property_request'] = 'apps/hca_fs/ajax/assign_property_request.php';
     $urls['hca_fs_ajax_get_units'] = 'apps/hca_fs/ajax/get_units.php';
     $urls['hca_fs_ajax_get_workers'] = 'apps/hca_fs/ajax/get_workers.php';
     $urls['hca_fs_ajax_get_time_slots'] = 'apps/hca_fs/ajax/get_time_slots.php';

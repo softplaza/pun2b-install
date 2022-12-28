@@ -1524,8 +1524,7 @@ function csrf_confirm_form()
 // Display a message
 function message($message, $link = '', $heading = '')
 {
-	global $Core, $URL, $Templator, $PagesNavigator, $Loader, $DBLayer, $Config, $User, $FlashMessenger, $Hooks, $SwiftMenu, $page_param;
-	global $lang_common, $microtime_start, $tpl_main;
+	global $User, $Hooks, $Core, $URL, $Templator, $PagesNavigator, $Loader, $DBLayer, $Config, $FlashMessenger, $SwiftMenu, $page_param, $lang_common, $microtime_start, $tpl_main;
 
 	if (defined('SPM_REQUEST_AJAX'))
 	{
@@ -1533,7 +1532,6 @@ function message($message, $link = '', $heading = '')
 			'code'		=> -1,
 			'message'	=> $message
 		);
-
 		send_json($json_data);
 	}
 
@@ -1543,19 +1541,23 @@ function message($message, $link = '', $heading = '')
 		require SITE_ROOT.'header.php';
 	}
 
-	if ($User->is_guest() && $link == '')
-		$link = 'If you are not logged in, <strong><a href="'.BASE_URL.'/login.php">LOG IN</a></strong> with your username and password.';
+	$content = [];
+	if ($message != '')
+		$content[] = '<p>'.$message.'</p>';
 
-	if (!empty($page_param['main_head_options']))
-		echo "\n\t\t".'<p class="options">'.implode(' ', $page_param['main_head_options']).'</p>';
+	if ($User->is_guest() && $link == '')
+		$content[] = '<p>If you are not logged in, <a class="badge bg-primary text-white" href="'.BASE_URL.'/login.php">LOG IN</a> with your username and password.</p>';
+
+	//if (!empty($page_param['main_head_options']))
+	//	echo "\n\t\t".'<p class="options">'.implode(' ', $page_param['main_head_options']).'</p>';
 
 ?>
 
 	<div class="card">
 		<div class="card-body">
 			<div class="callout callout-danger mb-2">
-				<h6 class="h6">Warning!</h6>
-				<p><?php echo $message ?><?php if ($link != '') echo ' <span>'.$link.'</span>' ?></p>
+				<h6 class="text-danger">Warning!</h6>
+				<?php echo implode("\n", $content)  ?>
 			</div>
 		</div>
 	</div>
@@ -1856,7 +1858,6 @@ p {padding:2px;margin:0;}
 .alert{border-radius: 0.25rem;color: #842029;background-color: #f8d7da;border-color: #f5c2c7;padding: 7px 12px;margin: 65px 10px;}
 .title{font-weight:bold;color: #6a1a21;}
 .content{font-size: 14px;}
-.error_line{}
 	</style>
 </head>
 <body>

@@ -3,8 +3,8 @@
 if (!defined('APP_INSTALL')) die();
 
 // For apply any changes go to manifest and up version
-$schema = array(
-	'FIELDS'		=> array(
+$schema = [
+	'FIELDS'		=> [
 		'id'					=> $DBLayer->dt_serial(),
 		'property_id'			=> $DBLayer->dt_int(),
 		'property_name'			=> $DBLayer->dt_varchar(),
@@ -39,42 +39,42 @@ $schema = array(
 		'start_time'			=> $DBLayer->dt_time(),
 		'end_time'				=> $DBLayer->dt_time(),
 		'date_requested'		=> $DBLayer->dt_date(),
-	),
-	'PRIMARY KEY'	=> array('id')
-);
+	],
+	'PRIMARY KEY'	=> ['id']
+];
 $DBLayer->create_table('hca_fs_requests', $schema);
 
 // hca_fs_weekly
-$schema = array(
-	'FIELDS'		=> array(
+$schema = [
+	'FIELDS'		=> [
 		'id'					=> $DBLayer->dt_serial(),
 		'user_id'				=> $DBLayer->dt_int(),
 		'week_of'				=> $DBLayer->dt_int(),
 		'mailed_time'			=> $DBLayer->dt_int(),
 		'submitted_time'		=> $DBLayer->dt_int(),
 		'hash'					=> $DBLayer->dt_varchar(),
-	),
-	'PRIMARY KEY'	=> array('id')
-);
+	],
+	'PRIMARY KEY'	=> ['id']
+];
 $DBLayer->create_table('hca_fs_weekly', $schema);
 
 // hca_fs_vacations
-$schema = array(
-	'FIELDS'		=> array(
+$schema = [
+	'FIELDS'		=> [
 		'id'					=> $DBLayer->dt_serial(),
 		'user_id'				=> $DBLayer->dt_int(),
 		'start_date'			=> $DBLayer->dt_int(),
 		'end_date'				=> $DBLayer->dt_int(),
 		'date_off'				=> $DBLayer->dt_date(),
 		'off_type'				=> $DBLayer->dt_int('TINYINT(1)'),
-	),
-	'PRIMARY KEY'	=> array('id')
-);
+	],
+	'PRIMARY KEY'	=> ['id']
+];
 $DBLayer->create_table('hca_fs_vacations', $schema);
 
 // hca_fs_permanent_assignments
-$schema = array(
-	'FIELDS'		=> array(
+$schema = [
+	'FIELDS'		=> [
 		'id'					=> $DBLayer->dt_serial(),
 		'user_id'				=> $DBLayer->dt_int(),
 		'group_id'				=> $DBLayer->dt_int(),
@@ -86,9 +86,9 @@ $schema = array(
 		'start_date'			=> $DBLayer->dt_int(),
 		'end_date'				=> $DBLayer->dt_int(),
 		'time_shift'			=> $DBLayer->dt_int('TINYINT(1)', false, '1'),
-	),
-	'PRIMARY KEY'	=> array('id')
-);
+	],
+	'PRIMARY KEY'	=> ['id']
+];
 $DBLayer->create_table('hca_fs_permanent_assignments', $schema);
 
 // hca_fs_emergency_schedule
@@ -104,18 +104,28 @@ $schema = array(
 );
 $DBLayer->create_table('hca_fs_emergency_schedule', $schema);
 
+$DBLayer->drop_table('hca_fs_tasks');
 $schema = [
 	'FIELDS'		=> [
 		'id'						=> $DBLayer->dt_serial(),
-		'request_id'				=> $DBLayer->dt_int(),
-		'request_text'				=> $DBLayer->dt_text(),
-		'completion_text'			=> $DBLayer->dt_text(),
-		'time_start'				=> $DBLayer->dt_time(),
-		'time_end'					=> $DBLayer->dt_time(),
+		'property_id'				=> $DBLayer->dt_int(),
+		'unit_id'					=> $DBLayer->dt_int(),
+		'unit_number'				=> $DBLayer->dt_varchar(),
+		'gl_code'					=> $DBLayer->dt_varchar(),
+		'task_details'				=> $DBLayer->dt_text(),
+		// settings
+		'time_slot'					=> $DBLayer->dt_int('TINYINT(1)'),
+		'template_type'				=> $DBLayer->dt_int('TINYINT(1)'),
+		'assigned_to'				=> $DBLayer->dt_int(),
+		// dates
+		'requested_date'			=> $DBLayer->dt_date(),
+		'created_on'				=> $DBLayer->dt_int(),
+		'created_by'				=> $DBLayer->dt_int(),
 	],
 	'PRIMARY KEY'	=> ['id']
 ];
 $DBLayer->create_table('hca_fs_tasks', $schema);
+
 
 // DO NOT REMOVE!!!
 $DBLayer->add_field('groups', 'hca_fs', 'TINYINT(1)', false, '0'); 

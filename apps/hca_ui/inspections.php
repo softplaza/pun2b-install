@@ -245,6 +245,7 @@ $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $PagesNavigator->set_total($DBLayer->result($result));
 
 // 1 - Pendind 2 - Completed Work Prders
+//  c.work_order_completed AS inspection_completed,
 $query = [
 	'SELECT'	=> 'c.*, p.pro_name, un.unit_number, u1.realname AS owner_name, u2.realname AS inspected_name, u3.realname AS completed_name, u4.realname AS updated_name, u5.realname AS started_name',
 	'FROM'		=> 'hca_ui_checklist as c',
@@ -257,6 +258,7 @@ $query = [
 			'INNER JOIN'	=> 'sm_property_units AS un',
 			'ON'			=> 'un.id=c.unit_id'
 		],
+
 		[
 			'LEFT JOIN'		=> 'users AS u1',
 			'ON'			=> 'u1.id=c.owned_by'
@@ -278,8 +280,10 @@ $query = [
 			'ON'			=> 'u5.id=c.started_by'
 		],
 	],
-	//'ORDER BY'	=> 'c.completed, c.status, p.pro_name, LENGTH(un.unit_number), un.unit_number',
-	'ORDER BY'	=> 'c.inspection_completed, c.work_order_completed, p.pro_name, LENGTH(un.unit_number), un.unit_number', //mycolumn=0 desc, mycolumn desc
+
+	'ORDER BY'	=> 'c.inspection_completed, c.work_order_completed, p.pro_name, LENGTH(un.unit_number)',
+	//'ORDER BY'	=> 'IF((FIELD(c.inspection_completed,2,1)=1),1,0), c.inspection_completed, p.pro_name, LENGTH(un.unit_number)',
+
 	'LIMIT'		=> $PagesNavigator->limit()
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);

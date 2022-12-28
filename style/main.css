@@ -1906,8 +1906,10 @@ table .tcr{
     border-radius: 0.25rem;
 }
 .callout-success{
+    border: 1px solid #9df0c9;
     border-left-color:#198754!important;
-    background-color: #d6f0e0 !important;
+    background-color: #daffe8 !important;
+    color: #03361e !important;
 }
 .callout-info{
     border-left-color:#5bc0de!important;
@@ -1922,8 +1924,10 @@ table .tcr{
     background-color: #ebedef !important;
 }
 .callout-warning{
+    border: 1px solid #ffed9a;
     border-left-color:#f0ad4e!important;
-    background-color: #fbf0da !important;
+    background-color: #fff7e7 !important;
+    color: #73510d !important;
 }
 .callout-danger{
     border-left-color:#d9534f!important;
@@ -1955,7 +1959,7 @@ table .tcr{
     color: #1c657d !important;
 }
 .badge-light {
-    background-color: #f5f5f5 !important;
+    background-color: #ffffff !important;
     color: #4f4f4f !important;
 }
 .badge-dark {

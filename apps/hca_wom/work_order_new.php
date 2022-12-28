@@ -10,6 +10,7 @@ $HcaWOM = new HcaWOM;
 
 if (isset($_POST['add']))
 {
+	$request_type = isset($_POST['request_type']) ? intval($_POST['request_type']) : 1;
 	$form_data = array(
 		'property_id'		=> isset($_POST['property_id']) ? intval($_POST['property_id']) : 0,
 		'unit_id'			=> isset($_POST['unit_id']) ? intval($_POST['unit_id']) : 0,
@@ -32,24 +33,51 @@ if (isset($_POST['add']))
 
 	if (empty($Core->errors))
 	{
-		// Create a new Work Order
-		$new_id = $DBLayer->insert_values('hca_wom_work_orders', $form_data);
 
-		$task_data = [
-			'work_order_id' 	=> $new_id,
-			'item_id'			=> isset($_POST['item_id'][1]) ? intval($_POST['item_id'][1]) : 0,
-			'task_action'		=> isset($_POST['task_action'][1]) ? intval($_POST['task_action'][1]) : 0,
-			'assigned_to'		=> isset($_POST['assigned_to'][1]) ? intval($_POST['assigned_to'][1]) : 0,
-			'task_message'		=> isset($_POST['task_message'][1]) ? swift_trim($_POST['task_message'][1]) : '',
-			'time_created'		=> time(),
-			'task_status'		=> 2 // set as already accepted
-		];
-		$new_tid = $DBLayer->insert_values('hca_wom_tasks', $task_data);
+		if ($request_type == 2)
+		{
 
-		// Add flash message
-		$flash_message = 'Work Order has been created';
-		$FlashMessenger->add_info($flash_message);
-		redirect($URL->link('hca_wom_work_order', $new_id), $flash_message);
+			$hca_fs_tasks = [
+				'property_id'		=> isset($_POST['property_id']) ? intval($_POST['property_id']) : 0,
+				'unit_id'			=> isset($_POST['unit_id']) ? intval($_POST['unit_id']) : 0,
+				'unit_number'		=> isset($_POST['unit_number']) ? swift_trim($_POST['unit_number']) : '',
+
+				'time_slot'			=> isset($_POST['time_slot']) ? intval($_POST['time_slot']) : 0,
+				'gl_code'			=> isset($_POST['gl_code']) ? swift_trim($_POST['gl_code']) : '',
+				'requested_date'	=> isset($_POST['requested_date']) ? $_POST['requested_date'] : '',
+				'task_details'		=> isset($_POST['task_details']) ? swift_trim($_POST['task_details']) : '',
+
+				'created_on'		=> time(),
+				'created_by'		=> $User->get('id'),
+			];
+			$new_fsid = $DBLayer->insert_values('hca_fs_tasks', $hca_fs_tasks);
+
+			// Add flash message
+			$flash_message = 'Request #'.$new_fsid.' has been sent to In-House Schedule.';
+			$FlashMessenger->add_info($flash_message);
+			redirect('', $flash_message);
+		}
+		else
+		{
+			// Create a new Work Order
+			$new_id = $DBLayer->insert_values('hca_wom_work_orders', $form_data);
+
+			$task_data = [
+				'work_order_id' 	=> $new_id,
+				'item_id'			=> isset($_POST['item_id'][1]) ? intval($_POST['item_id'][1]) : 0,
+				'task_action'		=> isset($_POST['task_action'][1]) ? intval($_POST['task_action'][1]) : 0,
+				'assigned_to'		=> isset($_POST['assigned_to'][1]) ? intval($_POST['assigned_to'][1]) : 0,
+				'task_message'		=> isset($_POST['task_message'][1]) ? swift_trim($_POST['task_message'][1]) : '',
+				'time_created'		=> time(),
+				'task_status'		=> 2 // set as already accepted
+			];
+			$new_tid = $DBLayer->insert_values('hca_wom_tasks', $task_data);
+
+			// Add flash message
+			$flash_message = 'Property Work Order has been created.';
+			$FlashMessenger->add_info($flash_message);
+			redirect($URL->link('hca_wom_work_order', $new_id), $flash_message);
+		}
 	}
 }
 
@@ -154,12 +182,12 @@ foreach ($sm_property_db as $cur_info)
 					<label class="form-label">Request type</label>
 
 					<div class="form-check">
-						<input class="form-check-input" type="radio" name="request_type" value="1" id="fld_request_type1" checked required>
+						<input class="form-check-input" type="radio" name="request_type" value="1" id="fld_request_type1" checked required onclick="switchTemplateType(1)">
 						<label class="form-check-label" for="fld_request_type1">Property Work Order</label>
 					</div>
 
 					<div class="form-check form-check-inline">
-						<input class="form-check-input" type="radio" name="request_type" value="2" id="fld_request_type2">
+						<input class="form-check-input" type="radio" name="request_type" value="2" id="fld_request_type2" onclick="switchTemplateType(2)">
 						<label class="form-check-label" for="fld_request_type2">In-House Request</label>
 					</div>
 				</div>
@@ -179,9 +207,11 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 }
 
 if (!empty($hca_wom_tpl_wo)):
+	
 ?>
-				<div class="col-md-3 mb-3">
-					<label class="form-label" for="fld_template_id">Templates</label>
+				<div class="property-fields col-md-3 mb-3">
+
+					<label class="form-label" for="fld_template_id">Property Templates</label>
 					<select id="fld_template_id" name="template_id" class="form-select form-select-sm" onchange="getWorkOrderTemplate()">
 						<option value="0" selected>Select one</option>
 <?php
@@ -195,6 +225,21 @@ foreach ($hca_wom_tpl_wo as $cur_info)
 ?>
 					</select>
 				</div>
+				<div class="inhouse-fields col-md-3 mb-3 hidden">
+					<label class="form-label" for="fld_template_type">In-House Templates</label>
+					<select name="template_type" id="fld_template_type" class="form-select form-select-sm">
+<?php
+	foreach ($HcaWOM->template_type as $key => $val)
+	{
+		if (isset($_POST['template_iihouse']) && intval($_POST['template_iihouse']) == $key)
+			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$val.'</option>'."\n";
+		else
+			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$val.'</option>'."\n";
+	}
+?>
+					</select>
+				</div>
+
 <?php endif; ?>
 			</div>
 		</div>
@@ -202,7 +247,7 @@ foreach ($hca_wom_tpl_wo as $cur_info)
 
 	<div class="card" id="work_order_template">
 
-		<div class="card-body">
+		<div class="card-body property-fields">
 
 			<div class="col-md-2 mb-2">
 				<label class="form-label" for="fld_priority">Priority</label>
@@ -236,7 +281,7 @@ foreach ($hca_wom_tpl_wo as $cur_info)
 
 		</div>
 
-		<div class="card-body badge-secondary">
+		<div class="card-body badge-secondary property-fields">
 			<h5 class="card-title mb-0">Task #1</h5>
 			<div class="row">
 				<div class="col-md-3 mb-3">
@@ -353,11 +398,48 @@ foreach ($users_info as $cur_info)
 
 		</div>
 
-		<div class="card-body bm-3">
+
+		<div class="card-body inhouse-fields hidden">
+			<div class="row">
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="fld_time_slot">Time</label>
+					<select name="time_slot" id="fld_time_slot" class="form-select form-select-sm">
+<?php
+	$time_slot = [1 => 'ALL DAY', 2 => 'A.M.', 3 => 'P.M.'];
+	foreach ($time_slot as $key => $val)
+	{
+		if (isset($_POST['time_slot']) && intval($_POST['time_slot']) == $key)
+			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$val.'</option>'."\n";
+		else
+			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$val.'</option>'."\n";
+	}
+?>
+					</select>
+				</div>
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="fld_gl_code">GL Code</label>
+					<input class="form-control form-control-sm" type="text" name="gl_code" id="fld_gl_code" value="">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-3 mb-3">
+					<label class="form-label" for="fld_requested_date">Requested Date</label>
+					<input class="form-control form-control-sm" type="date" name="requested_date" id="fld_requested_date" value="<?php echo (isset($_POST['requested_date']) ? $_POST['requested_date'] : '') ?>" onclick="this.showPicker()">
+				</div>
+			</div>
+			<div class="mb-3">
+				<label class="form-label" for="fld_task_details">Comments</label>
+				<textarea type="text" name="task_details" class="form-control" id="fld_task_details" placeholder="Enter details here" rows="2"><?php echo (isset($_POST['task_details']) ? html_encode($_POST['task_details']) : '') ?></textarea>
+			</div>
+
+		</div>
+
+		<div class="card-body mb-3">
 			<button type="submit" name="add" class="btn btn-primary">Submit</button>
 		</div>
 
 	</div>
+
 </form>
 
 <script>
@@ -394,6 +476,16 @@ function getWorkOrderTemplate()
 			document.getElementById("#unit_list").innerHTML = re;
 		}
 	});
+}
+function switchTemplateType(v)
+{
+	if(v==2){
+		$(".inhouse-fields").removeClass('hidden');
+		$(".property-fields").addClass('hidden');
+	}else{
+		$(".property-fields").removeClass('hidden');
+		$(".inhouse-fields").addClass('hidden');
+	} 
 }
 </script>
 

@@ -12,8 +12,9 @@ class HcaWOM
 	];
 
 	var $template_type = [
-		1 => 'Standard',
-		2 => 'Make Ready',
+		1 => 'Work Order',
+		2 => 'Property Work',
+		3 => 'Make Ready',
 	];
 
 	var $wo_status = [

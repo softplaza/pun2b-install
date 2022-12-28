@@ -607,7 +607,7 @@ if (!empty($main_info))
 		if ($permission5)
 			$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_appendixb', $cur_info['id']).'"><i class="far fa-file-pdf"></i> Create Appendix-B</a>');
 		if ($permission2)// ??
-			$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_invoice', $cur_info['id']).'"><i class="fas fa-file-invoice-dollar"></i> Edit Invoice</a>');
+			$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_invoice', $cur_info['id']).'"><i class="fas fa-file-invoice-dollar"></i> Invoice</a>');
 		//if ($permission6) // NEED TO FIX MANAGER FORM FIRST
 		//	$Core->add_dropdown_item('<a href="#!" onclick="emailWindow('.$cur_info['id'].')" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="far fa-envelope"></i> Send Email</a>');
 
@@ -636,7 +636,7 @@ if (!empty($main_info))
 			<td><?php echo implode("\n", $td['delivery_equip']) ?></td>
 			<td><p class="fw-bold"><?php echo ($cur_info['pickup_equip_date'] > 0) ? format_time($cur_info['pickup_equip_date'], 1) : '' ?></p></td>
 			<td><?php echo implode("\n", $td['afcc']) ?></td>
-			<td id="fup<?php echo $cur_info['id'] ?>"><?php echo implode("\n", $td['follow_up']) ?></td>
+			<td  class="min-w-10" id="fup<?php echo $cur_info['id'] ?>"><?php echo implode("\n", $td['follow_up']) ?></td>
 			<td class="<?php echo $td['asb_test_date_alert'] ?>"><?php echo implode("\n", $td['asb']) ?></td>
 
 			<td class="<?php echo $td['rem_start_date_alert'] ?>"><?php echo implode("\n", $td['rem']) ?></td>
@@ -675,8 +675,8 @@ if (!empty($main_info))
 			<form method="post" accept-charset="utf-8" action="">
 				<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 				<div class="modal-header">
-					<h5 class="modal-title">Edit item</h5>
-					<button type="button" class="btn-close bg-danger" data-bs-dismiss="modal" aria-label="Close" onclick="closeModalWindow()"></button>
+					<h5 class="modal-title">Follow Up Date</h5>
+					<button type="button" class="btn-close bg-danger" data-bs-dismiss="modal" aria-label="Close" onclick="clearModalWindowFields()"></button>
 				</div>
 				<div class="modal-body">
 					<!--modal_fields-->
@@ -704,7 +704,8 @@ function getEvent(pid,id) {
 			$('.modal .modal-footer').empty().html(re.modal_footer);
 		},
 		error: function(re){
-			$('.msg-section').empty().html('<div class="alert alert-danger" role="alert">Error: No data received.</div>');
+			$('.modal .modal-body').empty().html('<div class="alert alert-danger" role="alert"><p class="fw-bold">Warning:</p> <p>Internet connection may have been lost. Refresh the page and try again.</p></div>');
+			$('.modal .modal-footer"]').empty().html('');
 		}
 	});
 }
@@ -722,13 +723,14 @@ function emailWindow(pid){
 			$('.modal .modal-footer').empty().html(re.modal_footer);
 		},
 		error: function(re){
-			$('.msg-section').empty().html('<div class="alert alert-danger" role="alert">Error: No data received.</div>');
+			$('.modal .modal-body').empty().html('<div class="alert alert-danger" role="alert"><p class="fw-bold">Warning:</p> <p>Internet connection may have been lost. Refresh the page and try again.</p></div>');
+			$('.modal .modal-footer"]').empty().html('');
 		}
 	});
 }
-function closeModalWindow(){
-	$('.modal .modal-body"]').val("");
-	$('.modal .modal-footer"]').val("");
+function clearModalWindowFields(){
+	//$('#modalWindow .modal-body"]').empty().html('');
+	//$('#modalWindow .modal-footer"]').empty().html('');
 }
 </script>
 

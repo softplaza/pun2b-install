@@ -29,23 +29,35 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	$user_info[$row['id']] = $row;
 }
 
-$query = array(
-	'SELECT'	=> 'pj.*, p.pro_name, u1.realname AS mois_performed_name',
+$query = [
+	'SELECT'	=> 'pj.*, pj.unit_number AS unit, pt.pro_name, un.unit_number, u1.realname AS created_name, u2.realname AS project_manager',
 	'FROM'		=> 'hca_5840_projects AS pj',
 	'JOINS'		=> [
 		[
-			'INNER JOIN'	=> 'sm_property_db AS p',
-			'ON'			=> 'p.id=pj.property_id'
+			'INNER JOIN'	=> 'sm_property_db AS pt',
+			'ON'			=> 'pt.id=pj.property_id'
+		],
+		[
+			'LEFT JOIN'		=> 'sm_property_units AS un',
+			'ON'			=> 'un.id=pj.unit_id'
 		],
 		[
 			'LEFT JOIN'		=> 'users AS u1',
-			'ON'			=> 'u1.id=pj.performed_uid'
+			'ON'			=> 'u1.id=pj.created_by'
+		],
+		[
+			'LEFT JOIN'		=> 'users AS u2',
+			'ON'			=> 'u2.id=pj.performed_uid'
 		],
 	],
 	'WHERE'		=> 'pj.id='.$id,
-);
+];
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $project_info = $DBLayer->fetch_assoc($result);
+
+// Temporary solution. Remove after set all unit IDS
+$project_info['unit_number'] = ($project_info['unit_number'] != '') ? $project_info['unit_number'] : $project_info['unit'];
+$project_info['unit_number'] = ($project_info['unit_number'] != '') ? $project_info['unit_number'] : 'Common area';
 
 $query = array(
 	'SELECT'	=> '*',
@@ -111,8 +123,7 @@ if (isset($_POST['create_pdf']) && isset($_POST['form']))
 
 $page_param['fld_count'] = $page_param['group_count'] = $page_param['item_count'] = 0;
 
-$mois_performed_name = ($project_info['mois_performed_name'] != '') ? html_encode($project_info['mois_performed_name']) : html_encode($project_info['mois_performed_by']);
-$inspector_init_arr = explode(' ', $mois_performed_name);
+$inspector_init_arr = explode(' ', $project_info['project_manager']);
 $inspector_init = isset($inspector_init_arr[0]) ? substr($inspector_init_arr[0], 0, 1).'.' : '';
 $inspector_init .= isset($inspector_init_arr[1]) ? substr($inspector_init_arr[1], 0, 1).'.' : '';
 
@@ -169,9 +180,9 @@ p{font-size:1.2em;}
 							<td>Unit#&nbsp;&nbsp;<span class="box-desc"> <?php echo $project_info['unit_number'] ?></span></td>
 						</tr>
 						<tr>
-							<td><span class="box-title">Date Reported:&nbsp;&nbsp;<input type="datetime-local" name="reported_time" value="<?php echo sm_datetime_input($project_info['mois_inspection_date']) ?>"></span></td>
+							<td><span class="box-title">Date Reported:&nbsp;&nbsp;<input type="datetime-local" name="reported_time" value="<?php echo sm_datetime_input($project_info['mois_report_date']) ?>"></span></td>
 							<td class="td2-4"></td>
-							<td>Inspector's Name:&nbsp;&nbsp;<span class="box-desc"><?php echo $mois_performed_name ?></span></td>
+							<td>Inspector's Name:&nbsp;&nbsp;<span class="box-desc"><?php echo html_encode($project_info['project_manager']) ?></span></td>
 						</tr>
 					</tbody>
 				</table>

@@ -153,7 +153,7 @@ if ($task_id > 0)
 				'ON'			=> 'g.g_id=u.group_id'
 			)
 		),
-		'WHERE'		=> 'group_id=3',
+		'WHERE'		=> 'u.group_id=3',
 		'ORDER BY'	=> 'g.g_id, u.realname',
 	);
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);

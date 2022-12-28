@@ -42,7 +42,8 @@ if (isset($_POST['create']))
 		'type_audit'			=> isset($_POST['type_audit']) ? intval($_POST['type_audit']) : 0,
 		'type_flapper'			=> isset($_POST['type_flapper']) ? intval($_POST['type_flapper']) : 0,
 
-		'inspection_completed' => 1, // 1 - created, 2 - completed
+		// need rebuild the system of created inspections
+		'inspection_completed' => 1, // 0 - created, 1 - not completed, 2 - completed
 		'work_order_completed' => 0 // 0 - not created, 1 - created, 2 - completed
 	];
 

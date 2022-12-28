@@ -282,7 +282,12 @@ if (!empty($hca_wom_work_orders))
 				if ($cur_info['id'] == $cur_task['work_order_id'])
 				{
 					$items = [];
-					$task_info[] = '<div class="badge-warning border border-warning rounded px-1 mb-1">';
+
+					if ($cur_task['task_status'] == 3)
+						$task_info[] = '<div class="callout-success rounded px-1 mb-1 min-w-15">';
+					else
+						$task_info[] = '<div class="callout-warning rounded px-1 mb-1 min-w-15">';
+
 					$task_info[] = '<p>';
 					$task_info[] = '<span class="fw-bold">'.html_encode($cur_task['type_name']).', </span>';
 					$task_info[] = '<span class="fw-bold">'.html_encode($cur_task['item_name']).'</span>';

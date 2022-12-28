@@ -11,23 +11,24 @@ class Moisture
 	// in future add main func in Calendar
 	function get_events($events_info, $pid)
 	{
-		$output = array();
-		
+		$output = [];
 		if (!empty($events_info))
 		{
 			foreach($events_info as $cur_info)
 			{
-				$css = array();
+				$css = [];
 				if ($cur_info['project_id'] == $pid)
 				{
 					$date_now = date('Ymd', time());
 					$tomorrow = date('Ymd', ($cur_info['time'] - 86400));
 					$today = date('Ymd', $cur_info['time']);
 					
-					if ($date_now == $today) $css[] = 'alert-danger mb-1 p-1';
-					else if ($date_now == $tomorrow) $css[] = 'alert-warning mb-1 p-1';
+					if ($date_now == $today) $css[] = 'badge-danger border-danger';
+					else if ($date_now == $tomorrow) $css[] = 'badge-warning border-warning';
+					else $css[] = 'badge-light border-secondary';
 
-					$output[] = '<div class="'.implode(' ', $css).'">';
+					//$output[] = '<div class="'.implode(' ', $css).'">';
+					$output[] = '<div class="border rounded px-1 mb-1 min-w-15 '.implode(' ', $css).'">';
 					$output[] = '<p style="float:right" onclick="getEvent('.$pid.', '.$cur_info['id'].')" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="fas fa-edit fa-lg"></i></p>';
 					$output[] = '<p class="text-decoration-underline">'.format_time($cur_info['time']).'</p>';
 					$output[] = '<p>'.html_encode($cur_info['message']).'</p>';
@@ -118,7 +119,7 @@ class Moisture
 		$output .= '<tr>';
 		$output .= '<td style="border: 1px solid #6a6565;">Date Reported: <strong>'.format_time($form_info['reported_time'], 1, 'm/d/y').'</strong></td>';
 		$output .= '<td></td>';
-		$output .= '<td style="border: 1px solid #6a6565;">Inspector\'s Name: <strong>'.($project_info['mois_performed_name'] != '' ? html_encode($project_info['mois_performed_name']) : html_encode($project_info['mois_performed_by'])).'</strong></td>';
+		$output .= '<td style="border: 1px solid #6a6565;">Inspector\'s Name: <strong>'.($project_info['project_manager'] != '' ? html_encode($project_info['project_manager']) : html_encode($project_info['created_name'])).'</strong></td>';
 		$output .= '</tr>';
 		$output .= '<tr>';
 		$output .= '<td style="border: 1px solid #6a6565;">Time Reported: <strong>'.format_time($form_info['reported_time'], 2, 'H:i').'</strong></td>';

@@ -9,6 +9,7 @@ if (!$access)
 // to manage 
 $access_4_5 = ($User->checkAccess('hca_fs', 4) || $User->checkAccess('hca_fs', 5)) ? true : false;
 
+$HcaFS = new HcaFS;
 $Facility = new Facility;
 $action = $Facility->action = isset($_GET['action']) ? $_GET['action'] : '';
 $gid = $Facility->group_id = isset($_GET['gid']) ? intval($_GET['gid']) : 0;
@@ -386,15 +387,77 @@ else
 ?>
 <div id="weekly_schedule">
 
-<?php if (!empty($users_info)) 
+<?php
+if (!empty($users_info)) 
 {
+	$query = [
+		'SELECT'	=> 't.*, pt.pro_name, un.unit_number',
+		'FROM'		=> 'hca_fs_tasks AS t',
+		'JOINS'		=> [
+			[
+				'INNER JOIN'	=> 'sm_property_db AS pt',
+				'ON'			=> 'pt.id=t.property_id'
+			],
+			[
+				'INNER JOIN'	=> 'sm_property_units AS un',
+				'ON'			=> 'un.id=t.unit_id'
+			],
+		],
+		//'WHERE'		=> 'ps.group_id='.$this->group_id,
+		'ORDER BY'	=> 't.requested_date',
+	];
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	$hca_fs_tasks = [];
+	while ($row = $DBLayer->fetch_assoc($result)) {
+		$hca_fs_tasks[] = $row;
+	}
+
+	if (!empty($hca_fs_tasks))
+	{
 ?>
+
+<div class="accordion mb-2">
+	<div class="accordion-item">
+		<button class="accordion-button badge-danger text-danger collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#unassigned_property_requests" aria-expanded="false" aria-controls="unassigned_property_requests">Unassigned Property Requests!</button>
+		<div id="unassigned_property_requests" class="accordion-collapse collapse" aria-labelledby="heading_warnings" data-bs-parent="#warning_messages">
+			<div class="accordion-body p-2">
+				<div class="row px-2">
+<?php 
+
+		$task_info = [];
+		foreach($hca_fs_tasks as $cur_info)
+		{
+			$task_info[] = '<div class="col-2 callout-warning rounded px-1 m-2 min-w-10">';
+			$task_info[] = '<p>';
+			$task_info[] = '<span class="float-end" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="assignPropertyRequest('.$cur_info['id'].')"><i class="fas fa-edit"></i></span>';
+			$task_info[] = '<span class="fw-bold">'.html_encode($cur_info['pro_name']).', </span>';
+			$task_info[] = '<span class="fw-bold">'.html_encode($cur_info['unit_number']).'</span>';
+			$task_info[] = '</p>';
+			$task_info[] = '<p>';
+			$task_info[] = '<span class="fw-bold">'.$HcaFS->getTimeSlot($cur_info['time_slot']).'</span>';
+			if ($cur_info['gl_code'] != '')
+				$task_info[] = ', <span class="fw-bold">GL Code: '.html_encode($cur_info['gl_code']).'</span>';
+			$task_info[] = '</p>';
+			$task_info[] = '<p>'.html_encode($cur_info['task_details']).'</p>';
+			$task_info[] = '</div>';
+		}
+		echo implode("\n", $task_info);
+?>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<?php
+}
+?>
+
 <nav class="navbar container-fluid justify-content-between mb-2" style="background-color: #cff4fc">
 	<form method="get" accept-charset="utf-8" action="">
 		<input type="hidden" name="gid" value="<?php echo $gid ?>"/>
 		<div class="row">
 			<div class="col">
-				<input type="date" name="week_of" value="<?php echo date('Y-m-d', $first_day_of_week) ?>" class="form-control">
+				<input type="date" name="week_of" value="<?php echo date('Y-m-d', $first_day_of_week) ?>" class="form-control" onclick="this.showPicker()">
 			</div>
 			<div class="col">
 				<button type="submit" class="btn btn-outline-success">Go to Date</button>
@@ -614,6 +677,25 @@ if (file_exists($pdf_path))
 </div>
 
 <script>
+//
+function assignPropertyRequest(task_id) {
+	var csrf_token = "<?php echo generate_form_token($URL->link('hca_fs_ajax_assign_property_request')) ?>";
+	jQuery.ajax({
+		url:	"<?php echo $URL->link('hca_fs_ajax_assign_property_request') ?>",
+		type:	"POST",
+		dataType: "json",
+		cache: false,
+		data: ({task_id:task_id,csrf_token:csrf_token}),
+		success: function(re){
+			$('.modal .modal-title').empty().html(re.modal_title);
+			$('.modal .modal-body').empty().html(re.modal_body);
+			$('.modal .modal-footer').empty().html(re.modal_footer);
+		},
+		error: function(re){
+			$('.modal .modal-body').empty().html('Error: No data received.');
+		}
+	});
+}
 function createTask(uid,time,day)
 {
 	var csrf_token = "<?php echo generate_form_token($URL->link('hca_fs_ajax_get_weekly_shedule_request')) ?>";

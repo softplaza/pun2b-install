@@ -3,9 +3,8 @@
 // CHECK EXPIRED REQUESTS
 function hca_fs_check_expired_requests()
 {
-	global $DBLayer, $Config, $FlashMessenger;
+	global $DBLayer, $FlashMessenger;
 
-	$date_last_sunday = date('Y-m-d', strtotime('last sunday'));
 	$time_last_sunday = strtotime('last sunday');
 	
 	$query = array(

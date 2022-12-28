@@ -69,7 +69,7 @@ if (isset($_POST['form_sent']) && empty($action))
 		$mail_message = [];
 		$mail_message[] = 'Unsuccessful login attempt.'."\n";
 		$mail_message[] = 'Username: '.$form_username;
-		$mail_message[] = 'Used password: '.$form_password;
+		//$mail_message[] = 'Used password: '.$form_password;
 		$mail_message[] = 'Date and time: '.date('Y-m-d H:i');
 		$mail_message[] = 'IP: '.get_remote_address();
 		$SwiftMailer->send($Config->get('o_admin_email'), 'Failed login', implode("\n", $mail_message));
@@ -105,7 +105,7 @@ if (isset($_POST['form_sent']) && empty($action))
 		$FlashMessenger->add_info($flash_message);
 
 		//redirect(html_encode($_POST['redirect_url']).((substr_count($_POST['redirect_url'], '?') == 1) ? '&amp;' : '?').'login=1', $flash_message);
-		redirect($URL->link('profile_about', $user_id), $flash_message);
+		redirect($URL->link('index'), $flash_message);
 	}
 }
 
@@ -296,9 +296,9 @@ if (!$User->is_guest())
 $page_param['form_action'] = $URL->link('login');
 
 $page_param['hidden_fields'] = array(
-	'form_sent'		=> '<input type="hidden" name="form_sent" value="1" />',
-	'redirect_url'	=> '<input type="hidden" name="redirect_url" value="'.html_encode($User->get('prev_url')).'" />',
-	'csrf_token'	=> '<input type="hidden" name="csrf_token" value="'.generate_form_token($page_param['form_action']).'" />'
+	'form_sent'		=> '<input type="hidden" name="form_sent" value="1">',
+	'redirect_url'	=> '<input type="hidden" name="redirect_url" value="'.html_encode($User->get('prev_url')).'">',
+	'csrf_token'	=> '<input type="hidden" name="csrf_token" value="'.generate_form_token($page_param['form_action']).'">'
 );
 
 $Core->set_page_title(sprintf($Lang->login('login_info'), $Config->get('o_board_title')));
