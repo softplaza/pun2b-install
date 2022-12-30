@@ -12,7 +12,7 @@ $app_info = [
 	// Application's description
 	'description' 	=> 'Preview Images in PopUp Window.',
 	// Application's author
-	'author'		=> 'fancy/SwiftManage.Com',
+	'author'		=> 'fancy/SwiftProjectManager.Com',
 	// Last version of application
 	'version'		=> '4.0.0.09'
 ];

@@ -15,7 +15,7 @@ class GenPDF
 		4 => 'Thursday',
 		5 => 'Friday',
 		6 => 'Saturday',
-		7 => 'Sunday'
+		//7 => 'Sunday' // Jon ask to hide it
 	);
 	public $time_slots = array(
 		1 => 'ALL DAY', 
@@ -62,8 +62,9 @@ class GenPDF
 			if ($this->checkDay(6))
 				$this->days_of_week[6] = 'Saturday';
 			
-			if ($this->checkDay(7))
-				$this->days_of_week[7] = 'Sunday';
+			// Jon G ask hide Sunday
+			//if ($this->checkDay(7))
+			//	$this->days_of_week[7] = 'Sunday';
 			
 			$css_th = 'style="border:1px solid grey;padding:0;margin:0;text-align:center;text-transform:uppercase;font-size:16px;font-weight:bold;"';
 			$css_td = 'style="border: 1px solid grey;padding:0;margin:0;text-align:center"';
@@ -92,7 +93,7 @@ class GenPDF
 			foreach($this->users_list as $user_info)
 			{
 				$content .= '<tr>';
-				$content .= '<td '.$css_td.'><strong>'.html_encode($user_info['realname']).'</strong></td>';
+				$content .= '<td width="11% '.$css_td.'><strong>'.html_encode($user_info['realname']).'</strong></td>';
 
 				$time_next_date = $this->first_day_of_week;
 				foreach ($this->days_of_week as $key => $day)
@@ -149,7 +150,7 @@ class GenPDF
 
 		$css_th = 'style="border:1px solid grey;padding:0;margin:0;text-align:center;text-transform:uppercase;font-size:12px;font-weight:bold;"';
 		$css_td = 'style="width:18%;border: 1px solid grey;padding:1px;margin:0;vertical-align:top"';
-		$css_td_user = 'style="border: 1px solid grey;padding:1px;margin:0;vertical-align:top;text-transform: uppercase;"';
+		$css_td_user = 'style="width:13%;border: 1px solid grey;padding:1px;margin:0;vertical-align:top;text-transform: uppercase;text-align:center;vertical-align: middle;"';
 
 		$content = [];
 

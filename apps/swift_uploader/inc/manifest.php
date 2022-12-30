@@ -12,7 +12,7 @@ $app_info = [
 	// Application's description
 	'description' 	=> 'Uploading of images, documents, videos and other files.',
 	// Application's author
-	'author'		=> 'SwiftManager.Org',
+	'author'		=> 'SwiftProjectManager.Com',
 	// Last version of application
 	'version'		=> '5.34'
 ];

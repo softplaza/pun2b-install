@@ -109,7 +109,7 @@ $Core->set_page_id('hca_wom_work_order_new', 'hca_fs');
 require SITE_ROOT.'header.php';
 ?>
 
-<form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data">
+<form method="post" accept-charset="utf-8" action="">
 	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 
 	<div class="card">
@@ -153,11 +153,11 @@ foreach ($sm_property_units as $cur_info)
 					</select>
 				</div>
 <?php else: ?>
-				<div class="col-md-3 mb-3">
+				<div class="col-md-3 mb-3 was-validated">
 					<label class="form-label" for="fld_property_id">Properties</label>
 					<select id="fld_property_id" name="property_id" class="form-select form-select-sm" required onchange="getUnits()">
 <?php
-echo '<option value="0" selected disabled>Select one</option>'."\n";
+echo '<option value="" selected disabled>Select one</option>'."\n";
 foreach ($sm_property_db as $cur_info)
 {
 	if(isset($_POST['property_id']) && $_POST['property_id'] == $cur_info['id'])
@@ -167,6 +167,7 @@ foreach ($sm_property_db as $cur_info)
 }
 ?>
 					</select>
+					<div class="invalid-feedback">Example invalid select feedback</div>
 				</div>
 				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_unit_number">Unit #</label>
@@ -229,13 +230,13 @@ foreach ($hca_wom_tpl_wo as $cur_info)
 					<label class="form-label" for="fld_template_type">In-House Templates</label>
 					<select name="template_type" id="fld_template_type" class="form-select form-select-sm">
 <?php
-	foreach ($HcaWOM->template_type as $key => $val)
-	{
-		if (isset($_POST['template_iihouse']) && intval($_POST['template_iihouse']) == $key)
-			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$val.'</option>'."\n";
-		else
-			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$val.'</option>'."\n";
-	}
+foreach ($HcaWOM->template_type as $key => $val)
+{
+	if (isset($_POST['template_iihouse']) && intval($_POST['template_iihouse']) == $key)
+		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$val.'</option>'."\n";
+	else
+		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$val.'</option>'."\n";
+}
 ?>
 					</select>
 				</div>
@@ -253,13 +254,13 @@ foreach ($hca_wom_tpl_wo as $cur_info)
 				<label class="form-label" for="fld_priority">Priority</label>
 				<select name="priority" id="fld_priority" class="form-select form-select-sm">
 <?php
-	foreach ($HcaWOM->priority as $key => $val)
-	{
-		if (isset($_POST['priority']) && intval($_POST['priority']) == $key)
-			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$val.'</option>'."\n";
-		else
-			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$val.'</option>'."\n";
-	}
+foreach ($HcaWOM->priority as $key => $val)
+{
+	if (isset($_POST['priority']) && intval($_POST['priority']) == $key)
+		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$val.'</option>'."\n";
+	else
+		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$val.'</option>'."\n";
+}
 ?>
 				</select>
 			</div>
@@ -399,20 +400,23 @@ foreach ($users_info as $cur_info)
 		</div>
 
 
+
+
+
 		<div class="card-body inhouse-fields hidden">
 			<div class="row">
 				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_time_slot">Time</label>
 					<select name="time_slot" id="fld_time_slot" class="form-select form-select-sm">
 <?php
-	$time_slot = [1 => 'ALL DAY', 2 => 'A.M.', 3 => 'P.M.'];
-	foreach ($time_slot as $key => $val)
-	{
-		if (isset($_POST['time_slot']) && intval($_POST['time_slot']) == $key)
-			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$val.'</option>'."\n";
-		else
-			echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$val.'</option>'."\n";
-	}
+$time_slot = [1 => 'ALL DAY', 2 => 'A.M.', 3 => 'P.M.'];
+foreach ($time_slot as $key => $val)
+{
+	if (isset($_POST['time_slot']) && intval($_POST['time_slot']) == $key)
+		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$val.'</option>'."\n";
+	else
+		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$val.'</option>'."\n";
+}
 ?>
 					</select>
 				</div>

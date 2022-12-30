@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright (C) 2020 SwiftManager.Org, partially based on PunBB
+ * @copyright (C) 2020 SwiftProjectManager.Com, partially based on PunBB
  * @license http://www.gnu.org/licenses/gpl.html GPL version 2 or higher
  * @package SwiftManager
  */
@@ -990,43 +990,65 @@ function generate_avatar_markup($user_id, $avatar_type, $avatar_width, $avatar_h
 // Display executed queries (if enabled) for debug
 function get_saved_queries()
 {
-	global $DBLayer, $lang_common;
+	global $DBLayer, $microtime_start;
 
 	// Get the queries so that we can print them out
 	$saved_queries = $DBLayer->get_saved_queries();
 
-	ob_start();
+	// Calculate script generation time
+	$time_diff = get_microtime() - $microtime_start;
+	$query_time_total = $time_percent_db = 0.0;
+
+	if (count($saved_queries) > 0)
+	{
+		foreach ($saved_queries as $cur_query)
+		{
+			$query_time_total += $cur_query[1];
+		}
+
+		if ($query_time_total > 0 && $time_diff > 0)
+		{
+			$time_percent_db = ($query_time_total / $time_diff) * 100;
+		}
+	}
 ?>
-		<table class="dev-mode">
-			<thead>
-				<tr>
-					<th class="tcl" scope="col"><?php echo $lang_common['Query times'] ?></th>
-					<th class="tcr" scope="col"><?php echo $lang_common['Query'] ?></th>
-				</tr>
-			</thead>
-			<tbody>
+<div class="accordion accordion-flush mb-3" id="accordionFlushExample">
+	<div class="accordion-item">
+		<h2 class="accordion-header" id="flush-headingOne">
+			<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="true" aria-controls="flush-collapseOne">
+				<p>Generated in <?php echo gen_number_format($time_diff, 3) ?> seconds (PHP: <?php echo gen_number_format(100 - $time_percent_db, 0) ?>%, DataBase: <?php echo gen_number_format($time_percent_db, 0) ?>%) with <?php echo gen_number_format($DBLayer->get_num_queries()) ?> queries.</p>
+			</button>
+		</h2>
+		<div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
+			<div class="accordion-body">
+				<div class="row">
+					<div class="col-1 fw-bold">Time</div>
+					<div class="col-auto fw-bold">Query</div>
+				</div>
+				<hr class="m-0">
 <?php
 	$query_time_total = 0.0;
 	foreach ($saved_queries as $cur_query)
 	{
 		$query_time_total += $cur_query[1];
 ?>
-				<tr>
-					<td class="tcl"><?php echo (($cur_query[1] != 0) ? gen_number_format($cur_query[1], 5) : '&#160;') ?></td>
-					<td class="tcr"><?php echo html_encode($cur_query[0]) ?></td>
-				</tr>
+				<div class="row">
+					<div class="col-2"><?php echo (($cur_query[1] != 0) ? gen_number_format($cur_query[1], 5) : '&#160;') ?></div>
+					<div class="col-10"><?php echo html_encode($cur_query[0]) ?></div>
+				</div>
 <?php
 	}
 ?>
-				<tr>
-					<td class="tcl border-less"><?php echo gen_number_format($query_time_total, 5) ?></td>
-					<td class="tcr border-less"><?php echo $lang_common['Total query time'] ?></td>
-				</tr>
-			</tbody>
-		</table>
+				<hr class="m-0">
+				<div class="row">
+					<div class="col-2"><?php echo gen_number_format($query_time_total, 5) ?></div>
+					<div class="col-10">Total query time</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
 <?php
-
-	return ob_get_clean();
 }
 
 // Verifies that the provided username is OK for insertion into the database
@@ -1964,7 +1986,7 @@ function send_json($params)
 	die;
 }
 
-// Display content of Array
+// Display array 
 function print_dump($array)
 {
 	echo '<pre>';

@@ -12,7 +12,7 @@ $app_info = [
 	// Application's description
 	'description' 	=> 'These lists are a quick glance at all items due, displaying the property and month due.',
 	// Application's author
-	'author'		=> 'SwiftManage.Com',
+	'author'		=> 'SwiftProjectManager.Com',
 	// Last version of application
 	'version'		=> '0.23'
 ];

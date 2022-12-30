@@ -12,7 +12,7 @@ $app_info = [
 	// Application's description
 	'description' 	=> 'HCA Property Vacancy Conditional Report',
 	// Application's author
-	'author'		=> 'SwiftManager.Org',
+	'author'		=> 'SwiftProjectManager.Com',
 	// Last version of application
 	'version'		=> '0.49'
 ];

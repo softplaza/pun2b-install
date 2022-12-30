@@ -7,6 +7,6 @@ $app_info = [
 	'id'			=> 'swift_notify',
 	'title'			=> 'Notification in Badges',
 	'description' 	=> 'Beautiful notifications in color badges.',
-	'author'		=> 'SwiftManager.Org',
+	'author'		=> 'SwiftProjectManager.Com',
 	'version'		=> '1.01'
 ];

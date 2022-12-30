@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @author SwiftManager.Org
+ * @author SwiftProjectManager.Com
  * @copyright (C) 2021 SwiftManager license GPL
  * @package Templator
 **/
@@ -150,7 +150,7 @@ class Templator
 		// START SUBST - <!--footer_about-->
 		ob_start();
 ?>
-			<p id="copyright" style="opacity: 0.3;">&copy; Powered by <a href="https://swiftmanage.com/" target="_blank"><?php echo SPM_NAME ?> <?php echo SPM_VERSION ?></a></p>
+			<p id="copyright" style="opacity: 0.3;">&copy; Powered by <a href="https://SwiftProjectManager.Com/" target="_blank"><?php echo SPM_NAME ?> <?php echo SPM_VERSION ?></a></p>
 <?php
 
 		$tpl_temp = swift_trim(ob_get_contents());
@@ -166,7 +166,7 @@ class Templator
 		if (defined('SPM_DEBUG') || defined('SPM_SHOW_QUERIES') || $User->is_admin())
 		{
 			ob_start();
-		
+/*
 			// Calculate script generation time
 			$time_diff = get_microtime() - $microtime_start;
 			$query_time_total = $time_percent_db = 0.0;
@@ -191,7 +191,7 @@ class Templator
 					gen_number_format(100 - $time_percent_db, 0),
 					gen_number_format($time_percent_db, 0),
 					gen_number_format($DBLayer->get_num_queries())).'</p>'."\n";
-		
+*/
 			if (defined('SPM_SHOW_QUERIES') || ($User->is_admin()))
 				echo get_saved_queries();
 		

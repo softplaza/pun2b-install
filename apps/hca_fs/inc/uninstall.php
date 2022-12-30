@@ -7,7 +7,7 @@ $DBLayer->drop_table('hca_fs_assignment');
 $DBLayer->drop_table('hca_fs_weekly');
 $DBLayer->drop_table('hca_fs_tasks');
 
-$DBLayer->drop_table('hca_fs_vacations');
+$DBLayer->drop_table('hca_fs_vacations'); // remove
 $DBLayer->drop_table('hca_fs_permanent_assignments');
 $DBLayer->drop_table('hca_fs_emergency_schedule');
 

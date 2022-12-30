@@ -17,6 +17,142 @@ $search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id
 $search_by_unit_number = isset($_GET['unit_number']) ? swift_trim($_GET['unit_number']) : '';
 $search_by_assigned_to = isset($_GET['assigned_to']) ? intval($_GET['assigned_to']) : 0;
 
+if (isset($_POST['add_task']))
+{
+	$work_order_id = isset($_POST['work_order_id']) ? intval($_POST['work_order_id']) : 0;
+
+	$form_data = array(
+		'work_order_id' => $work_order_id,
+		'item_id'		=> isset($_POST['item_id']) ? intval($_POST['item_id']) : 0,
+		'task_action'	=> isset($_POST['task_action']) ? intval($_POST['task_action']) : 0,
+		'assigned_to'	=> isset($_POST['assigned_to']) ? intval($_POST['assigned_to']) : 0,
+		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
+		'time_created'	=> time(),
+		'task_status'	=> 2 // set 2 as already accepted
+	);
+
+	if ($work_order_id == 0)
+		$Core->add_error('Wrong Work Order ID number.');
+
+	if (empty($Core->errors))
+	{
+		// Create task of Work Order
+		$new_tid = $DBLayer->insert_values('hca_wom_tasks', $form_data);
+
+		$query = array(
+			'UPDATE'	=> 'hca_wom_work_orders',
+			'SET'		=> 'num_tasks=num_tasks+1, last_task_id='.$new_tid,
+			'WHERE'		=> 'id='.$work_order_id
+		);
+		$DBLayer->query_build($query) or error(__FILE__, __LINE__);
+
+		// notify when task assigned
+		if ($form_data['assigned_to'] > 0 && $Config->get('o_hca_wom_notify_technician') == 1)
+		{
+			$task_info = $HcaWOM->getTaskInfo($new_tid);
+
+			if (isset($task_info['assigned_email']) && $task_info['assigned_email'] != '')
+			{
+				$SwiftMailer = new SwiftMailer;
+				//$SwiftMailer->isHTML();
+
+				$mail_subject = 'Property Task #'.$task_info['id'];
+				$mail_message = [];
+				$mail_message[] = 'Hello '.$task_info['assigned_name'];
+				$mail_message[] = 'You have been assigned to a new task.';
+				$mail_message[] = 'Property: '.$task_info['pro_name'];
+				$mail_message[] = 'Unit: '.$task_info['unit_number'];
+				
+				if ($task_info['task_message'] != '')
+					$mail_message[] = 'Details: '.$task_info['task_message']."\n";
+
+				$mail_message[] = 'To complete the task follow the link:';
+				$mail_message[] = $URL->link('hca_wom_task', $task_info['id']);
+
+				$SwiftMailer->send($task_info['assigned_email'], $mail_subject, implode("\n", $mail_message));
+			}
+		}
+
+		// Add flash message
+		$flash_message = 'Task #'.$new_tid.' was created.';
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
+	}
+}
+else if (isset($_POST['update_task']))
+{
+	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
+
+	$form_data = [
+		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
+	];
+
+	if (isset($_POST['item_id']))
+		$form_data['item_id'] = intval($_POST['item_id']);
+	if (isset($_POST['task_action']))
+		$form_data['task_action'] = intval($_POST['task_action']);
+	if (isset($_POST['assigned_to']))
+		$form_data['assigned_to'] = intval($_POST['assigned_to']);
+
+	//if ($form_data['assigned_to'] == 0)
+	//	$Core->add_error('Select technician.');
+
+	if (empty($Core->errors) && $task_id > 0)
+	{
+		// Update task of Work Order
+		$DBLayer->update('hca_wom_tasks', $form_data, $task_id);
+
+		// notify when task assigned
+		if (isset($form_data['assigned_to']) && $form_data['assigned_to'] > 0 && $Config->get('o_hca_wom_notify_technician') == 1)
+		{
+			$task_info = $HcaWOM->getTaskInfo($task_id);
+
+			$SwiftMailer = new SwiftMailer;
+			//$SwiftMailer->isHTML();
+
+			$mail_subject = 'Property Task #'.$task_info['id'];
+			$mail_message = [];
+			$mail_message[] = 'Hello '.$task_info['assigned_name'];
+			$mail_message[] = 'You have been assigned to a new task.';
+			$mail_message[] = 'Property: '.$task_info['pro_name'];
+			$mail_message[] = 'Unit: '.$task_info['unit_number'];
+			
+			if ($task_info['task_message'] != '')
+				$mail_message[] = 'Details: '.$task_info['task_message']."\n";
+
+			$mail_message[] = 'To complete the task follow the link:';
+			$mail_message[] = $URL->link('hca_wom_task', $task_info['id']);
+
+			$SwiftMailer->send($task_info['assigned_email'], $mail_subject, implode("\n", $mail_message));
+		}
+		
+		// Add flash message
+		$flash_message = 'Task #'.$task_id.' was updated.';
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
+	}
+}
+else if (isset($_POST['close_task']))
+{
+	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
+
+	$form_data = [
+		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
+		'task_status'	=> 4,
+	];
+
+	if (empty($Core->errors) && $task_id > 0)
+	{
+		// Update task of Work Order
+		$DBLayer->update('hca_wom_tasks', $form_data, $task_id);
+
+		// Add flash message
+		$flash_message = 'Task #'.$task_id.' has been closed.';
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
+	}
+}
+
 $search_query = [];
 $search_query[] = 't.task_status!=0'; // Exclude canceled and On Hold
 $search_query[] = 't.task_status!=4'; // Exclude completed
@@ -37,7 +173,7 @@ if ($search_by_assigned_to > 0)
 	$search_query[] = 't.assigned_to='.$search_by_assigned_to;
 
 $query = [
-	'SELECT'	=> 'COUNT(w.id)',
+	'SELECT'	=> 'COUNT(t.id)',
 	'FROM'		=> 'hca_wom_tasks AS t',
 	'JOINS'		=> [
 		[
@@ -62,7 +198,6 @@ $query = [
 			'ON'			=> 'u1.id=w.assigned_to'
 		],
 */
-
 	],
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
@@ -95,10 +230,9 @@ $query = [
 			'ON'			=> 'u1.id=w.assigned_to'
 		],
 */
-
 	],
 	'LIMIT'		=> $PagesNavigator->limit(),
-	'ORDER BY'	=> 'p.pro_name, LENGTH(pu.unit_number), t.task_status DESC, pu.unit_number',
+	'ORDER BY'	=> 'p.pro_name, LENGTH(pu.unit_number), pu.unit_number, t.task_status DESC',
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -108,7 +242,7 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	$hca_wom_wo_ids[$row['id']] = $row['id'];
 	$tasks[] = $row['id'];
 }
-$PagesNavigator->num_items($tasks);
+$PagesNavigator->num_items($hca_wom_work_orders);
 
 $hca_wom_tasks = [];
 if (!empty($hca_wom_wo_ids))
@@ -131,6 +265,7 @@ if (!empty($hca_wom_wo_ids))
 			],
 		],
 		'WHERE'		=> 't.work_order_id IN ('.implode(',', $hca_wom_wo_ids).')',
+		'ORDER BY'	=> 't.task_status DESC',
 	];
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	while ($row = $DBLayer->fetch_assoc($result))
@@ -235,7 +370,6 @@ foreach ($users as $cur_user)
 
 <div class="card-header ">
 	<h6 class="card-title mb-0">List of Work Orders</h6>
-
 </div>
 
 <?php
@@ -282,22 +416,36 @@ if (!empty($hca_wom_work_orders))
 				if ($cur_info['id'] == $cur_task['work_order_id'])
 				{
 					$items = [];
-
-					if ($cur_task['task_status'] == 3)
-						$task_info[] = '<div class="callout-success rounded px-1 mb-1 min-w-15">';
+					if ($cur_task['task_status'] == 4)
+						$task_info[] = '<div class="alert-success rounded px-1 mb-1 min-w-15">';
+					else if ($cur_task['task_status'] == 3)
+						$task_info[] = '<div class="alert-primary rounded px-1 mb-1 min-w-15">';
 					else
-						$task_info[] = '<div class="callout-warning rounded px-1 mb-1 min-w-15">';
+						$task_info[] = '<div class="alert-warning rounded px-1 mb-1 min-w-15">';
 
 					$task_info[] = '<p>';
+
+					if ($cur_task['task_status'] < 4)
+						$task_info[] = '<span class="float-end" onclick="quickManageTask(0,'.$cur_task['id'].')" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="fas fa-edit fa-lg"></i></span>';
+
 					$task_info[] = '<span class="fw-bold">'.html_encode($cur_task['type_name']).', </span>';
 					$task_info[] = '<span class="fw-bold">'.html_encode($cur_task['item_name']).'</span>';
 					$task_info[] = ' ('.html_encode($cur_task['problem_name']).')';
 					$task_info[] = '</p>';
+
+					if ($cur_task['task_status'] == 4)
+						$task_info[] = '<span class="badge badge-success float-end">Closed</span>';
+					else if ($cur_task['task_status'] == 3)
+						$task_info[] = '<span class="badge badge-primary border float-end">Ready for review</span>';
+					else
+						$task_info[] = '<span class="badge badge-warning float-end">Open</span>';
+
 					$task_info[] = '<p>'.html_encode($cur_task['task_message']).'</p>';
+
 					$task_info[] = '</div>';
 
 					if ($cur_task['task_status'] == 3)
-						$status = '<span class="badge badge-success">Ready for review</span>';
+						$status = '<span class="badge badge-primary">Ready for review</span>';
 
 					++$i;
 				}
@@ -318,14 +466,17 @@ if (!empty($hca_wom_work_orders))
 				<?php echo $view_wo ?>
 			</td>
 			<td class="min-100 ta-center fw-bold"><?php echo html_encode($cur_info['unit_number']) ?></td>
-			<td class="min-100"><?php echo implode("\n", $task_info) ?></td>
+			<td class="min-100">
+				<?php echo implode("\n", $task_info) ?>
+				<span class="float-end px-1" onclick="quickManageTask(<?=$cur_info['id']?>,0)" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="fas fa-plus-circle fa-lg text-secondary"></i></span>
+			</td>
 			<td class="min-100 ta-center"><?php echo $priority ?></td>
 			<td class="min-100 ta-center"><?php echo $status ?></td>
 			<td class="min-100 ta-center"><?php echo format_date($cur_info['dt_created'], 'm/d/Y') ?></td>
 			<td class="ta-center"><?php echo $cur_info['num_tasks'] ?></td>
 			<td class="ta-center">
 				<a href="<?=$URL->genLink('hca_wom_print', ['section' => 
-'work_order', 'id' => $cur_info['id']])?>" target="_blank"><i class="fas fa-print" aria-hidden="true"></i></a>
+'work_order', 'id' => $cur_info['id']])?>" target="_blank"><i class="fas fa-print fa-lg" aria-hidden="true"></i></a>
 			</td>
 		</tr>
 <?php
@@ -333,6 +484,71 @@ if (!empty($hca_wom_work_orders))
 ?>
 	</tbody>
 </table>
+
+<div class="modal fade" id="modalWindow" tabindex="-1" aria-labelledby="modalWindowLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<form method="post" accept-charset="utf-8" action="">
+				<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
+				<div class="modal-header">
+					<h5 class="modal-title">Follow Up Date</h5>
+					<button type="button" class="btn-close bg-danger" data-bs-dismiss="modal" aria-label="Close" onclick="clearModalFields()"></button>
+				</div>
+				<div class="modal-body">
+					<!--modal_fields-->
+				</div>
+				<div class="modal-footer">
+					<!--modal_buttons-->
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+function quickManageTask(work_order_id,task_id)
+{
+	$(".modal-body").empty().html('');
+	$(".modal-footer").empty().html('');
+	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_quick_manage_task')) ?>";
+	jQuery.ajax({
+		url:	"<?php echo $URL->link('hca_wom_ajax_quick_manage_task') ?>",
+		type:	"POST",
+		dataType: "json",
+		data: ({work_order_id:work_order_id,task_id:task_id,csrf_token:csrf_token}),
+		success: function(re){
+			$(".modal-title").empty().html(re.modal_title);
+			$(".modal-body").empty().html(re.modal_body);
+			$(".modal-footer").empty().html(re.modal_footer);
+		},
+		error: function(re){
+			document.getElementById("#brd-messages").innerHTML = re;
+		}
+	});
+}
+function getActions(){
+	var item_id = $("#fld_item_id").val();
+	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_get_items')) ?>";
+	jQuery.ajax({
+		url:	"<?php echo $URL->link('hca_wom_ajax_get_items') ?>",
+		type:	"POST",
+		dataType: "json",
+		data: ({item_id:item_id,csrf_token:csrf_token}),
+		success: function(re){
+			$("#fld_task_action").empty().html(re.item_actions);
+
+		},
+		error: function(re){
+			document.getElementById("#fld_task_action").innerHTML = re;
+		}
+	});
+}
+function clearModalFields()
+{
+
+}
+</script>
+
 <?php
 }
 else

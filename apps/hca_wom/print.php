@@ -41,7 +41,7 @@ if ($section == 'work_order')
 	];
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	$wo_info = $DBLayer->fetch_assoc($result);
-
+	$wo_info['unit_number'] = ($wo_info['unit_number'] != '') ? $wo_info['unit_number'] : 'Common area';
 
 
 	$query = [

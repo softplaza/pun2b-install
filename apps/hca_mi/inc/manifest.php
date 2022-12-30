@@ -12,7 +12,7 @@ $app_info = [
 	// Application's description
 	'description' 	=> 'HCA Moisture Inspections.',
 	// Application's author
-	'author'		=> 'SwiftManage.Com',
+	'author'		=> 'SwiftProjectManager.Com',
 	// Last version of application
 	'version'		=> '1.86'
 ];

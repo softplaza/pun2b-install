@@ -571,14 +571,14 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 			if ($cur_info['assigned_to'] == 0)
 				$task_status = '<span class="badge badge-warning">Open</span>';
 			else if ($cur_info['task_status'] == 4)
-				$task_status = '<span class="badge badge-success">Closed by Manager</span>';
+				$task_status = '<span class="badge badge-success">Closed</span>';
 			else if ($cur_info['task_status'] == 3)
 				$task_status = '<span class="badge badge-primary">Ready for review</span>';
 			else if ($cur_info['task_status'] == 2)
-				$task_status = '<span class="badge badge-warning">Assigned</span>';
+				$task_status = '<span class="badge badge-warning">Open</span>';
 				//$task_status = '<span class="badge badge-info">Accepted by Technician</span>';
 			else if ($cur_info['task_status'] == 1)
-				$task_status = '<span class="badge badge-warning">Assigned</span>';
+				$task_status = '<span class="badge badge-warning">Open</span>';
 			else if ($cur_info['task_status'] == 0)
 				$task_status = '<span class="badge badge-danger">Canceled</span>';
 
@@ -612,20 +612,23 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	</tbody>
 </table>
 
-
+<?php
+		$cur_project_files = $SwiftUploader->displayCurProjectImages('hca_wom_tasks', $task_ids);
+		if (!empty($SwiftUploader->cur_project_files))
+		{
+?>
 <div class="card-header d-flex justify-content-between">
 	<h6 class="card-title mb-0">Uploaded Image</h6>
 </div>
 <div class="card">
 	<div class="card-body">
 		<div class="row">
-			<?php $SwiftUploader->displayCurProjectImages('hca_wom_tasks', $task_ids); ?>
+			<?php echo $cur_project_files; ?>
 		</div>
 	</div>
 </div>
-
 <?php
-
+		}
 	}
 	else
 	{

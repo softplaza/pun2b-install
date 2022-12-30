@@ -443,7 +443,8 @@ function deleteFile(table,id)
         }
     }
 
-	public function displayCurProjectImages($table_name, $table_ids)
+    // Insert this function <div class="row">HERE</div>
+	function displayCurProjectImages($table_name, $table_ids)
 	{
         global $URL;
 
@@ -458,10 +459,10 @@ function deleteFile(table,id)
                 $output[] = '<div class="col-md-auto"><a data-fancybox="single" href="'.$URL->link($cur_info['file_path'].$cur_info['file_name']).'" target="_blank"><img class="img-thumbnail max-h-15" src="'.$URL->link($cur_info['file_path'].$cur_info['file_name']).'"/></a></div>';
             }
 
-            echo implode("\n", $output);
+            return implode("\n", $output);
         }
         else
-            echo '<div class="alert alert-warning" role="alert">No images uploaded.</div>';
+            return '<div class="alert alert-warning" role="alert">No images uploaded.</div>';
     }
 
 	function getCurProjectFiles($project_id)

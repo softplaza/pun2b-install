@@ -1,7 +1,7 @@
 <?php
 /**
  * Basic functions of SwiftManager
- * @author SwiftManager.Org
+ * @author SwiftProjectManager.Com
  * @copyright (C) 2021 SwiftManager license GPL
  * @package Core
 **/

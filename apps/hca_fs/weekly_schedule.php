@@ -189,6 +189,68 @@ else if (isset($_POST['update_task']))
 		redirect($URL->link('hca_fs_weekly_schedule', [$gid, date('Y-m-d', $week_of)]).'&uid='.$employee_id, $flash_message);
 	}
 }
+// assign_task
+else if (isset($_POST['assign_task']))
+{
+	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
+
+	$form_data = [
+		'property_id'		=> isset($_POST['property_id']) ? intval($_POST['property_id']) : 0,
+		//'unit_id'			=> isset($_POST['unit_id']) ? intval($_POST['unit_id']) : 0,
+		'unit_number'		=> isset($_POST['unit_number']) ? swift_trim($_POST['unit_number']) : '',
+		'geo_code'			=> isset($_POST['gl_code']) ? swift_trim($_POST['gl_code']) : '',
+		'msg_for_maint'		=> isset($_POST['task_details']) ? swift_trim($_POST['task_details']) : '',
+		'time_slot'			=> isset($_POST['time_slot']) ? intval($_POST['time_slot']) : 1,
+		'template_type'		=> isset($_POST['template_type']) ? intval($_POST['template_type']) : 1,
+		'employee_id'		=> isset($_POST['assigned_to']) ? intval($_POST['assigned_to']) : 0,
+		'group_id'			=> isset($_POST['group_id']) ? intval($_POST['group_id']) : 0,
+		'created'			=> time(),
+		'start_date'		=> isset($_POST['requested_date']) ? swift_trim($_POST['requested_date']) : '',
+		'scheduled'			=> isset($_POST['requested_date']) ? date('Ymd', strtotime($_POST['requested_date'])) : '',
+		'week_of'			=> isset($_POST['requested_date']) ? strtotime('Monday this week', strtotime($_POST['requested_date'])) : strtotime('Monday this week'),
+		'date_requested'	=> isset($_POST['requested_date']) ? swift_trim($_POST['requested_date']) : '',
+		'work_status'		=> 1,
+		'requested_by'		=> $User->get('realname'),
+
+	];
+
+	if ($form_data['property_id'] == 0)
+		$Core->add_error('No property to assign the task.');
+	if ($form_data['employee_id'] == 0)
+		$Core->add_error('To assign the task select user.');
+
+	if ($form_data['group_id'] == 0 && $form_data['employee_id'] > 0)
+	{
+		$query = [
+			'SELECT'	=> 'u.id, u.group_id, u.realname',
+			'FROM'		=> 'users AS u',
+			'WHERE'		=> 'u.id='.$form_data['employee_id'],
+		];
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		$user = $DBLayer->fetch_assoc($result);
+		$form_data['group_id'] = $user['group_id'];
+	}
+
+	if (empty($Core->errors))
+	{
+		$new_id = $DBLayer->insert_values('hca_fs_requests', $form_data);
+
+		if ($task_id > 0)
+		{
+			$query = array(
+				'UPDATE'	=> 'hca_fs_tasks',
+				'SET'		=> 'task_status=1',
+				'WHERE'		=> 'id='.$task_id
+			);
+			$DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		}
+
+		// Add flash message
+		$flash_message = 'Task #'.$task_id.' has been assigned.';
+		$FlashMessenger->add_info($flash_message);
+		redirect($URL->link('hca_fs_weekly_schedule', [$gid, date('Y-m-d', $week_of)]).'&uid='.$form_data['employee_id'], $flash_message);
+	}
+}
 else if (isset($_POST['delete_task']))
 {
 	$request_id = isset($_POST['request_id']) ? intval($_POST['request_id']) : 0;
@@ -359,9 +421,9 @@ else if (isset($_POST['send_schedule']))
 $Facility->checkWorkOrderLimit();
 
 $pdf_path = ($gid == $Config->get('o_hca_fs_painters')) ? 'files/painter_schedule.pdf' : 'files/maintenance_schedule.pdf';
-$Core->add_page_action('<a href="'.$pdf_path.'" target="_blank"><i class="fa fa-file-pdf-o fa-2x"></i>Print as PDF</a>');
+$Core->add_page_action('<a href="'.$pdf_path.'" target="_blank"><i class="fas fa-file-pdf fa-2x"></i>Print as PDF</a>');
 
-$SwiftMenu->addNavAction('<li><a class="dropdown-item" href="'.$pdf_path.'" target="_blank"><i class="fa fa-file-pdf-o fa-1x" aria-hidden="true"></i> Print as PDF</a></li>');
+$SwiftMenu->addNavAction('<li><a class="dropdown-item" href="'.$pdf_path.'" target="_blank"><i class="fas fa-file-pdf fa-1x" aria-hidden="true"></i> Print as PDF</a></li>');
 
 $group_name = ($gid == $Config->get('o_hca_fs_painters')) ? 'Painter' : 'Maintenance';
 $Core->set_page_title($group_name.' Weekly Schedule');
@@ -403,7 +465,7 @@ if (!empty($users_info))
 				'ON'			=> 'un.id=t.unit_id'
 			],
 		],
-		//'WHERE'		=> 'ps.group_id='.$this->group_id,
+		'WHERE'		=> 't.task_status=0',
 		'ORDER BY'	=> 't.requested_date',
 	];
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -479,7 +541,8 @@ if (!empty($users_info))
 				<th class="tc1">Employee Name</th>
 <?php
 	$header_days = $first_day_of_week;
-	foreach ($days_of_week as $key => $day) {
+	foreach ($days_of_week as $key => $day)
+	{
 		echo '<th class="'.(in_array($key, array(6,7)) ? 'th-weekend' : '').'"><p>'.date('l', $header_days ).'</p>
 		<p>'.date('m/d', $header_days).'</p></th>';
 		$header_days = $header_days + 86400;

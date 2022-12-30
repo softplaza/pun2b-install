@@ -58,7 +58,9 @@ $schema = [
 ];
 $DBLayer->create_table('hca_fs_weekly', $schema);
 
-// hca_fs_vacations
+// Will removed because never used
+$DBLayer->drop_table('hca_fs_vacations');
+/*
 $schema = [
 	'FIELDS'		=> [
 		'id'					=> $DBLayer->dt_serial(),
@@ -71,6 +73,7 @@ $schema = [
 	'PRIMARY KEY'	=> ['id']
 ];
 $DBLayer->create_table('hca_fs_vacations', $schema);
+*/
 
 // hca_fs_permanent_assignments
 $schema = [
@@ -117,6 +120,7 @@ $schema = [
 		'time_slot'					=> $DBLayer->dt_int('TINYINT(1)'),
 		'template_type'				=> $DBLayer->dt_int('TINYINT(1)'),
 		'assigned_to'				=> $DBLayer->dt_int(),
+		'task_status'				=> $DBLayer->dt_int('TINYINT(1)'),
 		// dates
 		'requested_date'			=> $DBLayer->dt_date(),
 		'created_on'				=> $DBLayer->dt_int(),

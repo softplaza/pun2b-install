@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @author SwiftManager.Org. Based on PunBB & phpBB functions
+ * @author SwiftProjectManager.Com. Based on PunBB & phpBB functions
  * @copyright (C) 2021 SwiftManager license GPL
  * @package SwiftMailer
  * @version 1.01

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @author SwiftManager.Org
+ * @author SwiftProjectManager.Com
  * @copyright (C) 2020 SwiftManager license GPL
  * @package URL
 **/

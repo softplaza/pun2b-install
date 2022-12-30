@@ -12,7 +12,7 @@ $app_info = [
 	// Application's description
 	'description' 	=> 'HCA SB 721 inspections.',
 	// Application's author
-	'author'		=> 'SwiftManage.Com',
+	'author'		=> 'SwiftProjectManager.Com',
 	// Last version of application
 	'version'		=> '1.05'
 ];

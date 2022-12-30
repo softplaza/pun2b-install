@@ -32,7 +32,7 @@ if ($task_id > 0)
 	}
 
 	$query = [
-		'SELECT'	=> 't.*, pt.pro_name, un.unit_number, u.realname',
+		'SELECT'	=> 't.*, pt.pro_name, un.unit_number, u.group_id, u.realname',
 		'FROM'		=> 'hca_fs_tasks AS t',
 		'JOINS'		=> [
 			[
@@ -54,6 +54,9 @@ if ($task_id > 0)
 	$hca_fs_tasks = $DBLayer->fetch_assoc($result);
 
 	$json[] = '<input type="hidden" name="task_id" value="'.$task_id.'">';
+	$json[] = '<input type="hidden" name="property_id" value="'.$hca_fs_tasks['property_id'].'">';
+	$json[] = '<input type="hidden" name="time_slot" value="'.$hca_fs_tasks['time_slot'].'">';
+	$json[] = '<input type="hidden" name="group_id" value="'.$hca_fs_tasks['group_id'].'">';
 
 	$json[] = '<div class="row">';
 	$json[] = '<div class="col mb-3">';
@@ -63,7 +66,7 @@ if ($task_id > 0)
 
 	$json[] = '<div class="col mb-3">';
 	$json[] = '<label class="form-label">Unit #</label>';
-	$json[] = '<input type="text" value="'.html_encode($hca_fs_tasks['unit_number']).'" class="form-control" readonly>';
+	$json[] = '<input type="text" name="unit_number" value="'.html_encode($hca_fs_tasks['unit_number']).'" class="form-control" readonly>';
 	$json[] = '</div>';
 	$json[] = '</div>';
 
@@ -75,26 +78,25 @@ if ($task_id > 0)
 
 	$json[] = '<div class="col mb-3">';
 	$json[] = '<label class="form-label">GL Code</label>';
-	$json[] = '<input type="text" value="'.html_encode($hca_fs_tasks['gl_code']).'" class="form-control" readonly>';
+	$json[] = '<input type="text" name="gl_code" value="'.html_encode($hca_fs_tasks['gl_code']).'" class="form-control" readonly>';
 	$json[] = '</div>';
 	$json[] = '</div>';
 
 	$json[] = '<div class="mb-3">';
 	$json[] = '<label class="form-label">Comment</label>';
-	$json[] = '<textarea rows="2" class="form-control">'.html_encode($hca_fs_tasks['task_details']).'</textarea>';
+	$json[] = '<textarea name="task_details" rows="2" class="form-control">'.html_encode($hca_fs_tasks['task_details']).'</textarea>';
 	$json[] = '</div>';
 
 	$json[] = '<div class="row">';
 	$json[] = '<div class="col mb-3">';
 	$json[] = '<label class="form-label">Requested Date</label>';
-	$json[] = '<input type="date" name="requested_date" class="form-control" value="'.html_encode($hca_fs_tasks['requested_date']).'">';
+	$json[] = '<input type="date" name="requested_date" class="form-control" value="'.html_encode($hca_fs_tasks['requested_date']).'" onclick="this.showPicker()" required>';
 	$json[] = '</div>';
 
 	$json[] = '<div class="col mb-3">';
 	$json[] = '<label class="form-label">Assigned to</label>';
-
-	$json[] = '<select name="assigned_to" class="form-select form-select-sm fw-bold" id="fld_assigned_to">';
-	$json[] = '<option value="0" selected disabled>Select one</option>';
+	$json[] = '<select name="assigned_to" class="form-select" id="fld_assigned_to" required>';
+	$json[] = '<option value="" selected disabled>Select one</option>';
 	$optgroup = 0;
 	foreach($users as $cur_info)
 	{
@@ -118,7 +120,7 @@ if ($task_id > 0)
 	echo json_encode([
 			'modal_title'	=> 'Assign Property Request',
 			'modal_body'	=> implode("\n", $json),
-			'modal_footer'	=> '<button type="submit" name="assign_task" class="btn btn-primary">Assign</button>'
+			'modal_footer'	=> '<button type="submit" name="assign_task" class="btn btn-primary">Submit</button>'
 	]);
 }
 

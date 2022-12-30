@@ -12,7 +12,7 @@ $app_info = [
 	// Application's description
 	'description' 	=> 'PunBB Forum',
 	// Application's author
-	'author'		=> 'PunBB/SwiftManage.Com',
+	'author'		=> 'PunBB/SwiftProjectManager.Com',
 	// Last version of application
 	'version'		=> '1.4.6.01'
 ];

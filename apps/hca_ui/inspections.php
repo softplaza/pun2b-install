@@ -230,6 +230,9 @@ if ($search_by_key_word != '') {
 if ($search_by_appendixb == 1)
 	$search_query[] = 'c.appendixb=1';
 
+if (empty($search_query))
+	$search_query[] = '(c.inspection_completed=1 OR (c.work_order_completed=1 AND c.inspection_completed=2 AND c.num_problem > 0))';
+
 $query = [
 	'SELECT'	=> 'COUNT(c.id)',
 	'FROM'		=> 'hca_ui_checklist as c',

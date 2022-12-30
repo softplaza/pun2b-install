@@ -12,7 +12,7 @@ $app_info = [
 	// Application's description
 	'description' 	=> 'Work Order Management & Property Technician Management.',
 	// Application's author
-	'author'		=> 'SwiftManage.Com',
+	'author'		=> 'SwiftProjectManager.Com',
 	// Last version of application
 	'version'		=> '0.19'
 ];

@@ -12,7 +12,7 @@ $app_info = [
 	// Application's description
 	'description' 	=> 'Management of Properties, units and locations',
 	// Application's author
-	'author'		=> 'SwiftManager.Org',
+	'author'		=> 'SwiftProjectManager.Com',
 	// Last version of application
 	'version'		=> '3.61'
 ];

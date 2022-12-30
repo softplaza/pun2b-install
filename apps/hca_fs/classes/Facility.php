@@ -27,7 +27,7 @@ class Facility
 		4 => 'Thursday',
 		5 => 'Friday',
 		6 => 'Saturday',
-		7 => 'Sunday'
+		//7 => 'Sunday'
 	);
 	public $time_slots = array(
 		0 => 'ANY TIME',

@@ -12,7 +12,7 @@ $app_info = [
 	// Application's description
 	'description' 	=> 'Automatically checks the current version of the script library and loads it. In the settings you can choose the version and method of connection.',
 	// Application's author
-	'author'		=> 'jquery.com/SwiftManage.Com',
+	'author'		=> 'jquery.com/SwiftProjectManager.Com',
 	// Last version of application
 	'version'		=> '1.1.75'
 ];

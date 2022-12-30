@@ -72,7 +72,7 @@ if ($task_id > 0)
 
 	$modal_body = $modal_footer = [];
 
-	//$modal_body[] = '<input type="hidden" name="work_order_id" value="'.$task_info['work_order_id'].'">';
+	$modal_body[] = '<input type="hidden" name="work_order_id" value="'.$task_info['work_order_id'].'">';
 	$modal_body[] = '<input type="hidden" name="task_id" value="'.$task_info['id'].'">';
 	
 	$modal_body[] = '<div class="input-group mb-3">';
@@ -142,7 +142,7 @@ if ($task_id > 0)
 
 	$modal_body[] = '<div class="mb-2">';
 	$modal_body[] = '<label class="form-label" for="fld_task_message">Details</label>';
-	$modal_body[] = '<textarea name="task_message" class="form-control" placeholder="Enter details here" id="fld_task_message" rows="5">'.html_encode($task_info['task_message']).'</textarea>';
+	$modal_body[] = '<textarea name="task_message" class="form-control" placeholder="Enter details here" id="fld_task_message">'.html_encode($task_info['task_message']).'</textarea>';
 	$modal_body[] = '</div>';
 
 
@@ -196,7 +196,16 @@ if ($task_id > 0)
 	}
 	$modal_body[] = '</div>';
 
+	if ($task_info['task_status'] == 3)
+	{
+		$modal_body[] = '<div class="mb-2">';
+		$modal_body[] = '<label class="form-label" for="fld_task_closing_comment">Closing comment</label>';
+		$modal_body[] = '<textarea name="task_closing_comment" class="form-control" placeholder="Technician closing comment" id="fld_task_closing_comment">'.html_encode($task_info['task_closing_comment']).'</textarea>';
+		$modal_body[] = '</div>';
+	}
+
 	// Notify technician if status is 1 OPEN, 2 ACCEPTED, 3 READY FOR REVIEW
+	/*
 	if ($task_info['task_status'] > 0 && $task_info['task_status'] < 4)
 	{
 		$modal_body[] = '<div class="mb-3 hidden">';
@@ -207,7 +216,7 @@ if ($task_id > 0)
 		$modal_body[] = '</div>';
 		$modal_body[] = '</div>';
 	}
-
+*/
 	if ($task_info['task_status'] == 4)
 	{
 		$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-success">Reopen task</button>';
@@ -216,7 +225,7 @@ if ($task_id > 0)
 	{
 		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save</button>';
 		$modal_footer[] = '<button type="submit" name="close_task" class="btn btn-sm btn-success">Approve and close</button>';
-		$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-outline-success">Re-open</button>';
+		//$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-outline-success">Re-open</button>';
 	}
 	else if ($task_info['task_status'] == 0)
 	{
@@ -234,7 +243,7 @@ if ($task_id > 0)
 		'modal_footer' => implode('', $modal_footer),
 	));
 }
-else
+else if ($work_order_id > 0)
 {
 	require SITE_ROOT.'apps/hca_wom/classes/HcaWOM.php';
 	$HcaWOM = new HcaWOM;
@@ -258,6 +267,8 @@ else
 
 	$modal_body = $modal_footer = [];
 	
+	$modal_body[] = '<input type="hidden" name="work_order_id" value="'.$work_order_id.'">';
+
 	$modal_body[] = '<div class="input-group mb-3">';
 	$modal_body[] = '<span class="input-group-text w-25" for="fld_item_id">Item</span>';
 	$modal_body[] = '<select name="item_id" class="form-select form-select-sm fw-bold" id="fld_item_id" onchange="getActions()" required>';
@@ -342,7 +353,7 @@ else
 	$modal_footer[] = '<button type="submit" name="add_task" class="btn btn-sm btn-primary">Save changes</button>';
 
 	echo json_encode(array(
-		'modal_title' => 'A new task',
+		'modal_title' => 'New task',
 		'modal_body' => implode('', $modal_body),
 		'modal_footer' => implode('', $modal_footer),
 	));

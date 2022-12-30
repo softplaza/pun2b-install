@@ -12,7 +12,7 @@ $app_info = [
 	// Application's description
 	'description' 	=> 'HCA Pest Control Projects',
 	// Application's author
-	'author'		=> 'SwiftManage.Com',
+	'author'		=> 'SwiftProjectManager.Com',
 	// Last version of application
 	'version'		=> '2.54'
 ];

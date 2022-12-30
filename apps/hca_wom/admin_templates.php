@@ -384,9 +384,9 @@ else
 	<div id="collapse0" class="accordion-collapse collapse" aria-labelledby="heading0" data-bs-parent="#accordionExample">
 		<div class="accordion-body card-body">
 
-			<form method="post" accept-charset="utf-8" action="" class="was-validated">
+			<form method="post" accept-charset="utf-8" action="">
 				<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
-				<div class="col-md-6 mb-3">
+				<div class="col-md-3 mb-3 was-validated">
 					<label class="form-label" for="fld_tpl_name">Teplate Name</label>
 					<input type="text" name="tpl_name" value="" class="form-control form-control-sm" id="fld_tpl_name" required>
 				</div>
@@ -419,7 +419,6 @@ else
 ?>
 					</select>
 				</div>
-
 				<div class="mb-3">
 					<div class="form-check form-check-inline">
 						<input class="form-check-input" type="checkbox" name="has_animal" id="fld_has_animal" value="1" <?php echo (isset($_POST['has_animal']) && $_POST['has_animal'] == 1 ? ' checked' : '') ?>>
@@ -430,11 +429,13 @@ else
 						<label class="form-check-label" for="fld_enter_permission">Permission to Enter</label>
 					</div>
 				</div>
-
 				<div class="mb-3">
-					<label class="form-label" for="fld_wo_message">Comments</label>
 					<textarea type="text" name="wo_message" class="form-control" id="fld_wo_message" placeholder="Enter any special instructions for entry (example: After 2 pm only please)"><?php echo (isset($_POST['wo_message']) ? html_encode($_POST['wo_message']) : '') ?></textarea>
 				</div>
+
+
+
+
 
 				<div class="mb-3">
 					<button type="submit" name="create_tpl" class="btn btn-primary">Submit</button>

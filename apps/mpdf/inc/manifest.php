@@ -7,7 +7,7 @@ $app_info = array(
   'id'            => 'mpdf',
   'title'	    	  => 'mPDF',
   'description'   => 'PDF Creator.',
-  'author'	    	=> 'mpdf.github.io / SwiftManage.Com',
+  'author'	    	=> 'mpdf.github.io / SwiftProjectManager.Com',
   'version'	    	=> '8.0.0',
 );
 

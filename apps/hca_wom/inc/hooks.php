@@ -24,6 +24,7 @@ function hca_wom_co_modify_url_scheme()
     $urls['hca_wom_ajax_get_units'] = 'apps/hca_wom/ajax/get_units.php';
     $urls['hca_wom_ajax_get_items'] = 'apps/hca_wom/ajax/get_items.php';
     $urls['hca_wom_ajax_manage_task'] = 'apps/hca_wom/ajax/manage_task.php';
+    $urls['hca_wom_ajax_quick_manage_task'] = 'apps/hca_wom/ajax/quick_manage_task.php';
     $urls['hca_wom_ajax_manage_tpl_task'] = 'apps/hca_wom/ajax/manage_tpl_task.php';
     $urls['hca_wom_ajax_get_wo_template'] = 'apps/hca_wom/ajax/get_wo_template.php';
     
