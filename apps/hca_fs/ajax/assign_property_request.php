@@ -32,7 +32,7 @@ if ($task_id > 0)
 	}
 
 	$query = [
-		'SELECT'	=> 't.*, pt.pro_name, un.unit_number, u.group_id, u.realname',
+		'SELECT'	=> 't.*, pt.pro_name, un.unit_number',
 		'FROM'		=> 'hca_fs_tasks AS t',
 		'JOINS'		=> [
 			[
@@ -40,12 +40,8 @@ if ($task_id > 0)
 				'ON'			=> 'pt.id=t.property_id'
 			],
 			[
-				'INNER JOIN'	=> 'sm_property_units AS un',
+				'LEFT JOIN'		=> 'sm_property_units AS un',
 				'ON'			=> 'un.id=t.unit_id'
-			],
-			[
-				'LEFT JOIN'		=> 'users AS u',
-				'ON'			=> 'u.id=t.assigned_to'
 			],
 		],
 		'WHERE'		=> 't.id='.$task_id,
@@ -78,7 +74,7 @@ if ($task_id > 0)
 
 	$json[] = '<div class="col mb-3">';
 	$json[] = '<label class="form-label">GL Code</label>';
-	$json[] = '<input type="text" name="gl_code" value="'.html_encode($hca_fs_tasks['gl_code']).'" class="form-control" readonly>';
+	$json[] = '<input type="text" name="gl_code" value="'.html_encode($hca_fs_tasks['gl_code']).'" class="form-control">';
 	$json[] = '</div>';
 	$json[] = '</div>';
 

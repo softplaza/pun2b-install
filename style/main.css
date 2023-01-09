@@ -1901,8 +1901,8 @@ table .tcr{
 /* Bootstrap settings */
 .callout{
     padding: .5rem;
-    border: 1px solid #e9ecef;
-    border-left-width: 0.25rem;
+    /*border: 1px solid #e9ecef;*/
+    border-left-width: 0.25rem !important;
     border-radius: 0.25rem;
 }
 .callout-success{
@@ -1912,8 +1912,10 @@ table .tcr{
     color: #03361e !important;
 }
 .callout-info{
-    border-left-color:#5bc0de!important;
+    border: 1px solid #b6e9f8;
+    border-left-color: #3bb3d7!important;
     background-color: rgba(var(--bs-info-rgb), .075);
+    color: #0d6681 !important;
 }
 .callout-primary{
     border-left-color:rgb(13,110,253)!important;
@@ -1930,8 +1932,10 @@ table .tcr{
     color: #73510d !important;
 }
 .callout-danger{
+    border: 1px solid #ebc7cd;
     border-left-color:#d9534f!important;
     background-color: #f9e1e5 !important;
+    color: #5e0e0e !important;
 }
 
 .badge-primary {

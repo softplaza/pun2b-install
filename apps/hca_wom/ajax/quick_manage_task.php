@@ -140,11 +140,19 @@ if ($task_id > 0)
 	$modal_body[] = '</div>';
 	
 
-	$modal_body[] = '<div class="mb-2">';
-	$modal_body[] = '<label class="form-label" for="fld_task_message">Details</label>';
-	$modal_body[] = '<textarea name="task_message" class="form-control" placeholder="Enter details here" id="fld_task_message">'.html_encode($task_info['task_message']).'</textarea>';
-	$modal_body[] = '</div>';
-
+	if ($task_info['task_status'] == 3 && $task_info['task_message'] != '')
+	{
+		$modal_body[] = '<div class="callout callout-warning mb-3">';
+		$modal_body[] = '<p>'.html_encode($task_info['task_message']).'</p>';
+		$modal_body[] = '</div>';
+	}
+	else
+	{
+		$modal_body[] = '<div class="mb-2">';
+		$modal_body[] = '<label class="form-label" for="fld_task_message">Details</label>';
+		$modal_body[] = '<textarea name="task_message" class="form-control" placeholder="Enter details here" id="fld_task_message">'.html_encode($task_info['task_message']).'</textarea>';
+		$modal_body[] = '</div>';
+	}
 
 	$query = array(
 		'SELECT'	=> 'u.id, u.group_id, u.username, u.realname, u.email, g.g_id, g.g_title',
@@ -196,11 +204,18 @@ if ($task_id > 0)
 	}
 	$modal_body[] = '</div>';
 
+	if ($task_info['tech_comment'] != '')
+	{
+		$modal_body[] = '<div class="callout callout-success mb-2">';
+		$modal_body[] = '<p>'.html_encode($task_info['tech_comment']).'</p>';
+		$modal_body[] = '</div>';
+	}
+
 	if ($task_info['task_status'] == 3)
 	{
 		$modal_body[] = '<div class="mb-2">';
 		$modal_body[] = '<label class="form-label" for="fld_task_closing_comment">Closing comment</label>';
-		$modal_body[] = '<textarea name="task_closing_comment" class="form-control" placeholder="Technician closing comment" id="fld_task_closing_comment">'.html_encode($task_info['task_closing_comment']).'</textarea>';
+		$modal_body[] = '<textarea name="task_closing_comment" class="form-control" placeholder="Manager closing comment" id="fld_task_closing_comment">'.html_encode($task_info['task_closing_comment']).'</textarea>';
 		$modal_body[] = '</div>';
 	}
 
@@ -219,22 +234,22 @@ if ($task_id > 0)
 */
 	if ($task_info['task_status'] == 4)
 	{
-		$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-success">Reopen task</button>';
+		//$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-success">Reopen task</button>';
 	}
 	else if ($task_info['task_status'] == 3)
 	{
-		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save</button>';
+		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save changes</button>';
 		$modal_footer[] = '<button type="submit" name="close_task" class="btn btn-sm btn-success">Approve and close</button>';
 		//$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-outline-success">Re-open</button>';
 	}
 	else if ($task_info['task_status'] == 0)
 	{
-		$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-success">Reopen task</button>';
+		//$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-success">Reopen task</button>';
 	}
 	else
 	{
-		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save</button>';
-		$modal_footer[] = '<button type="submit" name="delete_task" class="btn btn-sm btn-danger">Delete task</button>';
+		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save changes</button>';
+		$modal_footer[] = '<button type="submit" name="close_task" class="btn btn-sm btn-danger">Close task</button>';
 	}
 
 	echo json_encode(array(

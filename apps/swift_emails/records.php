@@ -34,9 +34,8 @@ if ($search_by_user_id > 0)
 	$search_query[] = 'e.sent_from='.$search_by_user_id;
 
 $query = array(
-	'SELECT'	=> 'COUNT(e.sent_from)',
+	'SELECT'	=> 'COUNT(e.id)',
 	'FROM'		=> 'swift_emails AS e',
-	'WHERE'		=> 'e.sent_from > 0'
 );
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);

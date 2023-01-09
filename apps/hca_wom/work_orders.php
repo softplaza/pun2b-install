@@ -83,21 +83,17 @@ else if (isset($_POST['update_task']))
 {
 	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
 
-	$form_data = [
-		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
-	];
-
-	if (isset($_POST['item_id']))
-		$form_data['item_id'] = intval($_POST['item_id']);
-	if (isset($_POST['task_action']))
-		$form_data['task_action'] = intval($_POST['task_action']);
-	if (isset($_POST['assigned_to']))
-		$form_data['assigned_to'] = intval($_POST['assigned_to']);
+	$form_data = [];
+	if (isset($_POST['task_message'])) $form_data['task_message'] = swift_trim($_POST['task_message']);
+	if (isset($_POST['task_closing_comment'])) $form_data['task_closing_comment'] = swift_trim($_POST['task_closing_comment']);
+	if (isset($_POST['item_id'])) $form_data['item_id'] = intval($_POST['item_id']);
+	if (isset($_POST['task_action'])) $form_data['task_action'] = intval($_POST['task_action']);
+	if (isset($_POST['assigned_to'])) $form_data['assigned_to'] = intval($_POST['assigned_to']);
 
 	//if ($form_data['assigned_to'] == 0)
 	//	$Core->add_error('Select technician.');
 
-	if (empty($Core->errors) && $task_id > 0)
+	if (empty($Core->errors) && $task_id > 0 && !empty($form_data))
 	{
 		// Update task of Work Order
 		$DBLayer->update('hca_wom_tasks', $form_data, $task_id);
@@ -117,7 +113,7 @@ else if (isset($_POST['update_task']))
 			$mail_message[] = 'Property: '.$task_info['pro_name'];
 			$mail_message[] = 'Unit: '.$task_info['unit_number'];
 			
-			if ($task_info['task_message'] != '')
+			if (isset($task_info['task_message']) && $task_info['task_message'] != '')
 				$mail_message[] = 'Details: '.$task_info['task_message']."\n";
 
 			$mail_message[] = 'To complete the task follow the link:';
@@ -137,8 +133,9 @@ else if (isset($_POST['close_task']))
 	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
 
 	$form_data = [
-		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
-		'task_status'	=> 4,
+		//'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
+		'task_closing_comment'	=> isset($_POST['task_closing_comment']) ? swift_trim($_POST['task_closing_comment']) : '',
+		'task_status'			=> 4,
 	];
 
 	if (empty($Core->errors) && $task_id > 0)
@@ -232,7 +229,8 @@ $query = [
 */
 	],
 	'LIMIT'		=> $PagesNavigator->limit(),
-	'ORDER BY'	=> 'p.pro_name, LENGTH(pu.unit_number), pu.unit_number, t.task_status DESC',
+	//'ORDER BY'	=> 'p.pro_name, LENGTH(pu.unit_number), pu.unit_number, t.task_status DESC',
+	'ORDER BY'	=> 'p.pro_name, t.task_status DESC, LENGTH(pu.unit_number), pu.unit_number',
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -243,36 +241,6 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	$tasks[] = $row['id'];
 }
 $PagesNavigator->num_items($hca_wom_work_orders);
-
-$hca_wom_tasks = [];
-if (!empty($hca_wom_wo_ids))
-{
-	$query = [
-		'SELECT'	=> 't.*, i.item_name, tp.type_name, pb.problem_name',
-		'FROM'		=> 'hca_wom_tasks AS t',
-		'JOINS'		=> [
-			[
-				'LEFT JOIN'		=> 'hca_wom_items AS i',
-				'ON'			=> 'i.id=t.item_id'
-			],
-			[
-				'LEFT JOIN'		=> 'hca_wom_types AS tp',
-				'ON'			=> 'tp.id=i.item_type'
-			],
-			[
-				'LEFT JOIN'		=> 'hca_wom_problems AS pb',
-				'ON'			=> 'pb.id=t.task_action'
-			],
-		],
-		'WHERE'		=> 't.work_order_id IN ('.implode(',', $hca_wom_wo_ids).')',
-		'ORDER BY'	=> 't.task_status DESC',
-	];
-	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-	while ($row = $DBLayer->fetch_assoc($result))
-	{
-		$hca_wom_tasks[] = $row;
-	}
-}
 
 $query = array(
 	'SELECT'	=> 'p.*',
@@ -375,6 +343,32 @@ foreach ($users as $cur_user)
 <?php
 if (!empty($hca_wom_work_orders))
 {
+	$hca_wom_tasks = [];
+	$query = [
+		'SELECT'	=> 't.*, i.item_name, tp.type_name, pb.problem_name',
+		'FROM'		=> 'hca_wom_tasks AS t',
+		'JOINS'		=> [
+			[
+				'LEFT JOIN'		=> 'hca_wom_items AS i',
+				'ON'			=> 'i.id=t.item_id'
+			],
+			[
+				'LEFT JOIN'		=> 'hca_wom_types AS tp',
+				'ON'			=> 'tp.id=i.item_type'
+			],
+			[
+				'LEFT JOIN'		=> 'hca_wom_problems AS pb',
+				'ON'			=> 'pb.id=t.task_action'
+			],
+		],
+		'WHERE'		=> 't.task_status < 4 AND t.work_order_id IN ('.implode(',', $hca_wom_wo_ids).')',
+		'ORDER BY'	=> 't.task_status DESC',
+	];
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	while ($row = $DBLayer->fetch_assoc($result))
+	{
+		$hca_wom_tasks[] = $row;
+	}
 ?>
 
 <table class="table table-striped table-bordered">
@@ -387,7 +381,7 @@ if (!empty($hca_wom_work_orders))
 			<th>Status</th>
 			<th>Submitted on</th>
 			<th>Tasks</th>
-			<th></th>
+			<th>Print</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -416,36 +410,33 @@ if (!empty($hca_wom_work_orders))
 				if ($cur_info['id'] == $cur_task['work_order_id'])
 				{
 					$items = [];
-					if ($cur_task['task_status'] == 4)
-						$task_info[] = '<div class="alert-success rounded px-1 mb-1 min-w-15">';
-					else if ($cur_task['task_status'] == 3)
-						$task_info[] = '<div class="alert-primary rounded px-1 mb-1 min-w-15">';
+
+					if ($cur_task['task_status'] == 3)
+						$task_info[] = '<div class="callout callout-success rounded px-1 mb-1 min-w-15 position-relative">';
 					else
-						$task_info[] = '<div class="alert-warning rounded px-1 mb-1 min-w-15">';
+						$task_info[] = '<div class="callout callout-warning rounded px-1 mb-1 min-w-15 position-relative">';
 
 					$task_info[] = '<p>';
-
-					if ($cur_task['task_status'] < 4)
-						$task_info[] = '<span class="float-end" onclick="quickManageTask(0,'.$cur_task['id'].')" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="fas fa-edit fa-lg"></i></span>';
-
+					$task_info[] = '<span class="float-end" onclick="quickManageTask(0,'.$cur_task['id'].')" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="fas fa-edit fa-lg"></i></span>';
 					$task_info[] = '<span class="fw-bold">'.html_encode($cur_task['type_name']).', </span>';
 					$task_info[] = '<span class="fw-bold">'.html_encode($cur_task['item_name']).'</span>';
 					$task_info[] = ' ('.html_encode($cur_task['problem_name']).')';
 					$task_info[] = '</p>';
 
-					if ($cur_task['task_status'] == 4)
-						$task_info[] = '<span class="badge badge-success float-end">Closed</span>';
-					else if ($cur_task['task_status'] == 3)
-						$task_info[] = '<span class="badge badge-primary border float-end">Ready for review</span>';
+					if ($cur_task['task_status'] == 3)
+						$task_info[] = '<span class="fw-bold text-success small position-absolute bottom-0 end-0">Ready for review</span>';
 					else
-						$task_info[] = '<span class="badge badge-warning float-end">Open</span>';
+						$task_info[] = '<span class="fw-bold text-warning small position-absolute bottom-0 end-0">Open</span>';
 
 					$task_info[] = '<p>'.html_encode($cur_task['task_message']).'</p>';
+
+					if ($cur_task['task_status'] == 3 && $cur_task['tech_comment'] != '')
+						$task_info[] = '<p class="text-muted">[ '.html_encode($cur_task['tech_comment']).' ]</p>';
 
 					$task_info[] = '</div>';
 
 					if ($cur_task['task_status'] == 3)
-						$status = '<span class="badge badge-primary">Ready for review</span>';
+						$status = '<span class="badge badge-success">Ready for review</span>';
 
 					++$i;
 				}
@@ -543,10 +534,7 @@ function getActions(){
 		}
 	});
 }
-function clearModalFields()
-{
-
-}
+function clearModalFields(){}
 </script>
 
 <?php

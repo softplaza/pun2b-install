@@ -140,208 +140,209 @@ class HcaUIHooks
         }
     }
 
-    
-    public function ProfileAboutMyProjects()
+    function ReportBody()
     {
-        global $DBLayer, $URL, $User, $user;
+        global $DBLayer, $URL;
 
-        $user_id = isset($user['id']) ? intval($user['id']) : $User->get('id');
-        $period = date('Y-m-d', strtotime('- 6 month'));
+        $search_by_period = isset($_GET['period']) ? intval($_GET['period']) : 12;
+        $search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
+
+        $num_never_inspected = 0;
+
+        $DateTime = new DateTime();
 
         $search_query = [];
-        $search_query[] = '(ch.inspected_by='.$user_id.' OR ch.owned_by='.$user_id.' OR ch.completed_by='.$user_id.' OR ch.updated_by='.$user_id.')';
-        $search_query[] = 'DATE(ch.date_inspected) > \''.$DBLayer->escape($period).'\'';
+
+        if ($search_by_period == 1)
+        {
+            $DateTime->modify('-1 month');
+            $search_query[] = 'DATE(ch.date_inspected) > \''.$DBLayer->escape($DateTime->format('Y-m-d')).'\'';
+        }
+        else if ($search_by_period == 3)
+        {
+            $DateTime->modify('-3 months');
+            $search_query[] = 'DATE(ch.date_inspected) > \''.$DBLayer->escape($DateTime->format('Y-m-d')).'\'';
+        }
+        else if ($search_by_period == 6)
+        {
+            $DateTime->modify('-6 months');
+            $search_query[] = 'DATE(ch.date_inspected) > \''.$DBLayer->escape($DateTime->format('Y-m-d')).'\'';
+        }
+        else
+        {
+            $DateTime->modify('-12 months');
+            $search_query[] = 'DATE(ch.date_inspected) > \''.$DBLayer->escape($DateTime->format('Y-m-d')).'\'';
+        }
+
+        if ($search_by_property_id > 0)
+            $search_query[] = 'ch.property_id='.$search_by_property_id;
 
         $query = [
-            'SELECT'	=> 'ch.*, p.pro_name, un.unit_number',
+            'SELECT'	=> 'ch.*',
             'FROM'		=> 'hca_ui_checklist as ch',
-            'JOINS'		=> [
-                [
-                    'INNER JOIN'	=> 'sm_property_db AS p',
-                    'ON'			=> 'p.id=ch.property_id'
-                ],
-                [
-                    'INNER JOIN'	=> 'sm_property_units AS un',
-                    'ON'			=> 'un.id=ch.unit_id'
-                ],
-            ],
         ];
         if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
         $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-        $projects = [];
+        $projects = $inspected_properties_ids = $inspected_units_ids = [];
         while ($row = $DBLayer->fetch_assoc($result)) {
             $projects[] = $row;
+
+            $inspected_properties_ids[$row['property_id']] = $row['property_id'];
+            $inspected_units_ids[$row['unit_id']] = $row['unit_id'];
         }
 
         if (!empty($projects))
         {
+            $query = array(
+                'SELECT'	=> 'un.id, un.unit_number, un.property_id',
+                'FROM'		=> 'sm_property_units AS un',
+            );
+            if (!empty($inspected_properties_ids))
+                $query['WHERE'] = 'un.property_id IN ('.implode(',', $inspected_properties_ids).')';
+            $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+            while ($row = $DBLayer->fetch_assoc($result))
+            {
+                if (!in_array($row['id'], $inspected_units_ids))
+                    ++$num_never_inspected;	
+            }
+
             $total = $due_projects = $completed = $pending_inspections = $pending_wo = 0;
-            $time_now = time() - 2592000;
+            $time_now = time() - 2592000; // 2592000 = 30 days
             foreach($projects as $project)
             {
                 // Overdue WO only
-                if ($project['work_order_completed'] == 1 && $project['inspection_completed'] == 2 && $project['num_problem'] > 0 && strtotime($project['date_inspected']) > $time_now)
+                if (($project['work_order_completed'] < 2 || $project['inspection_completed'] == 1) && $time_now < strtotime($project['date_inspected']))
                     ++$due_projects;
 
-                if ($project['inspection_completed'] == 1)
+                if ($project['inspection_completed'] < 2)
                     ++$pending_inspections;
 
                 if ($project['work_order_completed'] == 1 && $project['inspection_completed'] == 2 && $project['num_problem'] > 0)
                     ++$pending_wo;
 
-                if ($project['work_order_completed'] == 2 && $project['inspection_completed'] == 2 && $project['completed_by'] == $user_id)
+                if ($project['work_order_completed'] == 2 && $project['inspection_completed'] == 2)
                     ++$completed;
 
                 ++$total;
             }
 
-            $date = date('Y-m-d', strtotime('- 1 month'));
+            $due_date = date('Y-m-d', strtotime('- 1 month'));
             $output = [];
-
+/*
             if ($due_projects > 0)
-                $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 2, 'user_id' => $user_id, 'date_from' => $date]).'" class="badge bg-danger text-white me-1">Overdue Work Orders <span class="badge badge-secondary fw-bolder">'.$due_projects.'</span></a>';
+                $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['date_from' => $due_date]).'" class="d-flex justify-content-between badge bg-danger text-white me-1">Overdue Work Orders <span class="badge badge-secondary fw-bolder">'.$due_projects.'</span></a>';
 
             if ($pending_inspections > 0)
-                $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 1, 'user_id' => $user_id]).'" class="badge bg-secondary text-white me-1">Pending inspections <span class="badge badge-secondary fw-bolder">'.$pending_inspections.'</span></a>';
+                $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 1]).'" class="d-flex justify-content-between badge bg-warning text-white me-1">Pending Inspections <span class="badge badge-secondary fw-bolder">'.$pending_inspections.'</span></a>';
             
             if ($pending_wo > 0)
-                $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 2, 'user_id' => $user_id]).'" class="badge bg-warning text-white me-1">Pending WO <span class="badge badge-secondary fw-bolder">'.$pending_wo.'</span></a>';
+                $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 2]).'" class="d-flex justify-content-between badge bg-primary text-white me-1">Pending WO <span class="badge badge-secondary fw-bolder">'.$pending_wo.'</span></a>';
+
+            if ($num_never_inspected > 0)
+                $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 1]).'" class="d-flex justify-content-between badge bg-secondary text-white me-1">Not Inspected Units <span class="badge badge-secondary fw-bolder">'.$num_never_inspected.'</span></a>';
 
             if ($completed > 0)
-                $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 3, 'user_id' => $user_id]).'" class="badge bg-success text-white me-1">Completed <span class="badge badge-secondary fw-bolder">'.$completed.'</span></a>';
-
-            if (empty($output))
-                $output[] = '<span class="badge badge-warning me-1">No project activity in the last six months.</span>';
-
-            $main_css = 'callout-success bd-callout-success';
-            if ($due_projects > 0)
-                $main_css = 'callout-danger bd-callout-danger';
-            else if ($pending_inspections > 0)
-                $main_css = 'callout-secondary bd-callout-secondary';
-            else if ($pending_wo > 0)
-                $main_css = 'callout-warning bd-callout-warning';
+                $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 4]).'" class="d-flex justify-content-between badge bg-success text-white me-1">Completed <span class="badge badge-secondary fw-bolder">'.$completed.'</span></a>';
+*/
 ?>
-        <div class="callout <?=$main_css?> mb-3">
-            <h4 class="alert-heading">Plumbing Inspections</h4>
-            <hr class="my-1">
-            <p class="mb-0"> <?php echo implode($output) ?></p>
+
+    <div class="col-xxl-4 col-xl-6 mb-3">
+        <div class="card flex-fill">
+            <div class="card-body my-0 pt-0">
+                <h4 class="card-title"><a href="<?=$URL->genLink('hca_ui_inspections')?>">Plumbing Inspections</a></h4>
+                <hr class="my-2">
+
+                <div id="chart_hca_ui_pie"></div>
+
+                    <ul class="list-group list-group-flush border-dashed mb-0">
+
+                        <li class="list-group-item px-0 pb-0">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-circle fa-lg text-danger"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-2">
+                                    <h6 class="mb-1"><a href="<?=$URL->genLink('hca_ui_inspections', ['status' => 1])?>">Overdue Work Orders</a></h6>
+                                    <p class="fs-12 mb-0 text-muted">Overdue Work Orders</p>
+                                </div>
+                                <div class="flex-shrink-0 text-end">
+                                    <h5 class="mb-1"><?=$due_projects?></h5>
+                                    <p class="text-success fs-12 mb-0"></p>
+                                </div>
+                            </div>
+                        </li><!-- end -->
+
+                        <li class="list-group-item px-0 pb-0">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle fa-lg text-warning"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-2">
+                                    <h6 class="mb-1"><a href="<?=$URL->genLink('hca_ui_inspections', ['status' => 1])?>">Pending Inspections</a></h6>
+                                    <p class="fs-12 mb-0 text-muted">Pending Inspections</p>
+                                </div>
+                                <div class="flex-shrink-0 text-end">
+                                    <h5 class="mb-1"><?=$pending_inspections?></h5>
+                                    <p class="text-success fs-12 mb-0"></p>
+                                </div>
+                            </div>
+                        </li><!-- end -->
+
+                        <li class="list-group-item px-0 pb-0">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle fa-lg text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-2">
+                                    <h6 class="mb-1"><a href="<?=$URL->genLink('hca_ui_inspections', ['status' => 2])?>">Pending WO</a></h6>
+                                    <p class="fs-12 mb-0 text-muted">Pending Work Orders</p>
+                                </div>
+                                <div class="flex-shrink-0 text-end">
+                                    <h5 class="mb-1"><?=$pending_wo?></h5>
+                                    <p class="text-success fs-12 mb-0"></p>
+                                </div>
+                            </div>
+                        </li><!-- end -->
+
+                        <li class="list-group-item px-0 pb-0">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-times-circle fa-lg text-secondary"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-2">
+                                    <h6 class="mb-1">Not Inspected Units</h6>
+                                    <p class="fs-12 mb-0 text-muted">Not Inspected Units</p>
+                                </div>
+                                <div class="flex-shrink-0 text-end">
+                                    <h5 class="mb-1"><?=$num_never_inspected?></h5>
+                                    <p class="text-success fs-12 mb-0"></p>
+                                </div>
+                            </div>
+                        </li><!-- end -->
+
+                        <li class="list-group-item px-0 pb-0">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-check-circle fa-lg text-success"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-2">
+                                    <h6 class="mb-1"><a href="<?=$URL->genLink('hca_ui_inspections', ['status' => 4])?>">Completed</a></h6>
+                                    <p class="fs-12 mb-0 text-muted">Number of completed projects</p>
+                                </div>
+                                <div class="flex-shrink-0 text-end">
+                                    <h5 class="mb-1"><?=$completed?></h5>
+                                    <p class="text-success fs-12 mb-0"></p>
+                                </div>
+                            </div>
+                        </li><!-- end -->
+
+                    </ul>
+
+            </div>
         </div>
+    </div>
+
 <?php
-        }
-    }
-
-    public function IndexBody()
-    {
-        global $DBLayer, $URL, $User, $user;
-
-        if ($User->checkAccess('hca_ui'))
-        {
-            //$user_id = isset($user['id']) ? intval($user['id']) : $User->get('id');
-            $period = date('Y-m-d', strtotime('- 6 month'));
-
-            $search_query = [];
-            //$search_query[] = '(ch.inspected_by='.$user_id.' OR ch.owned_by='.$user_id.' OR ch.completed_by='.$user_id.' OR ch.updated_by='.$user_id.')';
-            $search_query[] = 'DATE(ch.date_inspected) > \''.$DBLayer->escape($period).'\'';
-
-            $query = [
-                'SELECT'	=> 'ch.*, p.pro_name, un.unit_number',
-                'FROM'		=> 'hca_ui_checklist as ch',
-                'JOINS'		=> [
-                    [
-                        'INNER JOIN'	=> 'sm_property_db AS p',
-                        'ON'			=> 'p.id=ch.property_id'
-                    ],
-                    [
-                        'INNER JOIN'	=> 'sm_property_units AS un',
-                        'ON'			=> 'un.id=ch.unit_id'
-                    ],
-                ],
-            ];
-            if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
-            $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-            $projects = [];
-            while ($row = $DBLayer->fetch_assoc($result)) {
-                $projects[] = $row;
-            }
-
-            if (!empty($projects))
-            {
-                $total = $due_projects = $completed = $pending_inspections = $pending_wo = 0;
-                $time_now = time() - 2592000;
-                foreach($projects as $project)
-                {
-                    // Overdue WO only
-                    if ($project['work_order_completed'] == 1 && $project['inspection_completed'] == 2 && $project['num_problem'] > 0 && strtotime($project['date_inspected']) > $time_now)
-                        ++$due_projects;
-
-                    if ($project['inspection_completed'] == 1)
-                        ++$pending_inspections;
-
-                    if ($project['work_order_completed'] == 1 && $project['inspection_completed'] == 2 && $project['num_problem'] > 0)
-                        ++$pending_wo;
-
-                    if ($project['work_order_completed'] == 2 && $project['inspection_completed'] == 2)
-                        ++$completed;
-
-                    ++$total;
-                }
-
-                $date = date('Y-m-d', strtotime('- 1 month'));
-                $output = [];
-
-                if ($due_projects > 0)
-                    $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 2, 'date_from' => $date]).'" class="badge bg-danger text-white me-1">Overdue Work Orders <span class="badge badge-secondary fw-bolder">'.$due_projects.'</span></a>';
-
-                if ($pending_inspections > 0)
-                    $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 1]).'" class="badge bg-secondary text-white me-1">Pending inspections <span class="badge badge-secondary fw-bolder">'.$pending_inspections.'</span></a>';
-                
-                if ($pending_wo > 0)
-                    $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 2]).'" class="badge bg-warning text-white me-1">Pending WO <span class="badge badge-secondary fw-bolder">'.$pending_wo.'</span></a>';
-
-                if ($completed > 0)
-                    $output[] = '<a href="'.$URL->genLink('hca_ui_inspections', ['status' => 3]).'" class="badge bg-success text-white me-1">Completed <span class="badge badge-secondary fw-bolder">'.$completed.'</span></a>';
-
-                if (empty($output))
-                    $output[] = '<span class="badge badge-warning me-1">No project activity in the last six months.</span>';
-
-                $main_css = 'callout-success bd-callout-success';
-                if ($due_projects > 0)
-                    $main_css = 'callout-danger bd-callout-danger';
-                else if ($pending_inspections > 0)
-                    $main_css = 'callout-secondary bd-callout-secondary';
-                else if ($pending_wo > 0)
-                    $main_css = 'callout-warning bd-callout-warning';
-?>
-        <div class="callout <?=$main_css?> mb-3">
-            <h4 class="alert-heading">Plumbing Inspections</h4>
-            <hr class="my-1">
-            <p class="mb-0"> <?php echo implode($output) ?></p>
-        </div>
-
-        <div class="col-md-3">
-            <div id="chart"></div>
-        </div>
-        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-        <script>
-var options = {
-  chart: {
-    type: 'bar'
-  },
-  series: [{
-    name: 'sales',
-    data: [30,40,45,50,49,60,70,91,125]
-  }],
-  xaxis: {
-    categories: [1991,1992,1993,1994,1995,1996,1997, 1998,1999]
-  }
-}
-
-var chart = new ApexCharts(document.querySelector("#chart"), options);
-
-chart.render();
-        </script>
-<?php
-            }
         }
     }
 }
@@ -352,4 +353,4 @@ Hook::addAction('ProfileAdminAccess', ['HcaUIHooks', 'ProfileAdminAccess']);
 
 Hook::addAction('ProfileAboutMyProjects', ['HcaUIHooks', 'ProfileAboutMyProjects']);
 
-Hook::addAction('IndexBody', ['HcaUIHooks', 'IndexBody']);
+Hook::addAction('ReportBody', ['HcaUIHooks', 'ReportBody']);

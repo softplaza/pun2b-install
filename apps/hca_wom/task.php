@@ -16,8 +16,7 @@ $SwiftUploader = new SwiftUploader;
 
 // Set permissions to view, download and delete files
 $SwiftUploader->access_view_files = true;
-if ($User->checkPermissions('hca_wom', 10))
-	$SwiftUploader->access_upload_files = true;
+$SwiftUploader->access_upload_files = true;
 
 // Get current task info
 //$task_info = $HcaWOM->getTaskInfo($id);
@@ -101,7 +100,7 @@ if (isset($_POST['complete']))
 
 			$mail_subject = 'Property Work Order #'.$task_info['work_order_id'];
 			$mail_message = [];
-			$mail_message[] = 'Hello '.$task_info['requested_name'];
+			//$mail_message[] = 'Hello '.$task_info['requested_name'];
 			$mail_message[] = 'Work Order #'.$task_info['work_order_id'].' is ready for review.';
 			$mail_message[] = 'Property: '.$task_info['pro_name'];
 			$mail_message[] = 'Location: '.$task_info['unit_number'];

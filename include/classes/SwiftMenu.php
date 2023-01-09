@@ -50,7 +50,7 @@ class SwiftMenu
 			// <i class="fa-solid fa-bell fa-lg"></i>
 			$profile_links[] = '<li class="nav-item dropdown">';
 			//$profile_links[] = '<span class="position-absolute start-50 badge rounded-pill bg-danger">9</span>';
-			$profile_links[] = '<span class="nav-link text-white"><a href="'.BASE_URL.'" class="text-white"><i class="fa-solid fa-bell fa-lg"></i></a></span>';
+			$profile_links[] = '<span class="nav-link text-white"><a href="'.BASE_URL.'/report.php" class="text-white"><i class="fa-solid fa-bell fa-lg"></i></a></span>';
 			//$profile_links[] = '<ul class="dropdown-menu dropdown-menu-end">';
 			//$profile_links[] = '<li><a class="dropdown-item" href="'.BASE_URL.'"><i class="fa fa-print fa-1x" aria-hidden="true"></i> My projects</a></li>';
 			//$profile_links[] = '</ul>';
@@ -117,7 +117,9 @@ class SwiftMenu
 		$output[] = "\t\t\t\t\t\t".'<nav class="swift-navbar navbar-dark bg-dark" id="navbar_top">'."\n";
 
 		// Left side of top nav bar
-		$output[] = "\t\t\t\t\t\t\t".'<a class="site-title" href="#">'.$top_left_side.'</a>'."\n";
+		if (!$User->is_guest())
+			$output[] = "\t\t\t\t\t\t\t".'<a class="site-title" href="#">'.$top_left_side.'</a>'."\n";
+
 		// Right side of top nav bar
 		$output[] = "\t\t\t\t\t\t\t\t".'<ul class="nav float-end" style="font-size:16px">'."\n";
 

@@ -82,6 +82,7 @@ class ComposerStaticInitSwiftManager
         'Menu'              => __DIR__ . '/../..' . '/include/classes/Menu.php',
         'SwiftMenu'         => __DIR__ . '/../..' . '/include/classes/SwiftMenu.php',
         'SwiftSettings'     => __DIR__ . '/../..' . '/include/classes/SwiftSettings.php',
+        'SwiftReport'        => __DIR__ . '/../..' . '/include/classes/SwiftReport.php',
     );
 
     public static function getInitializer(ClassLoader $loader)

@@ -73,29 +73,6 @@ function hca_fs_IncludeCommon()
         // Display main menu item
         $SwiftMenu->addItem(['title' => 'Facility', 'link' => '#', 'id' => 'hca_fs', 'icon' => '<i class="fas fa-landmark"></i>', 'level' => 11]);
 
-        //if ($User->get('sm_pm_property_id') > 0 || $User->checkAccess('hca_fs', 2))
-        //   $SwiftMenu->addItem(['title' => '+ Make Request', 'link' => $URL->link('hca_fs_new_request', 0), 'id' => 'hca_fs_new_request', 'parent_id' => 'hca_fs', 'level' => 0]);
-
-        /*
-        // Property Managers & Facility Managers
-        if ($User->get('sm_pm_property_id') > 0 || $User->checkAccess('hca_fs', 3))
-        {
-            $SwiftMenu->addItem(['title' => 'Property requests', 'link' => $URL->link('hca_fs_requests', ['new', 0]), 'id' => 'hca_fs_requests', 'parent_id' => 'hca_fs', 'level' => 1]);
-
-            $SwiftMenu->addItem(['title' => 'Pending', 'link' => $URL->link('hca_fs_requests', ['new', 0]), 'id' => 'hca_fs_requests_new', 'parent_id' => 'hca_fs_requests', 'level' => 1]);
-            $SwiftMenu->addItem(['title' => 'In-progress', 'link' => $URL->link('hca_fs_requests', ['active', 0]), 'id' => 'hca_fs_requests_active', 'parent_id' => 'hca_fs_requests', 'level' => 2]);
-            $SwiftMenu->addItem(['title' => 'Completed', 'link' => $URL->link('hca_fs_requests', ['completed', 0]), 'id' => 'hca_fs_requests_active', 'parent_id' => 'hca_fs_requests', 'level' => 3]);
-            //$SwiftMenu->addItem(['title' => 'Completed', 'link' => $URL->link('hca_fs_report'), 'id' => 'hca_fs_report', 'parent_id' => 'hca_fs_requests', 'level' => 3]);
-        }
-        // Technician
-        else if ($User->get('group_id') == $Config->get('o_hca_fs_painters') || $User->get('group_id') == $Config->get('o_hca_fs_maintenance'))
-        {
-            $SwiftMenu->addItem(['title' => 'Work orders', 'link' => $URL->link('hca_fs_worker_schedule', $User->get('id')), 'id' => 'hca_fs_worker_schedule', 'parent_id' => 'hca_fs', 'level' => 2]);
-
-            // Current Schedule $urls['hca_fs_weekly_technician_schedule']
-            $SwiftMenu->addItem(['title' => 'Weekly schedule', 'link' => $URL->link('hca_fs_weekly_technician_schedule', [$hca_fs_group, $User->get('id'), date('Y-m-d')]), 'id' => 'hca_fs_weekly_technician_schedule', 'parent_id' => 'hca_fs', 'level' => 3]);
-        }
-*/
         // For other who has access
         if ($User->checkAccess('hca_fs', 1))
         {
@@ -153,64 +130,6 @@ function hca_fs_ft_js_include()
     }
 }
 
-/*
-function hca_fs_swift_notify_ajax()
-{
-    global $DBLayer, $User, $Config, $SwiftNotify;
-
-    $notify_counter = [
-        'hca_fs_requests_new'       => 0,
-        'hca_fs_requests_active'    => 0,
-        'hca_fs_requests_on_hold'   => 0
-    ];
-
-    $query = array(
-        'SELECT'	=> 'property_id, work_status, new_start_date',
-        'FROM'		=> 'hca_fs_requests',
-        'WHERE'		=> 'work_status < 2',
-    );
-
-    if ($User->get('hca_fs_group') > 0)
-        $query['WHERE'] .= ' AND group_id='.$User->get('hca_fs_group');
-    else if ($User->get('sm_pm_property_id') > 0)
-        $query['WHERE'] .= ' AND property_id='.$User->get('sm_pm_property_id');
-    else if ($User->get('group_id') == $Config->get('o_hca_fs_painters') || $User->get('group_id') == $Config->get('o_hca_fs_maintenance'))
-        $query['WHERE'] .= ' AND employee_id='.$User->get('id');
-
-    $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-    while ($row = $DBLayer->fetch_assoc($result))
-    {
-        if ($row['work_status'] == 0)
-            ++$notify_counter['hca_fs_requests_new'];
-        else if ($row['work_status'] == 1)
-            ++$notify_counter['hca_fs_requests_active'];
-        else if ($row['work_status'] == -1)
-            ++$notify_counter['hca_fs_requests_on_hold'];
-    }
-    
-    if ($User->get('group_id') == $Config->get('o_hca_fs_painters') || $User->get('group_id') == $Config->get('o_hca_fs_maintenance'))
-    {
-        if ($notify_counter['hca_fs_requests_active'] > 0)
-        {
-            $SwiftNotify->addInfo('menu_item_hca_fs', $notify_counter['hca_fs_requests_active'], 'top-0 start-100 translate-middle badge rounded-pill bg-red');
-
-            $SwiftNotify->addInfo('menu_item_hca_fs_worker_schedule', $notify_counter['hca_fs_requests_active'], 'position-absolute top-50 start-50 translate-middle badge rounded-pill bg-blue');
-        }
-    }
-    else
-    {
-        if ($notify_counter['hca_fs_requests_new'] > 0)
-            $SwiftNotify->addInfo('menu_item_hca_fs', $notify_counter['hca_fs_requests_new'], 'top-0 start-100 translate-middle badge rounded-pill bg-red');
-
-        if ($notify_counter['hca_fs_requests_new'] > 0)
-            $SwiftNotify->addInfo('menu_item_hca_fs_requests_new', $notify_counter['hca_fs_requests_new'], 'position-absolute top-50 start-50 translate-middle badge rounded-pill bg-orange');
-
-        if ($notify_counter['hca_fs_requests_active'] > 0)
-            $SwiftNotify->addInfo('menu_item_hca_fs_requests_active', $notify_counter['hca_fs_requests_active'], 'position-absolute top-50 start-50 translate-middle badge rounded-pill bg-blue');
-    }
-}
-*/
-
 class HcaFacilityHooks
 {
     private static $singleton;
@@ -262,6 +181,111 @@ class HcaFacilityHooks
             echo '</div>';
         }
     }
+
+    public function ReportBody()
+    {
+        global $DBLayer, $URL, $Config;
+
+        $this_week_tasks = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0, 6 => 0, 0 => 0];
+        $next_week_tasks = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0, 6 => 0, 0 => 0];
+        $time_this_week = strtotime('Monday this week');
+        $time_next_week = strtotime('Monday this week') + 604800;
+        $query = array(
+            'SELECT'	=> 'r.*',
+            'FROM'		=> 'hca_fs_requests AS r',
+            'WHERE'     => '(r.template_type<4 OR r.template_type=7) AND r.start_date >= '.$time_this_week, // exclude DayOff and Sick and Vacations
+            'ORDER BY'  => 'r.start_date'
+        );
+        $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+        while ($row = $DBLayer->fetch_assoc($result))
+        {
+            $week_of  = strtotime('Monday this week', $row['start_date']);
+            $day_of_week = date('w', $row['start_date']);
+
+            if ($week_of == $time_this_week)
+            {
+                if (isset($this_week_tasks[$day_of_week]))
+                    ++$this_week_tasks[$day_of_week];
+                else
+                    $this_week_tasks[$day_of_week] = 1;
+            }
+            else if ($week_of == $time_next_week)
+            {
+                if (isset($next_week_tasks[$day_of_week]))
+                    ++$next_week_tasks[$day_of_week];
+                else
+                    $next_week_tasks[$day_of_week] = 1;
+            }
+        }
+?>
+     <div class="col-xxl-4 col-xl-6 mb-3">
+        <div class="card">
+            <div class="card-body my-0 pt-0">
+                <h4 class="card-title"><a href="<?=$URL->link('hca_fs_weekly_schedule', array($Config->get('o_hca_fs_maintenance'), date('Y-m-d')))?>">Facility Schedule</a></h4>
+                <hr class="my-2">
+                <div id="chart_hca_fs_pie"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    var options = {
+        series: [{
+            name: 'This Week',
+            data: [
+            <?=$this_week_tasks[1]?>, <?=$this_week_tasks[2]?>, <?=$this_week_tasks[3]?>, <?=$this_week_tasks[4]?>, <?=$this_week_tasks[5]?>, <?=$this_week_tasks[6]?>]
+        }, {
+            name: 'Next Week',
+            data: [
+            <?=$next_week_tasks[1]?>, <?=$next_week_tasks[2]?>, <?=$next_week_tasks[3]?>, <?=$next_week_tasks[4]?>, <?=$next_week_tasks[5]?>, <?=$next_week_tasks[6]?>]
+        }],
+          chart: {
+            type: 'bar',
+            height: 265,
+            width: 300,
+            toolbar: {
+                show: false
+            }
+        },
+        plotOptions: {
+          bar: {
+            horizontal: false,
+          }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        title: {
+          text: 'Num tasks of this week & next week'
+        },
+        dataLabels: {
+          enabled: true,
+          
+          style: {
+            fontSize: '12px',
+            colors: ['#fff']
+          }
+        },
+        stroke: {
+          show: true,
+          width: 1,
+          colors: ['#fff']
+        },
+        legend: {
+          position: 'top',
+          horizontalAlign: 'left',
+          offsetX: 50
+        },
+        xaxis: {
+          categories: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+        }
+        };
+
+    var chart = new ApexCharts(document.querySelector("#chart_hca_fs_pie"), options);
+    chart.render();
+    </script>
+<?php
+    }
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
@@ -269,3 +293,4 @@ Hook::addAction('ProfileAdminAccess', ['HcaFacilityHooks', 'ProfileAdminAccess']
 //Hook::addAction('ProfileAboutNewPermissions', ['HcaFacilityHooks', 'ProfileAboutNewPermissions']);
 //Hook::addAction('ProfileAboutNewNotifications', ['HcaFacilityHooks', 'ProfileAboutNewNotifications']);
 
+Hook::addAction('ReportBody', ['HcaFacilityHooks', 'ReportBody']);

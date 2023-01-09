@@ -12,8 +12,9 @@ $DBLayer->drop_table('hca_wom_tasks');
 
 $DBLayer->drop_table('hca_wom_tpl_wo');
 $DBLayer->drop_table('hca_wom_tpl_tasks');
-
 $DBLayer->drop_table('hca_wom_actions');
+
+$DBLayer->drop_field('sm_property_db', 'default_maint');
 
 // Drop rights
 $DBLayer->delete('user_access', 'a_to=\''.$DBLayer->escape('hca_wom').'\'');
@@ -25,5 +26,7 @@ $DBLayer->delete('sm_uploader', 'table_name=\'hca_wom\'');
 
 config_remove(array(
 	'o_hca_wom_notify_technician',
-	'o_hca_wom_notify_managers'
+	'o_hca_wom_notify_managers',
+	'o_hca_wom_notify_inhouse_from_manager',
+	'o_hca_wom_notify_managers_from_inhouse',
 ));

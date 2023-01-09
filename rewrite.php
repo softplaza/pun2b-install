@@ -72,6 +72,8 @@ foreach ($rewrite_rules as $rule => $rewrite_to)
 // If we don't know what to rewrite to, we show a bad request messsage
 if (empty($rewritten_url))
 {
+	$Hooks->get_hook('RewriteEmpty');
+
 	define('SPM_HTTP_RESPONSE_CODE_SET', 1);
 	header('HTTP/1.1 404 Not Found');
 

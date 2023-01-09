@@ -10,7 +10,8 @@ class Core
 {
 	// Default 'help'
 	public $cur_page_id = '';
-	
+	public $message = '';
+
 	// Default 'index'
 	public $cur_page_section = '';
 	
@@ -95,6 +96,10 @@ class Core
 		$this->notices[] = $val;
 	}
 	
+	function addMessage($message) {
+		$this->message = $message;
+	}
+
 	// Get current user info
 	function cur_user($key = '') {
 		return isset($this->user_info[$key]) ? $this->user_info[$key] : '';

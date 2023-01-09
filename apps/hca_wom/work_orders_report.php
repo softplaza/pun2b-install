@@ -18,7 +18,7 @@ $search_by_unit_number = isset($_GET['unit_number']) ? swift_trim($_GET['unit_nu
 $search_by_assigned_to = isset($_GET['assigned_to']) ? intval($_GET['assigned_to']) : 0;
 
 $search_query = [];
-$search_query[] = 't.task_status=4'; // Exclude completed
+//$search_query[] = 't.task_status=4'; // Exclude completed
 if ($is_manager)
 {
 	$property_ids = explode(',', $User->get('property_access'));
@@ -35,7 +35,7 @@ if ($search_by_assigned_to > 0)
 	$search_query[] = 't.assigned_to='.$search_by_assigned_to;
 
 $query = [
-	'SELECT'	=> 'COUNT(w.id)',
+	'SELECT'	=> 'COUNT(t.id)',
 	'FROM'		=> 'hca_wom_tasks AS t',
 	'JOINS'		=> [
 		[
@@ -68,7 +68,7 @@ $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $PagesNavigator->set_total($DBLayer->result($result));
 
 $query = [
-	'SELECT'	=> 'w.*, p.pro_name, pu.unit_number, u2.realname AS requested_name, u2.email AS requested_email', // u1.realname AS assigned_name, u1.email AS assigned_email,
+	'SELECT'	=> 't.*, w.property_id, p.pro_name, pu.unit_number, u2.realname AS requested_name, u2.email AS requested_email', // u1.realname AS assigned_name, u1.email AS assigned_email,
 	'FROM'		=> 'hca_wom_tasks AS t',
 	'JOINS'		=> [
 		[
@@ -99,36 +99,19 @@ $query = [
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$hca_wom_work_orders = $hca_wom_wo_ids = $tasks = [];
-while ($row = $DBLayer->fetch_assoc($result)) {
-	$hca_wom_work_orders[$row['id']] = $row;
-	$hca_wom_wo_ids[$row['id']] = $row['id'];
-	$tasks[] = $row['id'];
-}
-$PagesNavigator->num_items($tasks);
-
-
-$hca_wom_tasks = [];
-if (!empty($hca_wom_wo_ids))
+$hca_wom_tasks =  $hca_wom_user_tasks = [];
+while ($row = $DBLayer->fetch_assoc($result))
 {
-	$query = [
-		'SELECT'	=> 't.*, i.item_name',
-		'FROM'		=> 'hca_wom_tasks AS t',
-		'JOINS'		=> [
-			[
-				'LEFT JOIN'		=> 'hca_wom_items AS i',
-				'ON'			=> 'i.id=t.item_id'
-			],
-		],
-		'WHERE'		=> 't.work_order_id IN ('.implode(',', $hca_wom_wo_ids).')',
-	];
-	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-	while ($row = $DBLayer->fetch_assoc($result))
-	{
-		$hca_wom_tasks[] = $row;
-	}
-}
+	$hca_wom_tasks[] = $row;
 
+	if (!isset($hca_wom_user_tasks[$row['assigned_to']][$row['property_id']]))
+		$hca_wom_user_tasks[$row['assigned_to']][$row['property_id']] = 1;
+	else
+		++$hca_wom_user_tasks[$row['assigned_to']][$row['property_id']];
+}
+$PagesNavigator->num_items($hca_wom_tasks);
+
+$property_names = [];
 $query = array(
 	'SELECT'	=> 'p.*',
 	'FROM'		=> 'sm_property_db AS p',
@@ -142,8 +125,9 @@ if ($User->get('property_access') != '' && $User->get('property_access') != 0)
 }
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $property_info = [];
-while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
-	$property_info[] = $fetch_assoc;
+while ($row = $DBLayer->fetch_assoc($result)) {
+	$property_info[] = $row;
+	$property_names[$row['id']] = '"'.$row['pro_name'].'"';
 }
 
 $query = array(
@@ -155,7 +139,7 @@ $query = array(
 			'ON'			=> 'g.g_id=u.group_id'
 		)
 	),
-	'WHERE'		=> 'u.group_id = 3 OR u.group_id = 9',
+	'WHERE'		=> 'u.group_id = 3',// OR u.group_id = 9
 	'ORDER BY'	=> 'g.g_id, u.realname',
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -227,62 +211,172 @@ foreach ($users as $cur_user)
 </nav>
 
 <div class="card-header">
+	<h6 class="card-title mb-0">Availability of Maintenance</h6>
+</div>
+<div id="chart_work_orders_summary" class="mb-3"></div>
+
+<div class="card-header">
 	<h6 class="card-title mb-0">Work Orders Report</h6>
 </div>
 <?php
-if (!empty($hca_wom_work_orders))
+if (!empty($hca_wom_tasks))
 {
 ?>
 <table class="table table-striped table-bordered">
 	<thead>
 		<tr>
-			<th>WO #</th>
-			<th>Property/Unit</th>
+			<th>Property/Unit #</th>
 			<th>Details</th>
-			<th>Priority</th>
 			<th>Status</th>
-			<th>Closing Date</th>
-			<th>Tasks</th>
 		</tr>
 	</thead>
 	<tbody>
 <?php
-	foreach ($hca_wom_work_orders as $cur_info)
+	$property_id = 0;
+	foreach ($hca_wom_tasks as $cur_info)
 	{
+		$view_wo = ($access6) ? '<p><a href="'.$URL->link('hca_wom_work_order', $cur_info['work_order_id']).'" class="badge bg-primary text-white">view</a></p>' : '';
+
 		$cur_info['unit_number'] = ($cur_info['unit_number'] != '') ? $cur_info['unit_number'] : 'Common area';
-		
-		$manage_link = ($access6) ? '<span class="badge bg-primary float-end"><a href="'.$URL->link('hca_wom_work_order', $cur_info['id']).'" class="text-white"><i class="fas fa-edit"></i> view</span>' : '';
 
-		if ($cur_info['priority'] == 2)
-			$priority = '<span class="text-danger fw-bold">High</span>';
-		else if ($cur_info['priority'] == 1)
-			$priority = '<span class="text-warning fw-bold">Medium</span>';
+		if ($cur_info['task_status'] == 4)
+			$status = '<span class="badge badge-primary">Closed</span>';
 		else
-			$priority = '<span class="text-primary fw-bold">Low</span>';
-
-		if ($cur_info['wo_status'] == 2)
-			$status = '<span class="badge badge-success">Closed</span>';
-		else if ($cur_info['wo_status'] == 1)
 			$status = '<span class="badge badge-warning">Open</span>';
-		else
-			$status = '<span class="badge badge-danger">Canceled</span>';
+
+		if ($property_id != $cur_info['property_id'])
+		{
+			echo '<tr class="table-primary"><td colspan="7" class="fw-bold">'.html_encode($cur_info['pro_name']).'</td></tr>';
+			$property_id = $cur_info['property_id'];
+		}
 ?>
-		<tr id="row<?php echo $cur_info['id'] ?>" class="<?php echo ($id == $cur_info['id'] ? ' anchor' : '') ?>">
-			<td class="ta-center">#<?php echo $cur_info['id'] ?></td>
+		<tr>
 			<td>
-				<span class="fw-bold"><a href="<?=$URL->link('hca_wom_work_order', $cur_info['id'])?>"><?php echo html_encode($cur_info['pro_name']) ?>, <?php echo html_encode($cur_info['unit_number']) ?></a></span>
+				<span class="fw-bold"><a href="<?=$URL->link('hca_wom_work_order', $cur_info['work_order_id'])?>"><?php echo html_encode($cur_info['unit_number']) ?></a></span>
+				<span class="float-end"><?php echo $view_wo ?></span>
 			</td>
-			<td class="min-100"><?php echo html_encode($cur_info['wo_message']) ?></td>
-			<td class="min-100 ta-center"><?php echo $priority ?></td>
+			<td class="min-100"><?php echo html_encode($cur_info['task_message']) ?></td>
 			<td class="min-100 ta-center"><?php echo $status ?></td>
-			<td class="min-100 ta-center"><?php echo format_date($cur_info['dt_closed'], 'm/d/Y') ?></td>
-			<td class="ta-center"><?php echo $cur_info['num_tasks'] ?></td>
 		</tr>
 <?php
+
 	}
 ?>
 	</tbody>
 </table>
+
+<?php
+/*
+$date = new \DateTime();
+$date->setTime(0, 0, 0);
+
+if ($date->format('N') != 1)
+	$date->modify('last monday');
+*/
+?>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+var options = {
+	series: [<?php
+foreach($users as $cur_user)
+{
+	echo '{';
+	echo 'name: "'.html_encode($cur_user['realname']).'",';
+	echo 'data: [';
+	foreach($property_info as $property)
+	{
+		$property_ident = false;
+		foreach($hca_wom_user_tasks as $key => $data)
+		{
+			if ($key == $cur_user['id'] && isset($data[$property['id']]))
+			{
+				echo $data[$property['id']].',';
+				$property_ident = true;
+				break;
+			}
+		}
+		if (!$property_ident)
+			echo '0,';
+	}
+	echo ']';
+	echo '},';
+}
+?>
+	],
+	chart: {
+		height: 750,
+		type: 'heatmap',
+		toolbar: {
+            show: false
+        }
+	},
+	stroke: {
+		width: 5
+	},
+	/*
+	grid: {
+		padding: {
+		right: 20
+		}
+	},*/
+	plotOptions: {
+		heatmap: {
+			radius: 5,
+			enableShades: false,
+			colorScale: {
+				/*inverse: true,*/
+				ranges: [{
+					from: 0,
+					to: 0,
+					color: '#eaf2ff',//#9ae7be 
+					name: 'No tasks',
+				},
+				{
+					from: 1,
+					to: 5,
+					color: '#33A1FD',
+					name: '1-5 tasks',
+				},
+				{
+					from: 6,
+					to: 10,
+					color: '#ff7f53',
+					name: '6-10 tasks',
+				},
+				{
+					from: 11,
+					to: 50,
+					color: '#c72121',
+					name: '11-50 tasks',
+				},
+
+
+				],
+			},
+		}
+	},
+	dataLabels: {
+		enabled: true,
+		style: {
+			colors: ['#eaf2ff']
+		}
+	},
+	xaxis: {
+		type: 'category',
+		categories: [<?php echo implode(',', $property_names) ?>]
+	},
+	title: {
+		//text: 'Maintenance Availability Schedule'
+	},
+};
+
+var chart = new ApexCharts(document.querySelector("#chart_work_orders_summary"), options);
+chart.render();
+</script>
+
+
+
 <?php
 }
 else

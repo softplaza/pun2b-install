@@ -8,16 +8,19 @@ $schema = array(
 		'property_id'			=> $DBLayer->dt_int(),
 		'unit_id'				=> $DBLayer->dt_int(),
 		'wo_message'			=> $DBLayer->dt_varchar(),
+		'wo_requested_date'		=> $DBLayer->dt_datetime(),
 		'priority'				=> $DBLayer->dt_int('TINYINT(1)'),
-		'template_type'			=> $DBLayer->dt_int('TINYINT(1)'), // not in use yet
+		'template_type'			=> $DBLayer->dt_int('TINYINT(1)'),
 		'enter_permission'		=> $DBLayer->dt_int('TINYINT(1)'),
 		'has_animal'			=> $DBLayer->dt_int('TINYINT(1)'),
 		'wo_status'				=> $DBLayer->dt_int('TINYINT(1)'),
+
 		'requested_by'			=> $DBLayer->dt_int(),
 		'created_by'			=> $DBLayer->dt_int(),
 		'dt_created'			=> $DBLayer->dt_datetime(),
 		'closed_by'				=> $DBLayer->dt_int(),
 		'dt_closed'				=> $DBLayer->dt_datetime(),
+		'dt_completed'			=> $DBLayer->dt_datetime(), // use closed
 		'wo_closing_comment'	=> $DBLayer->dt_varchar(),
 		'num_tasks'				=> $DBLayer->dt_int(),
 		'last_task_id'			=> $DBLayer->dt_int(),
@@ -27,8 +30,10 @@ $schema = array(
 	'PRIMARY KEY'	=> ['id']
 );
 $DBLayer->create_table('hca_wom_work_orders', $schema);
+
 $DBLayer->add_field('hca_wom_work_orders', 'request_type', 'TINYINT(1)', false, '0');
 $DBLayer->add_field('hca_wom_work_orders', 'template_id', 'INT(10) UNSIGNED', false, '0');
+$DBLayer->add_field('hca_wom_work_orders', 'wo_requested_date', 'DATETIME', false, '1000-01-01 00:00:00');
 
 $schema = [
 	'FIELDS'		=> [
@@ -137,5 +142,10 @@ $schema = [
 ];
 $DBLayer->create_table('hca_wom_actions', $schema);
 
+$DBLayer->add_field('sm_property_db', 'default_maint', 'INT(10) UNSIGNED', false, '0');
+
 config_add('o_hca_wom_notify_technician', '0');
 config_add('o_hca_wom_notify_managers', '0');
+
+config_add('o_hca_wom_notify_inhouse_from_manager', '0');
+config_add('o_hca_wom_notify_managers_from_inhouse', '0');

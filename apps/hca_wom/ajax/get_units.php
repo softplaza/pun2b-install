@@ -12,7 +12,7 @@ $query = array(
 	'SELECT'	=> 'u.id, u.unit_number',
 	'FROM'		=> 'sm_property_units AS u',
 	'WHERE'		=> 'u.property_id='.$id,
-	'ORDER BY'	=> 'u.id',
+	'ORDER BY'	=> 'LENGTH(u.unit_number), u.unit_number',
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $sm_property_units = [];

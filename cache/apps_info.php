@@ -59,13 +59,13 @@ $apps_info = array (
     'url' => 'https://swiftmanager.localhost/dev/apps/sm_errors_report/',
     'path' => '../apps/sm_errors_report/',
   ),
-  'sm_user_actions' => 
+  'swift_user_actions' => 
   array (
-    'id' => 'sm_user_actions',
-    'title' => 'User Actions',
+    'id' => 'swift_user_actions',
+    'title' => 'Swift User Actions',
     'disabled' => '0',
-    'url' => 'https://swiftmanager.localhost/dev/apps/sm_user_actions/',
-    'path' => '../apps/sm_user_actions/',
+    'url' => 'https://swiftmanager.localhost/dev/apps/swift_user_actions/',
+    'path' => '../apps/swift_user_actions/',
   ),
   'hca_fs' => 
   array (

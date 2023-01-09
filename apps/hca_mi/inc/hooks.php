@@ -79,6 +79,7 @@ function hca_mi_IncludeCommon()
         $SwiftMenu->addItem(['title' => 'Completed', 'link' => $URL->link('hca_5840_forms_confirmed'), 'id' => 'hca_mi_forms_confirmed', 'parent_id' => 'hca_mi_forms']);
     }
 
+    /*
     if ($id > 0)
     {
         $SwiftMenu->addItem(['title' => 'Current Project', 'link' => '#', 'id' => 'hca_mi_management', 'parent_id' => 'hca_mi', 'level' => 5]);
@@ -92,6 +93,7 @@ function hca_mi_IncludeCommon()
         if ($User->is_admin())
             $SwiftMenu->addItem(['title' => 'Project Tracking', 'link' => $URL->link('hca_mi_project_tracking', $id), 'id' => 'hca_mi_project_tracking', 'parent_id' => 'hca_mi_management']);
     }
+*/
 
     if ($User->checkAccess('hca_mi', 20) || $User->checkAccess('hca_mi', 21) || $User->checkAccess('hca_mi', 22) || $User->checkAccess('hca_mi', 23) || $User->checkAccess('hca_mi', 24))
     {
@@ -248,6 +250,139 @@ class HcaMoistureInspections
             </div>
 <?php
     }
+
+    public function ReportBody()
+    {
+        global $DBLayer, $URL;
+
+        $projects_ids = [];
+        $num_active = $num_on_hold = $num_today_event = 0;
+        $query = array(
+            'SELECT'	=> 'pj.*',
+            'FROM'		=> 'hca_5840_projects AS pj',
+            'WHERE'     => 'pj.job_status=1 OR pj.job_status=2',
+            //'ORDER BY'	=> 'pt.pro_name, LENGTH(pj.unit_number)',
+        );
+        $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+        while ($row = $DBLayer->fetch_assoc($result))
+        {
+            if ($row['job_status'] == 1)
+                ++$num_active;
+            else if ($row['job_status'] == 2)
+                ++$num_on_hold;
+
+            if (sm_is_today($row['asb_test_date']) || sm_is_today($row['rem_start_date']) || sm_is_today($row['rem_end_date']) || sm_is_today($row['cons_start_date']) || sm_is_today($row['cons_end_date']) || sm_is_today($row['afcc_date']) || sm_is_today($row['delivery_equip_date']) || sm_is_today($row['pickup_equip_date']))
+                ++$num_today_event;
+
+            $projects_ids[] = $row['id'];
+        }
+
+        $query = array(
+            'SELECT'	=> 'e.id, e.project_id, e.time, e.message',
+            'FROM'		=> 'sm_calendar_events AS e',
+            'WHERE'		=> 'e.project_id IN('.implode(',', $projects_ids).') AND project_name=\'hca_5840\'',
+            'ORDER BY'	=> 'e.time DESC'
+        );
+        $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+        while ($row = $DBLayer->fetch_assoc($result)) {
+            if (sm_is_today($row['time']))
+                ++$num_today_event;
+        }
+
+?>
+     <div class="col-xxl-4 col-xl-6 mb-3">
+        <div class="card">
+            <div class="card-body my-0 pt-0">
+                <h4 class="card-title"><a href="<?=$URL->link('hca_5840_projects', ['active', 0])?>">Moisture Inspection</a></h4>
+                <hr class="my-2">
+                <div id="chart_hca_mi"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+
+var options = {
+        series: [{
+        data: [<?=$num_active?>, <?=$num_on_hold?>, <?=$num_today_event?>]
+    }],
+    chart: {
+        type: 'bar',
+        height: 265,
+        width: 300,
+        toolbar: {
+            show: false
+        }
+    },
+    plotOptions: {
+        bar: {
+        barHeight: '100%',
+        distributed: true,
+        horizontal: true,
+        dataLabels: {
+            position: 'bottom'
+        },
+        }
+    },
+    colors: ['#33b2df', '#546E7A', '#d4526e'],
+    dataLabels: {
+        enabled: true,
+        textAnchor: 'start',
+        style: {
+            colors: ['#fff'],
+            fontSize: '18px',
+        },
+        formatter: function (val, opt) {
+            return val
+        },
+        offsetX: 0,
+        dropShadow: {
+        enabled: true
+        }
+    },
+    stroke: {
+        width: 5,
+        colors: ['#fff']
+    },
+    xaxis: {
+        categories: ['Active Projects', 'On Hold', 'Today Follow Up Dates'],
+    },
+    yaxis: {
+        labels: {
+        show: false
+        }
+    },
+/*
+    title: {
+        text: 'Custom DataLabels',
+        align: 'center',
+        floating: true
+    },
+    subtitle: {
+        text: 'Category Names as DataLabels inside bars',
+        align: 'center',
+    },
+*/
+    tooltip: {
+        theme: 'dark',
+        x: {
+        show: false
+        },
+        y: {
+        title: {
+            formatter: function () {
+            return ''
+            }
+        }
+        }
+    }
+};
+
+var chart = new ApexCharts(document.querySelector("#chart_hca_mi"), options);
+chart.render();
+    </script>
+<?php
+    }
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
@@ -257,3 +392,5 @@ Hook::addAction('ProfileAdminNotifications', ['HcaMoistureInspections', 'Profile
 
 Hook::addAction('HcaVendorsEditUpdateValidation', ['HcaMoistureInspections', 'HcaVendorsEditUpdateValidation']);
 Hook::addAction('HcaVendorsEditPreSumbit', ['HcaMoistureInspections', 'HcaVendorsEditPreSumbit']);
+
+Hook::addAction('ReportBody', ['HcaMoistureInspections', 'ReportBody']);

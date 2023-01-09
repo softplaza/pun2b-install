@@ -430,16 +430,23 @@ function deleteFile(table,id)
             );
     
             if (is_array($table_ids) && !empty($table_ids))
+            {
                 $query['WHERE'] = 'f.table_name=\''.$table_name.'\' AND f.table_id IN ('.implode(',', $table_ids).')';
-            else
-                $query['WHERE'] = 'f.table_name=\''.$table_name.'\' AND f.table_id='.$table_ids;
-    
-            $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-            while ($row = $DBLayer->fetch_assoc($result)) {
-                $this->cur_project_files[] = $row;
+                $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+                while ($row = $DBLayer->fetch_assoc($result)) {
+                    $this->cur_project_files[] = $row;
+                }
+                return $this->cur_project_files;
             }
-    
-            return $this->cur_project_files;
+            else if (is_numeric($table_ids))
+            {
+                $query['WHERE'] = 'f.table_name=\''.$table_name.'\' AND f.table_id='.$table_ids;
+                $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+                while ($row = $DBLayer->fetch_assoc($result)) {
+                    $this->cur_project_files[] = $row;
+                }
+                return $this->cur_project_files;
+            }
         }
     }
 

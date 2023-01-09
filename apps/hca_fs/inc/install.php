@@ -107,7 +107,7 @@ $schema = array(
 );
 $DBLayer->create_table('hca_fs_emergency_schedule', $schema);
 
-$DBLayer->drop_table('hca_fs_tasks');
+//$DBLayer->drop_table('hca_fs_tasks');
 $schema = [
 	'FIELDS'		=> [
 		'id'						=> $DBLayer->dt_serial(),
@@ -119,6 +119,7 @@ $schema = [
 		// settings
 		'time_slot'					=> $DBLayer->dt_int('TINYINT(1)'),
 		'template_type'				=> $DBLayer->dt_int('TINYINT(1)'),
+		'group_id'					=> $DBLayer->dt_int(),
 		'assigned_to'				=> $DBLayer->dt_int(),
 		'task_status'				=> $DBLayer->dt_int('TINYINT(1)'),
 		// dates
@@ -129,6 +130,7 @@ $schema = [
 	'PRIMARY KEY'	=> ['id']
 ];
 $DBLayer->create_table('hca_fs_tasks', $schema);
+$DBLayer->add_field('hca_fs_tasks', 'group_id', 'INT(10) UNSIGNED', false, '0');
 
 
 // DO NOT REMOVE!!!

@@ -92,6 +92,7 @@ class HcaWOM
 
 	function getTaskActions($ids = '')
 	{
+/*
 		$output = [];
 		if ($ids != '')
 		{
@@ -108,6 +109,7 @@ class HcaWOM
 				return implode(', ', $output);
 			}
 		}
+*/
 	}
 
 	function getWorkOrderInfo($id)
@@ -191,6 +193,38 @@ class HcaWOM
 		return $this->cur_task_info;
 	}
 
+	function getInHouseTaskInfo($id)
+	{
+		global $DBLayer;
+
+		$query = [
+			'SELECT'	=> 't.*, p.pro_name, u1.realname AS created_name, u1.email AS created_email, pu.unit_number',
+			'FROM'		=> 'hca_fs_tasks AS t',
+			'JOINS'		=> [
+				[
+					'INNER JOIN'	=> 'sm_property_db AS p',
+					'ON'			=> 'p.id=t.property_id'
+				],
+				[
+					'INNER JOIN'	=> 'users AS u1',
+					'ON'			=> 'u1.id=t.created_by'
+				],
+				[
+					'LEFT JOIN'		=> 'sm_property_units AS pu',
+					'ON'			=> 'pu.id=t.unit_id'
+				],
+			],
+			'WHERE'		=> 't.id='.$id,
+		];
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		$hca_fs_tasks = $DBLayer->fetch_assoc($result);
+
+		if ($hca_fs_tasks['unit_id'] == 0 || $hca_fs_tasks['unit_id'] == '')
+			$hca_fs_tasks['unit_number'] = 'Common area';
+
+		return $hca_fs_tasks;
+	}
+
 	function getWOTasks($work_order_id)
 	{
 		global $DBLayer;
@@ -245,14 +279,14 @@ class HcaWOM
 		if ($wo_status == 3){
 			$output[] = '<div class="callout callout-danger mb-2">';
 			$output[] = 'The Work Order has been canceled.';
-			$output[] = '<button type="submit" name="reopen_wo" class="badge bg-primary">Reopen WO</button>';
+			//$output[] = '<button type="submit" name="reopen_wo" class="badge bg-primary">Reopen WO</button>';
 			$output[] = '</div>';
 		}
 		// Completed
 		if ($wo_status == 2){
 			$output[] = '<div class="callout callout-success mb-2">';
 			$output[] = 'The Work Order has been closed.';
-			$output[] = '<button type="submit" name="reopen_wo" class="badge bg-primary">Reopen WO</button>';
+			//$output[] = '<button type="submit" name="reopen_wo" class="badge bg-primary">Reopen WO</button>';
 			$output[] = '</div>';
 		}
 		// Active
@@ -268,7 +302,7 @@ class HcaWOM
 		{
 			$output[] = '<div class="callout callout-secondary mb-2">';
 			$output[] = 'The Work Order is On-Hold.';
-			$output[] = '<button type="submit" name="reopen_wo" class="badge bg-primary">Reopen WO</button>';
+			//$output[] = '<button type="submit" name="reopen_wo" class="badge bg-primary">Reopen WO</button>';
 			$output[] = '</div>';
 		}
 

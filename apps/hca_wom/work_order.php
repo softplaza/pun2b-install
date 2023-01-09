@@ -93,7 +93,7 @@ else if (isset($_POST['cancel_wo']))
 	// Add flash message
 	$flash_message = 'Work Order #'.$id.' has been canceled.';
 	$FlashMessenger->add_info($flash_message);
-	redirect('', $flash_message);
+	redirect($URL->link('hca_wom_work_orders'), $flash_message);
 }
 
 // TASK ACTIONS
@@ -480,8 +480,13 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 				</div>
 			</div>
 
-			<div class="row mb-3">
-				<div class="col-md-3">
+			<div class="row">
+				<div class="col-md-3 mb-2">
+					<label class="form-label" for="fld_wo_requested_date">Requested Date</label>
+					<input class="form-control form-control-sm" type="date" name="wo_requested_date" id="fld_wo_requested_date" value="<?php echo (isset($_POST['wo_requested_date']) ? $_POST['wo_requested_date'] : format_date($wo_info['wo_requested_date'], 'Y-m-d')) ?>" onclick="this.showPicker()">
+					<label class="text-muted">Leave blank if any date</label>
+				</div>
+				<div class="col-md-2 mb-2">
 					<label class="form-label" for="fld_priority">Priority</label>
 					<select name="priority" id="fld_priority" class="form-select form-select-sm">
 <?php
@@ -494,10 +499,6 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	}
 ?>
 					</select>
-				</div>
-				<div class="col-md-3">
-					<label class="form-label">Submit Date & Time</label>
-					<h5 class="mb-0"><?php echo format_date($wo_info['dt_created'], 'm/d/Y H:i') ?></h5>
 				</div>
 			</div>
 
@@ -537,32 +538,32 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 	</div>
 
 
-<div class="card-header">
-<?php if ($access7): ?>
-	<span class="badge bg-primary" role="button" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="manageTask(0)"><i class="fas fa-plus"></i> new task</span>
-<?php else: ?>
-	<h6 class="card-title mb-0">Tasks</h6>
-<?php endif; ?>
-</div>
+	<div class="card-header">
+	<?php if ($access7): ?>
+		<span class="badge bg-primary" role="button" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="manageTask(0)"><i class="fas fa-plus"></i> new task</span>
+	<?php else: ?>
+		<h6 class="card-title mb-0">Tasks</h6>
+	<?php endif; ?>
+	</div>
 <?php
 	if (!empty($tasks_info))
 	{
 ?>
-<table class="table table-striped table-bordered">
-	<thead>
-		<tr>
-			<th>#</th>
-			<th>Type</th>
-			<th>Item</th>
-			<th>Action</th>
-			<th>Details</th>
-			<th>Assigned to</th>
-			<th>Completion Date & Time</th>
-			<th>Closing Comments</th>
-			<th>Status</th>
-		</tr>
-	</thead>
-	<tbody>
+	<table class="table table-striped table-bordered">
+		<thead>
+			<tr>
+				<th>#</th>
+				<th>Type</th>
+				<th>Item</th>
+				<th>Action</th>
+				<th>Details</th>
+				<th>Assigned to</th>
+				<th>Completion Date & Time</th>
+				<th>Closing Comments</th>
+				<th>Status</th>
+			</tr>
+		</thead>
+		<tbody>
 <?php
 		$i = 1;
 		foreach ($tasks_info as $cur_info)
@@ -571,9 +572,9 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 			if ($cur_info['assigned_to'] == 0)
 				$task_status = '<span class="badge badge-warning">Open</span>';
 			else if ($cur_info['task_status'] == 4)
-				$task_status = '<span class="badge badge-success">Closed</span>';
+				$task_status = '<span class="badge badge-primary">Closed</span>';
 			else if ($cur_info['task_status'] == 3)
-				$task_status = '<span class="badge badge-primary">Ready for review</span>';
+				$task_status = '<span class="badge badge-success">Ready for review</span>';
 			else if ($cur_info['task_status'] == 2)
 				$task_status = '<span class="badge badge-warning">Open</span>';
 				//$task_status = '<span class="badge badge-info">Accepted by Technician</span>';
@@ -588,58 +589,59 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 
 			$edit = ($access7) ? '<span class="badge bg-primary" role="button" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="manageTask('.$cur_info['id'].')"><i class="fas fa-edit"></i> edit</span>' : '';
 ?>
-		<tr>
-			<td class="ta-center">
-				<p>#<?=$cur_info['id']?></p>
-				<p><?php echo $edit ?></p>
-			</td>
-			<td class="min-100 ta-center"><?php echo html_encode($cur_info['type_name']) ?></td>
-			<td class="min-100 ta-center"><?php echo html_encode($cur_info['item_name']) ?></td>
-			<td class="min-100 ta-center"><?php echo html_encode($cur_info['problem_name']) ?></td>
-			<td class="min-100"><?php echo html_encode($cur_info['task_message']) ?></td>
-			<td class="min-100 ta-center"><?php echo html_encode($cur_info['assigned_name']) ?></td>
-			<td class="min-100 ta-center">
-				<p><?php echo format_date($cur_info['dt_completed'], 'm/d/Y') ?></p>
-				<p><?php echo $interval ?></p>
-			</td>
-			<td class="min-100"><?php echo html_encode($cur_info['tech_comment']) ?></td>
-			<td class="min-100 ta-center"><?php echo $task_status ?></td>
-		</tr>
+			<tr>
+				<td class="ta-center">
+					<p>#<?=$cur_info['id']?></p>
+					<p><?php echo $edit ?></p>
+				</td>
+				<td class="min-100 ta-center"><?php echo html_encode($cur_info['type_name']) ?></td>
+				<td class="min-100 ta-center"><?php echo html_encode($cur_info['item_name']) ?></td>
+				<td class="min-100 ta-center"><?php echo html_encode($cur_info['problem_name']) ?></td>
+				<td class="min-100"><?php echo html_encode($cur_info['task_message']) ?></td>
+				<td class="min-100 ta-center"><?php echo html_encode($cur_info['assigned_name']) ?></td>
+				<td class="min-100 ta-center">
+					<p><?php echo format_date($cur_info['dt_completed'], 'm/d/Y') ?></p>
+					<p><?php echo $interval ?></p>
+				</td>
+				<td class="min-100"><?php echo html_encode($cur_info['tech_comment']) ?></td>
+				<td class="min-100 ta-center"><?php echo $task_status ?></td>
+			</tr>
 <?php
 		++$i;
 	}
 ?>
-	</tbody>
-</table>
-
+		</tbody>
+	</table>
 <?php
-		$cur_project_files = $SwiftUploader->displayCurProjectImages('hca_wom_tasks', $task_ids);
-		if (!empty($SwiftUploader->cur_project_files))
-		{
+}
+else
+{
 ?>
-<div class="card-header d-flex justify-content-between">
-	<h6 class="card-title mb-0">Uploaded Image</h6>
-</div>
-<div class="card">
-	<div class="card-body">
-		<div class="row">
-			<?php echo $cur_project_files; ?>
+	<div class="card">
+		<div class="card-body">
+			<div class="alert alert-warning py-2" role="alert">You have no tasks available for this Work Order.</div>
 		</div>
 	</div>
-</div>
 <?php
-		}
-	}
-	else
-	{
+}
+
+
+$cur_project_files = $SwiftUploader->displayCurProjectImages('hca_wom_tasks', $task_ids);
+if (!empty($SwiftUploader->cur_project_files))
+{
 ?>
-<div class="card">
-	<div class="card-body">
-		<div class="alert alert-warning py-2" role="alert">You have no tasks available for this Work Order.</div>
+	<div class="card-header d-flex justify-content-between">
+		<h6 class="card-title mb-0">Uploaded Image</h6>
 	</div>
-</div>
+	<div class="card">
+		<div class="card-body">
+			<div class="row">
+				<?php echo $cur_project_files; ?>
+			</div>
+		</div>
+	</div>
 <?php
-	}
+}
 ?>
 
 	<div class="modal fade" id="modalWindow" tabindex="-1" aria-labelledby="modalWindowLabel" aria-hidden="true">

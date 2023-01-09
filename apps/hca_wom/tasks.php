@@ -30,10 +30,10 @@ $search_query = [];
 
 if ($section == 'unassigned')
 	$search_query[] = 't.task_status=1';
-else if ($section == 'active')
-	$search_query[] = 't.task_status < 3 AND t.task_status > 0';
-else
+else if ($section == 'completed')
 	$search_query[] = 't.task_status>2';
+else
+	$search_query[] = 't.task_status < 3 AND t.task_status > 0';
 
 if (in_array($User->get('group_id'), [3,9]))
 	$search_query[] = 't.assigned_to='.$User->get('id');
@@ -73,7 +73,7 @@ $PagesNavigator->set_total($DBLayer->result($result));
 
 $property_ids = [];
 $query = [
-	'SELECT'	=> 't.*, w.property_id, w.unit_id, w.wo_message, p.pro_name, pu.unit_number, i.item_name, pb.problem_name, u1.realname AS assigned_name, u1.email AS assigned_email, u2.realname AS requested_name, u2.email AS requested_email',
+	'SELECT'	=> 't.*, w.property_id, w.unit_id, w.wo_message, w.priority, p.pro_name, pu.unit_number, i.item_name, pb.problem_name, u1.realname AS assigned_name, u1.email AS assigned_email, u2.realname AS requested_name, u2.email AS requested_email',
 	'FROM'		=> 'hca_wom_tasks AS t',
 	'JOINS'		=> [
 		[
@@ -104,10 +104,9 @@ $query = [
 			'LEFT JOIN'		=> 'hca_wom_problems AS pb',
 			'ON'			=> 'pb.id=t.task_action'
 		],
-
 	],
 	'LIMIT'		=> $PagesNavigator->limit(),
-	'ORDER BY'	=> 'p.pro_name, t.task_status, LENGTH(pu.unit_number), pu.unit_number',
+	'ORDER BY'	=> 'p.pro_name, w.priority, LENGTH(pu.unit_number), pu.unit_number',
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -150,7 +149,7 @@ if (!empty($property_ids))
 			<div class="row">
 				<div class="col-md-auto pe-0 mb-1">
 					<select name="property_id" class="form-select form-select-sm">
-						<option value="">All My Properties</option>
+						<option value="">Properties</option>
 <?php
 foreach ($property_info as $val)
 {
@@ -164,7 +163,7 @@ foreach ($property_info as $val)
 				</div>
 				<div class="col-md-auto">
 					<button type="submit" class="btn btn-sm btn-outline-success">Search</button>
-					<a href="<?php echo $URL->link('hca_wom_tasks') ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
+					<a href="<?php echo $URL->genLink('hca_wom_tasks', ['section' => 'active']) ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
 				</div>
 			</div>
 		</div>
@@ -172,22 +171,21 @@ foreach ($property_info as $val)
 </nav>
 
 <?php
-if (!empty($hca_wom_tasks))
-{
-
 if ($section == 'unassigned')
 	$title = 'List of Unassigned Tasks';
 else if ($section == 'active')
 	$title = 'To-Do List';
 else
 	$title = 'List of Completed Tasks';
-
 ?>
-
 <div class="card-header">
 	<h6 class="card-title mb-0"><?php echo $title ?></h6>
 </div>
 
+<?php
+if (!empty($hca_wom_tasks))
+{
+?>
 <div class="row">
 	<div class="col-4 ta-center fw-bold py-1 border alert-primary">Unit</div>
 	<div class="col-8 ta-center fw-bold py-1 border alert-primary">Details</div>
@@ -199,6 +197,13 @@ else
 	{
 		$unit_number = ($cur_info['unit_id'] > 0) ? 'Unit #'.html_encode($cur_info['unit_number']) : 'Common area';
 
+		if ($cur_info['priority'] == 2)
+			$priority = '<span class="badge badge-danger">High</span>';
+		else if ($cur_info['priority'] == 1)
+			$priority = '<span class="badge badge-warning">Medium</span>';
+		else
+			$priority = '<span class="badge badge-primary">Low</span>';
+
 		if ($property_id != $cur_info['property_id'])
 		{
 			echo '<div class="fw-bold py-1 alert-warning">'.html_encode($cur_info['pro_name']).'</div>';
@@ -206,7 +211,10 @@ else
 		}
 ?>
 	<a href="<?=$URL->link('hca_wom_task', $cur_info['id'])?>" class="row">
-		<div class="col-4 border"><p class="h5"><?=$unit_number?></p></div>
+		<div class="col-4 border">
+			<p class="h5"><?=$unit_number?></p>
+			<?=$priority?>
+		</div>
 		<div class="col-8 border">
 			<p><span class="fw-bold"><?php echo html_encode($cur_info['item_name']) ?></span> (<?php echo html_encode($cur_info['problem_name']) ?>)</p>
 			<p class=""><?php echo html_encode($cur_info['task_message']) ?></p>

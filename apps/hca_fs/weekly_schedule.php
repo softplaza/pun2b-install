@@ -205,7 +205,7 @@ else if (isset($_POST['assign_task']))
 		'employee_id'		=> isset($_POST['assigned_to']) ? intval($_POST['assigned_to']) : 0,
 		'group_id'			=> isset($_POST['group_id']) ? intval($_POST['group_id']) : 0,
 		'created'			=> time(),
-		'start_date'		=> isset($_POST['requested_date']) ? swift_trim($_POST['requested_date']) : '',
+		'start_date'		=> isset($_POST['requested_date']) ? strtotime($_POST['requested_date']) : 0,
 		'scheduled'			=> isset($_POST['requested_date']) ? date('Ymd', strtotime($_POST['requested_date'])) : '',
 		'week_of'			=> isset($_POST['requested_date']) ? strtotime('Monday this week', strtotime($_POST['requested_date'])) : strtotime('Monday this week'),
 		'date_requested'	=> isset($_POST['requested_date']) ? swift_trim($_POST['requested_date']) : '',
@@ -243,12 +243,35 @@ else if (isset($_POST['assign_task']))
 				'WHERE'		=> 'id='.$task_id
 			);
 			$DBLayer->query_build($query) or error(__FILE__, __LINE__);
+
+			$hca_fs_task = $Facility->getWorkOrder($new_id);
+			if (isset($hca_fs_task['manager_email']) && $Config->get('o_hca_wom_notify_managers_from_inhouse') == 1)
+			{
+				$SwiftMailer = new SwiftMailer;
+				//$SwiftMailer->isHTML();
+
+				$mail_subject = 'Property Request is in The Facility Schedule';
+				$mail_message = [];
+				$mail_message[] = 'Property: '.$hca_fs_task['pro_name'];
+				$mail_message[] = 'Location/Unit: '.$hca_fs_task['unit_number'];
+
+				if (strtotime($hca_fs_task['date_requested']) > 0)
+					$mail_message[] = 'Scheduled date: '.format_date($hca_fs_task['date_requested'], 'm/d/Y');
+				$mail_message[] = 'Time: '.$HcaFS->getTimeSlot($hca_fs_task['time_slot']);
+				
+				$mail_message[] = 'Technician: '.$hca_fs_task['realname']."\n";
+
+				if ($form_data['msg_for_maint'] != '')
+					$mail_message[] = 'Comment: '.$hca_fs_task['msg_for_maint']."\n";
+	
+				$SwiftMailer->send($hca_fs_task['manager_email'], $mail_subject, implode("\n", $mail_message));
+			}
 		}
 
 		// Add flash message
 		$flash_message = 'Task #'.$task_id.' has been assigned.';
 		$FlashMessenger->add_info($flash_message);
-		redirect($URL->link('hca_fs_weekly_schedule', [$gid, date('Y-m-d', $week_of)]).'&uid='.$form_data['employee_id'], $flash_message);
+		redirect($URL->link('hca_fs_weekly_schedule', [$gid, date('Y-m-d', $form_data['week_of'])]).'&uid='.$form_data['employee_id'], $flash_message);
 	}
 }
 else if (isset($_POST['delete_task']))
@@ -461,11 +484,11 @@ if (!empty($users_info))
 				'ON'			=> 'pt.id=t.property_id'
 			],
 			[
-				'INNER JOIN'	=> 'sm_property_units AS un',
+				'LEFT JOIN'		=> 'sm_property_units AS un',
 				'ON'			=> 'un.id=t.unit_id'
 			],
 		],
-		'WHERE'		=> 't.task_status=0',
+		'WHERE'		=> 't.task_status=0 AND t.group_id='.$gid,
 		'ORDER BY'	=> 't.requested_date',
 	];
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -480,7 +503,12 @@ if (!empty($users_info))
 
 <div class="accordion mb-2">
 	<div class="accordion-item">
-		<button class="accordion-button badge-danger text-danger collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#unassigned_property_requests" aria-expanded="false" aria-controls="unassigned_property_requests">Unassigned Property Requests!</button>
+		<button class="accordion-button badge-danger text-danger collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#unassigned_property_requests" aria-expanded="false" aria-controls="unassigned_property_requests">
+
+			<span class="position-relative fw-bold">Unassigned Property Requests<span class="position-absolute top-0 start-100 ms-2 translate-middle badge rounded-pill bg-danger"><?=count($hca_fs_tasks)?></span>
+			</span>
+
+		</button>
 		<div id="unassigned_property_requests" class="accordion-collapse collapse" aria-labelledby="heading_warnings" data-bs-parent="#warning_messages">
 			<div class="accordion-body p-2">
 				<div class="row px-2">
@@ -493,9 +521,15 @@ if (!empty($users_info))
 			$task_info[] = '<p>';
 			$task_info[] = '<span class="float-end" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="assignPropertyRequest('.$cur_info['id'].')"><i class="fas fa-edit"></i></span>';
 			$task_info[] = '<span class="fw-bold">'.html_encode($cur_info['pro_name']).', </span>';
-			$task_info[] = '<span class="fw-bold">'.html_encode($cur_info['unit_number']).'</span>';
+
+			if ($cur_info['unit_number'] != '')
+				$task_info[] = 'unit: <span class="fw-bold">'.html_encode($cur_info['unit_number']).'</span>';
+			else
+				$task_info[] = '<span class="fw-bold">Common area</span>';
 			$task_info[] = '</p>';
 			$task_info[] = '<p>';
+			if (strtotime($cur_info['requested_date']) > 0)
+				$task_info[] = '<span class="fw-bold">'.format_date($cur_info['requested_date'], 'm/d/Y').'</span>, ';
 			$task_info[] = '<span class="fw-bold">'.$HcaFS->getTimeSlot($cur_info['time_slot']).'</span>';
 			if ($cur_info['gl_code'] != '')
 				$task_info[] = ', <span class="fw-bold">GL Code: '.html_encode($cur_info['gl_code']).'</span>';

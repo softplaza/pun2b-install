@@ -126,6 +126,8 @@ Web-Administrator',
   'o_swift_messenger_number' => '18507864202',
   'o_swift_messenger_sid' => 'ACd571417caa7b8b18e200fb06d99b7819',
   'o_swift_messenger_token' => 'aa802fdf56ae9f2eca92ae9b2d661fba',
+  'o_hca_wom_notify_inhouse_from_manager' => '1',
+  'o_hca_wom_notify_managers_from_inhouse' => '1',
 );
 
 ?>

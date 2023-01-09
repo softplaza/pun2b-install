@@ -24,7 +24,7 @@ if ($id > 0)
 
 	$template_body = [];
 
-	$template_body[] = '<div class="card-body">';
+	$template_body[] = '<div class="card-body property-fields">';
 
 	//$template_body[] = '<div class="row">';
 	$template_body[] = '<div class="col-md-2 mb-2">';
@@ -125,7 +125,7 @@ if ($id > 0)
 		$users_info[] = $fetch_assoc;
 	}
 
-	$template_body[] = '<div class="card-body badge-secondary">';
+	$template_body[] = '<div class="card-body badge-secondary property-fields">';
 	if (!empty($hca_wom_tpl_tasks))
 	{
 		$i = 1;
@@ -203,9 +203,9 @@ if ($id > 0)
 
 	$template_body[] = '</div>';
 
-	$template_body[] = '<div class="card-body mb-3">';
-	$template_body[] = '<button type="submit" name="add" class="btn btn-primary">Submit</button>';
-	$template_body[] = '</div>';
+	//$template_body[] = '<div class="card-body mb-3">';
+	//$template_body[] = '<button type="submit" name="add" class="btn btn-primary">Submit</button>';
+	//$template_body[] = '</div>';
 
 	echo json_encode(array(
 		'template_body' => implode('', $template_body),
@@ -218,7 +218,7 @@ else
 
 	$template_body = [];
 
-	$template_body[] = '<div class="card-body">';
+	$template_body[] = '<div class="card-body property-fields">';
 
 	//$template_body[] = '<div class="row">';
 	$template_body[] = '<div class="col-md-2 mb-2">';
@@ -298,7 +298,7 @@ else
 		$users_info[] = $fetch_assoc;
 	}
 
-	$template_body[] = '<div class="card-body badge-secondary">';
+	$template_body[] = '<div class="card-body badge-secondary property-fields">';
 
 	$template_body[] = '<h5 class="card-title mb-0">Task #1</h5>';
 	$template_body[] = '<div class="row">';
@@ -359,9 +359,9 @@ else
 
 	$template_body[] = '</div>';
 
-	$template_body[] = '<div class="card-body mb-3">';
-	$template_body[] = '<button type="submit" name="add" class="btn btn-primary">Submit</button>';
-	$template_body[] = '</div>';
+	//$template_body[] = '<div class="card-body mb-3">';
+	//$template_body[] = '<button type="submit" name="add" class="btn btn-primary">Submit</button>';
+	//$template_body[] = '</div>';
 
 	echo json_encode(array(
 		'template_body' => implode('', $template_body),

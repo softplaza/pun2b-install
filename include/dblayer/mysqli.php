@@ -48,7 +48,14 @@ class DBLayer
 
 	function start_transaction(){return;}
 
-	function end_transaction(){return;}
+	function end_transaction()
+	{
+		global $Hooks;
+		
+		$Hooks->get_hook('IncludeDBLayerEndTransaction');
+
+		return;
+	}
 
 	function query($sql, $unbuffered = false)
 	{

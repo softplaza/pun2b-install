@@ -74,6 +74,9 @@ if ($is_manager)
 if ($search_by_property_id > 0)
 	$search_query[] = 'w.property_id='.$search_by_property_id;
 
+if (in_array($User->get('group_id'), [3,9]))
+	$search_query[] = 'w.requested_by='.$User->get('id');
+
 $query = [
 	'SELECT'	=> 'COUNT(t.id)',
 	'FROM'		=> 'hca_wom_tasks AS t',
@@ -134,11 +137,15 @@ $query = [
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$hca_wom_tasks = [];
+$hca_wom_tasks = $property_ids = [];
 while ($row = $DBLayer->fetch_assoc($result)) {
 	$hca_wom_tasks[] = $row;
+	$property_ids[] = $row['property_id'];
 }
 $PagesNavigator->num_items($hca_wom_tasks);
+
+if ($User->get('property_access') != '' && $User->get('property_access') != 0)
+	$property_ids = explode(',', $User->get('property_access'));
 
 $query = array(
 	'SELECT'	=> 'p.*',
@@ -146,11 +153,10 @@ $query = array(
 	'WHERE'		=> 'p.id!=105 AND p.id!=113 AND p.id!=115 AND p.id!=116',
 	'ORDER BY'	=> 'p.pro_name'
 );
-if ($User->get('property_access') != '' && $User->get('property_access') != 0)
-{
-	$property_ids = explode(',', $User->get('property_access'));
+
+if (!empty($property_ids))
 	$query['WHERE'] .= ' AND p.id IN ('.implode(',', $property_ids).')';
-}
+
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $property_info = [];
 while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
@@ -182,7 +188,7 @@ foreach ($property_info as $val)
 
 				<div class="col-md-auto">
 					<button type="submit" class="btn btn-sm btn-outline-success">Search</button>
-					<a href="<?php echo $URL->link('hca_wom_work_orders') ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
+					<a href="<?php echo $URL->link('hca_wom_work_orders_suggested') ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
 				</div>
 			</div>
 		</div>

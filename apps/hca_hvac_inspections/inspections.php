@@ -176,7 +176,7 @@ if ($search_by_unit_number != '')
 if ($search_by_date != '')
 	$search_query[] = '(DATE(c.datetime_inspection_start)=\''.$DBLayer->escape($search_by_date).'\' OR DATE(c.datetime_completion_end)=\''.$DBLayer->escape($search_by_date).'\')';
 else if ($search_by_date_from != '')
-	$search_query[] = 'DATE(c.datetime_inspection_start) >= \''.$DBLayer->escape($search_by_date_from).'\'';
+	$search_query[] = 'DATE(c.datetime_inspection_start) < \''.$DBLayer->escape($search_by_date_from).'\' AND (c.inspection_completed<2 OR c.work_order_completed=1)';
 else
 	$search_query[] = '(c.inspection_completed < 2 OR (c.inspection_completed=2 AND c.work_order_completed=1))';
 

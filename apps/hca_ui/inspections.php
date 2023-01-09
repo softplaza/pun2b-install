@@ -207,7 +207,7 @@ if ($search_by_unit_number != '')
 if ($search_by_date != '')
 	$search_query[] = '(c.date_inspected=\''.$DBLayer->escape($search_by_date).'\' OR DATE(c.datetime_completion_start)=\''.$DBLayer->escape($search_by_date).'\' OR DATE(c.datetime_completion_end)=\''.$DBLayer->escape($search_by_date).'\')';
 else if ($search_by_date_from != '')
-	$search_query[] = 'c.date_inspected >= \''.$DBLayer->escape($search_by_date_from).'\'';
+	$search_query[] = 'DATE(c.date_inspected) < \''.$DBLayer->escape($search_by_date_from).'\' AND c.work_order_completed=1 AND c.num_problem > 0';
 
 // owned_by, inspected_by, completed_by, updated_by
 if ($search_by_user_id > 0)

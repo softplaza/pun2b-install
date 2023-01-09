@@ -210,21 +210,21 @@ if ($task_id > 0)
 
 	if ($task_info['task_status'] == 4)
 	{
-		$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-success">Reopen task</button>';
+		//$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-success">Reopen task</button>';
 	}
 	else if ($task_info['task_status'] == 3)
 	{
-		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save</button>';
+		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save changes</button>';
 		$modal_footer[] = '<button type="submit" name="close_task" class="btn btn-sm btn-success">Approve and close</button>';
 		$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-outline-success">Re-open</button>';
 	}
 	else if ($task_info['task_status'] == 0)
 	{
-		$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-success">Reopen task</button>';
+		//$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-success">Reopen task</button>';
 	}
 	else
 	{
-		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save</button>';
+		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save changes</button>';
 		$modal_footer[] = '<button type="submit" name="delete_task" class="btn btn-sm btn-danger">Delete task</button>';
 	}
 

@@ -106,7 +106,7 @@ $Core->set_page_id('hca_wom_work_order_suggest', 'hca_fs');
 require SITE_ROOT.'header.php';
 ?>
 
-<form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data">
+<form method="post" accept-charset="utf-8" action="">
 	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 
 	<div class="card">
@@ -116,11 +116,11 @@ require SITE_ROOT.'header.php';
 		<div class="card-body">
 
 			<div class="row">
-				<div class="col-md-3 mb-3">
+				<div class="col-md-3 mb-3 was-validated">
 					<label class="form-label" for="fld_property_id">Available Properties</label>
 					<select id="fld_property_id" name="property_id" class="form-select form-select-sm" required onchange="getUnits()">
 <?php
-echo '<option value="0" selected disabled>Select one</option>'."\n";
+echo '<option value="" selected disabled>Select one</option>'."\n";
 foreach ($sm_property_db as $cur_info)
 {
 	if(isset($_POST['property_id']) && $_POST['property_id'] == $cur_info['id'])
@@ -142,8 +142,7 @@ foreach ($sm_property_db as $cur_info)
 			<div class="row">
 				<div class="col-md-3 mb-3">
 					<label class="form-label" for="fld_priority">Priority</label>
-					<select name="priority" id="fld_priority" class="form-select form-select-sm" required>
-						<option value="" selected disabled>Select one</option>
+					<select name="priority" id="fld_priority" class="form-select form-select-sm">
 <?php
 	foreach ($HcaWOM->priority as $key => $val)
 	{
@@ -155,14 +154,10 @@ foreach ($sm_property_db as $cur_info)
 ?>
 					</select>
 				</div>
-				<div class="col-md-3 mb-3">
-					<label class="form-label">Submit Date</label>
-					<h5 class="mb-0"><?php echo date('m/d/Y \a\t H:i') ?></h5>
-				</div>
 			</div>
 
 			<div class="row">
-				<div class="col-md-3 mb-3">
+				<div class="col-md-3 mb-3 was-validated">
 					<label class="form-label" for="fld_item_id">Item</label>
 					<select name="item_id" class="form-select form-select-sm" id="fld_item_id" required onchange="getActions()">
 <?php
@@ -191,7 +186,7 @@ foreach ($sm_property_db as $cur_info)
 				</div>
 			</div>
 
-			<div class="mb-3">
+			<div class="mb-3 was-validated">
 				<label class="form-label" for="fld_task_message">Comments</label>
 				<textarea type="text" name="task_message" class="form-control" id="fld_task_message" placeholder="Enter details here" required><?php echo isset($_POST['task_message']) ? html_encode($_POST['task_message']) : '' ?></textarea>
 			</div>

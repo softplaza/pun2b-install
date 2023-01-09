@@ -450,7 +450,7 @@ else
 </div>
 <?php
 
-	$hca_wom_tpl_wo = [];
+	$hca_wom_tpl_wo = $hca_wom_tpl_wo_ids = [];
 	$query = [
 		'SELECT'	=> 'tw.*',
 		'FROM'		=> 'hca_wom_tpl_wo AS tw',
@@ -461,10 +461,38 @@ else
 	while ($row = $DBLayer->fetch_assoc($result))
 	{
 		$hca_wom_tpl_wo[] = $row;
+		$hca_wom_tpl_wo_ids[] = $row['id'];
 	}
 
 	if (!empty($hca_wom_tpl_wo))
 	{
+		$query = [
+			'SELECT'	=> 't.*, i.item_name, tp.type_name, pb.problem_name',
+			'FROM'		=> 'hca_wom_tpl_tasks AS t',
+			'JOINS'		=> [
+				[
+					'LEFT JOIN'		=> 'hca_wom_items AS i',
+					'ON'			=> 'i.id=t.item_id'
+				],
+				[
+					'LEFT JOIN'		=> 'hca_wom_types AS tp',
+					'ON'			=> 'tp.id=i.item_type'
+				],
+				[
+					'LEFT JOIN'		=> 'hca_wom_problems AS pb',
+					'ON'			=> 'pb.id=t.task_action'
+				],
+			],
+			'WHERE'		=> 't.tpl_id IN ('.implode(',', $hca_wom_tpl_wo_ids).')',
+			//'ORDER BY'	=> 't.task_status DESC',
+		];
+		$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+		while ($row = $DBLayer->fetch_assoc($result))
+		{
+			$hca_wom_tasks[] = $row;
+		}
+
+
 ?>
 
 <table class="table table-striped table-bordered">
@@ -489,15 +517,53 @@ else
 
 			$enter_permission = $cur_info['enter_permission'] == 1 ? 'YES' : 'NO';
 			$has_animal = $cur_info['has_animal'] == 1 ? 'YES' : 'NO';
+
+			$task_info = [];
+			if (!empty($hca_wom_tasks))
+			{
+				$i = 1;
+				foreach($hca_wom_tasks as $cur_task)
+				{
+					if ($cur_info['id'] == $cur_task['tpl_id'])
+					{
+						$items = [];
+	
+						$task_info[] = '<div class="callout-warning border rounded px-1 mb-1 min-w-15">';
+						$task_info[] = '<p>';
+						$task_info[] = '<span class="float-end" onclick="quickManageTask(0,'.$cur_task['id'].')" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="fas fa-edit fa-lg"></i></span>';
+						$task_info[] = '<span class="fw-bold">'.html_encode($cur_task['type_name']).', </span>';
+						$task_info[] = '<span class="fw-bold">'.html_encode($cur_task['item_name']).'</span>';
+						$task_info[] = ' ('.html_encode($cur_task['problem_name']).')';
+						$task_info[] = '</p>';
+
+						$task_info[] = '<span class="fw-bold text-warning small float-end">Open</span>';
+	
+						$task_info[] = '<p>'.html_encode($cur_task['task_message']).'</p>';
+	
+						$task_info[] = '</div>';
+	
+						$status = '<span class="badge badge-primary">Ready for review</span>';
+	
+						++$i;
+					}
+				}
+			}
+
 ?>
 		<tr id="row<?php echo $cur_info['id'] ?>" class="<?php echo ($id == $cur_info['id'] ? ' anchor' : '') ?>">
-			<td class="fw-bold"><?php echo html_encode($cur_info['tpl_name']) ?></td>
+			<td class="fw-bold">
+				<?php echo html_encode($cur_info['tpl_name']) ?>
+				<a href="<?php echo $URL->link('hca_wom_admin_templates', $cur_info['id']) ?>" class="badge bg-primary text-white float-end"><i class="fas fa-edit"></i> edit</a>
+			</td>
 			<td class="ta-center"><?php echo $template_type ?></td>
 			<td class="ta-center"><?php echo $priority ?></td>
 			<td class="ta-center"><?php echo $enter_permission ?></td>
 			<td class="ta-center"><?php echo $has_animal ?></td>
 			<td class=""><?php echo html_encode($cur_info['wo_message']) ?></td>
-			<td class="ta-center"><a href="<?php echo $URL->link('hca_wom_admin_templates', $cur_info['id']) ?>" class="badge bg-primary text-white"><i class="fas fa-edit"></i> edit</a></td>
+			<td class="ta-center">
+				<?php echo implode("\n", $task_info) ?>
+				
+			</td>
 		</tr>
 <?php
 		}

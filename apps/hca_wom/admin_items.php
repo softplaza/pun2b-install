@@ -339,14 +339,14 @@ foreach($hca_wom_problems as $key => $value)
 
   <div class="accordion-item">
     <h2 class="accordion-header" id="flush-headingTwo">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">Add type of item</button>
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">Add type or problem</button>
     </h2>
     <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionFlushExample">
 		<div class="accordion-body card-body">
-			<form method="post" accept-charset="utf-8" action="">
-				<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
-				<div class="row">
-					<div class="col-md-4">
+			<div class="row">
+				<div class="col-md-6">
+					<form method="post" accept-charset="utf-8" action="">
+						<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 						<div class="mb-3">
 							<label class="form-label" for="fld_type_name">Type name</label>
 							<input type="text" name="type_name" value="<?php echo isset($_POST['type_name']) ? html_encode($_POST['type_name']) : '' ?>" class="form-control" id="fld_type_name" required>
@@ -354,8 +354,6 @@ foreach($hca_wom_problems as $key => $value)
 						<div class="mb-3">
 							<button type="submit" name="add_type" class="btn btn-sm btn-primary">Submit</button>
 						</div>
-					</div>
-					<div class="col-md-4">
 						<table class="table table-striped table-bordered table-sm">
 							<tbody>
 								<tr>
@@ -385,42 +383,28 @@ if (!empty($hca_wom_types))
 	}
 }
 ?>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</form>
-		</div>
-    </div>
-  </div>
-
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="flush-headingThree">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">Add actions/problem of item</button>
-    </h2>
-    <div id="flush-collapseThree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree" data-bs-parent="#accordionFlushExample">
-		<div class="accordion-body card-body">
-			<form method="post" accept-charset="utf-8" action="">
-				<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
-				<div class="row">
-					<div class="col-md-4">
-						<div class="mb-3">
-							<label class="form-label" for="fld_problem_name">Action/Problem name</label>
-							<input type="text" name="problem_name" value="<?php echo isset($_POST['problem_name']) ? html_encode($_POST['problem_name']) : '' ?>" class="form-control" id="fld_problem_name" required>
-						</div>
-						<div class="mb-3">
-							<button type="submit" name="add_problem" class="btn btn-sm btn-primary">Submit</button>
-						</div>
+								</tbody>
+							</table>
+						</form>
 					</div>
 
-					<div class="col-md-4">
-						<table class="table table-striped table-bordered table-sm">
-							<tbody>
-								<tr>
-									<th>List of available types</th>
-								</tr>
-							</tbody>
-							<tbody>
+					<div class="col-md-6">
+						<form method="post" accept-charset="utf-8" action="">
+							<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
+							<div class="mb-3">
+								<label class="form-label" for="fld_problem_name">Action/Problem name</label>
+								<input type="text" name="problem_name" value="<?php echo isset($_POST['problem_name']) ? html_encode($_POST['problem_name']) : '' ?>" class="form-control" id="fld_problem_name" required>
+							</div>
+							<div class="mb-3">
+								<button type="submit" name="add_problem" class="btn btn-sm btn-primary">Submit</button>
+							</div>
+							<table class="table table-striped table-bordered table-sm">
+								<tbody>
+									<tr>
+										<th>List of available problems</th>
+									</tr>
+								</tbody>
+								<tbody>
 <?php
 $query = array(
 	'SELECT'	=> 'pr.*',
@@ -443,14 +427,14 @@ if (!empty($hca_wom_problems))
 	}
 }
 ?>
-							</tbody>
-						</table>
+								</tbody>
+							</table>
+						</form>
 					</div>
 				</div>
-			</form>
-		</div>
-    </div>
-  </div>
+			</div>
+    	</div>
+  	</div>
 </div>
 
 <div class="card-header">

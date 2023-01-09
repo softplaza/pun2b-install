@@ -1565,7 +1565,10 @@ function message($message, $link = '', $heading = '')
 
 	$content = [];
 	if ($message != '')
+	{
 		$content[] = '<p>'.$message.'</p>';
+		$Core->addMessage($message);
+	}
 
 	if ($User->is_guest() && $link == '')
 		$content[] = '<p>If you are not logged in, <a class="badge bg-primary text-white" href="'.BASE_URL.'/login.php">LOG IN</a> with your username and password.</p>';
@@ -1703,7 +1706,7 @@ function redirect($destination_url = '', $message = '')
 // Display a simple error message
 function error()
 {
-	global $Config, $URL;
+	global $Core, $Config, $URL, $Hooks, $DBLayer, $User;
 
 	if (!headers_sent())
 	{
@@ -1766,50 +1769,41 @@ p {padding:2px;margin:0;}
 .alert{border-radius: 0.25rem;color: #842029;background-color: #f8d7da;border-color: #f5c2c7;padding: 7px 12px;margin: 65px 10px;}
 .title{font-weight:bold;color: #6a1a21;}
 .content{font-size: 14px;}
-.error_line{}
 	</style>
 </head>
 <body>
 <?php
-	$error_content = $email_content = [];
+
+	$error_content = [];
 	if (isset($message)){
 		$error_content[] = '<p>'.$message.'</p>';
-		$email_content[] = $message;
 	}else{
 		$error_content[] = '<p><strong>Please report this issue to website administrator.</strong></p>';
 	}
+	
 	if ($num_args > 1){
-		if (defined('SPM_DEBUG')){
-			$db_error = isset($GLOBALS['DBLayer']) ? $GLOBALS['DBLayer']->error() : array();
+		if (defined('SPM_DEBUG'))
+		{
+			$db_error = isset($GLOBALS['DBLayer']) ? $GLOBALS['DBLayer']->error() : [];
 			if (!empty($db_error['error_msg']))
 			{
 				$error_content[] = '<p><strong>'.html_encode($lang_common['error_db_reported']).'</strong> '.html_encode($db_error['error_msg']).(($db_error['error_no']) ? ' (Errno: '.$db_error['error_no'].')' : '').'.</p>';
-				$email_content[] = html_encode($lang_common['error_db_reported']);
-				$email_content[] = html_encode($db_error['error_msg']).(($db_error['error_no']) ? ' (Errno: '.$db_error['error_no'].')' : '');
 
 				if ($db_error['error_sql'] != ''){
 					$error_content[] = '<p><strong>'.html_encode($lang_common['error_db_query']).'</strong> <code>'.html_encode($db_error['error_sql']).'</code></p>';
-					$email_content[] = html_encode($lang_common['error_db_query']);
-					$email_content[] = html_encode($db_error['error_sql']);
 				}
 			}
 			if (isset($file) && isset($line)){
 				$file = str_replace(realpath(SITE_ROOT), '', $file);
 				$error_content[] = '<p class="error_line">'.html_encode(sprintf($lang_common['error_location'], $line, $file)).'</p>';
-				$email_content[] = html_encode(sprintf($lang_common['error_location'], $line, $file));
 			}
 		}
 	}
-	$email_output = implode("%0D%0A", $email_content);
-	$email_output = strip_tags($email_output, '<br />');
-	$email_output = strip_tags($email_output, '<em>');
+
 ?>
 	<div class="navbar">
 		<ul class="nav-left">
 			<li><a href="<?=BASE_URL?>">Home Page</a></li>
-		</ul>
-		<ul class="nav-right">
-			<li><a href="mailto:dmitry@hcares.com?subject=Website Error&amp;body=Hello, I got this error.%0D%0A%0D%0A<?=$email_output;?>">Report this issue</a></li>
 		</ul>
 	</div>
 	<div class="alert">
@@ -1819,6 +1813,9 @@ p {padding:2px;margin:0;}
 </body>
 </html>
 <?php
+
+	//if (isset($Hooks))
+	//	@$Hooks->get_hook('IncludeFunctionsErrorEnd');
 
 	// If a database connection was established (before this error) we close it
 	if (isset($GLOBALS['forum_db']))
@@ -1830,7 +1827,7 @@ p {padding:2px;margin:0;}
 // Display Database error message
 function db_error($file, $line)
 {
-	global $Config, $URL;
+	global $DBLayer;
 
 	if (!headers_sent())
 	{
@@ -1843,23 +1840,11 @@ function db_error($file, $line)
 		
 		header('Content-type: text/html; charset=utf-8');
 	}
-
-	// Set a default error messages string if the script failed before $common_lang loaded
-	$lang_common = [];
-	$lang_common['Forum error header'] = 'Sorry! The page could not be loaded.';
-	$lang_common['Forum error description'] = 'This is probably a temporary error. Just refresh the page and retry. If problem continues, please check back in 5-10 minutes.';
-	$lang_common['error_location'] = 'The error occurred on line %1$s in %2$s';
-	$lang_common['error_db_reported'] = 'Database reported:';
-	$lang_common['error_db_query'] = 'Failed query:';
 	
 	// Empty all output buffers and stop buffering
 	if (ob_get_contents()){
 		while (@ob_end_clean());
 	}
-	
-	// "Restart" output buffering if we are using ob_gzhandler (since the gzip header is already sent)
-//	if (!empty($Config->get('o_gzip')) && extension_loaded('zlib') && !empty($_SERVER['HTTP_ACCEPT_ENCODING']) && (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') !== false || strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'deflate') !== false))
-//		ob_start('ob_gzhandler');
 
 ?>
 <!DOCTYPE html>
@@ -1883,57 +1868,27 @@ p {padding:2px;margin:0;}
 	</style>
 </head>
 <body>
-<?php
-
-	$error_content = $email_content = [];
-	$error_content[] = '<p><strong>Please report this issue to website administrator.</strong></p>';
-	
-	//if (defined('SPM_DEBUG'))
-	//{
-		$db_error = isset($GLOBALS['DBLayer']) ? $GLOBALS['DBLayer']->error() : array();
-		if (!empty($db_error['error_msg']))
-		{
-			$error_content[] = '<p><strong>'.html_encode($lang_common['error_db_reported']).'</strong> '.html_encode($db_error['error_msg']).(($db_error['error_no']) ? ' (Errno: '.$db_error['error_no'].')' : '').'.</p>';
-			$email_content[] = html_encode($lang_common['error_db_reported']);
-			$email_content[] = html_encode($db_error['error_msg']).(($db_error['error_no']) ? ' (Errno: '.$db_error['error_no'].')' : '');
-		}
-
-		if ($db_error['error_sql'] != ''){
-			$error_content[] = '<p><strong>'.html_encode($lang_common['error_db_query']).'</strong> <code>'.html_encode($db_error['error_sql']).'</code></p>';
-			$email_content[] = html_encode($lang_common['error_db_query']);
-			$email_content[] = html_encode($db_error['error_sql']);
-		}
-
-		if (isset($file) && isset($line)){
-			$file = str_replace(realpath(SITE_ROOT), '', $file);
-			$error_content[] = '<p class="error_line">'.html_encode(sprintf($lang_common['error_location'], $line, $file)).'</p>';
-			$email_content[] = html_encode(sprintf($lang_common['error_location'], $line, $file));
-		}
-	//}
-
-	$email_output = implode("%0D%0A", $email_content);
-	$email_output = strip_tags($email_output, '<br />');
-	$email_output = strip_tags($email_output, '<em>');
-?>
 	<div class="navbar">
 		<ul class="nav-left">
 			<li><a href="<?=BASE_URL?>">Home Page</a></li>
 		</ul>
-		<ul class="nav-right">
-			<li><a href="mailto:dmitry@hcares.com?subject=Website Error&amp;body=Hello, I got this error.%0D%0A%0D%0A<?=$email_output;?>">Report this issue</a></li>
-		</ul>
 	</div>
 	<div class="alert">
 		<p class="title">Sorry! The page could not be loaded.</p>
-		<p class="content"><?php echo implode("\n", $error_content) ?></p>
+		<p class="content">
+			<?php
+			// echo implode("\n", $error_content) 
+			print_r($DBLayer->error());
+			
+			?></p>
 	</div>
 </body>
 </html>
 <?php
 
 	// If a database connection was established (before this error) we close it
-	if (isset($GLOBALS['forum_db']))
-		$GLOBALS['forum_db']->close();
+	//if (isset($GLOBALS['forum_db']))
+	//	$GLOBALS['forum_db']->close();
 
 	exit;
 }

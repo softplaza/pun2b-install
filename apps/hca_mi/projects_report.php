@@ -102,17 +102,18 @@ $search_by_move_out_date = isset($_GET['move_out_date']) ? intval($_GET['move_ou
 $search_by_appendixb = isset($_GET['appendixb']) ? intval($_GET['appendixb']) : 0;
 $search_by_leak_type = isset($_GET['leak_type']) ? intval($_GET['leak_type']) : -1;
 $search_by_symptom_type = isset($_GET['symptom_type']) ? intval($_GET['symptom_type']) : 0;
+$search_by_order_by = isset($_GET['order_by']) ? intval($_GET['order_by']) : 0;
 
-$search_query = $projects_info = $projects_ids = [];
+$search_query = $order_by_query = $projects_info = $projects_ids = [];
 
 $next_year = $search_by_year + 1;
 $next_year = strtotime($next_year.'-01-01');
 
 // SEARCH BY SECTION //
-if ($search_by_property_id > 0)
-	$search_query[] = 'pj.property_id='.$search_by_property_id;
 if ($search_by_year > 0)
 	$search_query[] = 'pj.mois_report_date > '.strtotime($search_by_year.'-01-01').' AND pj.mois_report_date < '.$next_year;
+if ($search_by_property_id > 0)
+	$search_query[] = 'pj.property_id='.$search_by_property_id;
 if ($search_by_leak_type > -1)
 	$search_query[] = 'pj.leak_type='.$search_by_leak_type;
 if ($search_by_symptom_type > 0)
@@ -123,6 +124,12 @@ if ($search_by_move_out_date > 0)
 	$search_query[] = 'pj.moveout_date > 0';
 if ($search_by_appendixb == 1)
 	$search_query[] = 'pj.appendixb=1';
+
+if ($search_by_order_by > 0 || ($search_by_year > 0 && $search_by_property_id > 0))
+{
+	$order_by_query[] = 'pj.mois_inspection_date';
+	$search_by_order_by = 1;
+}
 
 $query = array(
 	'SELECT'	=> 'pj.*, pj.unit_number AS unit, p.pro_name, un.unit_number, u.realname',
@@ -149,6 +156,9 @@ if (!empty($search_query))
 {
 	$search_query[] = '(pj.job_status=1 OR pj.job_status=3)'; // in-progress OR completed
 	$query['WHERE'] = implode(' AND ', $search_query);
+
+	if (!empty($order_by_query)) $query['ORDER BY'] = implode(', ', $order_by_query);
+
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 
 	while ($row = $DBLayer->fetch_assoc($result))
@@ -185,17 +195,6 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 $Core->set_page_id('hca_mi_projects_report', 'hca_mi');
 require SITE_ROOT.'header.php';
 ?>
-
-<style>
-.email-window {width: 300px;position: absolute;background: #dcf5e5;padding: 5px;line-height: 23px;border-radius: 10px;border: 1px solid #A5A5A5;z-index: 300;opacity: 0.9;right: 200px;}
-.email-window .btn-action{text-align: center;}
-.mailing-fields{columns: 2;padding-left: 5px;}
-.subject input, .email-window textarea{width:97%;}
-.close-window{cursor: pointer;float: right;position: relative;z-index: 300;}
-.search-light{color:#ff5e00;background:#03ffc5;}
-table .th-date{width: 100px;}
-table .td1{max-width: 160px;}
-</style>
 	
 <nav class="navbar search-bar">
 	<form method="get" accept-charset="utf-8" action="<?php echo get_current_url() ?>">
@@ -207,10 +206,10 @@ table .td1{max-width: 160px;}
 <?php
 for ($year = 2019; $year <= date('Y'); $year++)
 {
-			if ($search_by_year == $year)
-				echo '<option value="'.$year.'" selected="selected">'.$year.'</option>';
-			else
-				echo '<option value="'.$year.'">'.$year.'</option>';
+	if ($search_by_year == $year)
+		echo '<option value="'.$year.'" selected>'.$year.'</option>';
+	else
+		echo '<option value="'.$year.'">'.$year.'</option>';
 }
 ?>
 					</select>
@@ -221,10 +220,10 @@ for ($year = 2019; $year <= date('Y'); $year++)
 <?php
 foreach ($property_info as $val)
 {
-			if ($search_by_property_id == $val['id'])
-				echo '<option value="'.$val['id'].'" selected="selected">'.$val['pro_name'].'</option>';
-			else
-				echo '<option value="'.$val['id'].'">'.$val['pro_name'].'</option>';
+	if ($search_by_property_id == $val['id'])
+		echo '<option value="'.$val['id'].'" selected>'.$val['pro_name'].'</option>';
+	else
+		echo '<option value="'.$val['id'].'">'.$val['pro_name'].'</option>';
 }
 ?>
 					</select>
@@ -237,23 +236,40 @@ foreach ($property_info as $val)
 				</div>
 				<div class="col">
 					<select name="leak_type" class="form-select form-select-sm">
-						<option value="-1" selected="selected">Source of Moisture</option>
+						<option value="-1" selected>Source of Moisture</option>
 <?php
-
 foreach ($Hca5840Chart->leak_types as $key => $value)
 {
 	if ($search_by_leak_type == $key)
-		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected="selected">'.$value.'</option>'."\n";
+		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$value.'</option>'."\n";
 	else
 		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$value.'</option>'."\n";
 }
-	if ($search_by_leak_type == 0)
-	{
-		echo "\t\t\t\t\t\t\t".'<option value="0" selected>Unknown/Other</option>'."\n";
-		$Hca5840Chart->leak_types[0] = 'Unknown/Other';
-	}
+
+if ($search_by_leak_type == 0)
+{
+	echo "\t\t\t\t\t\t\t".'<option value="0" selected>Unknown/Other</option>'."\n";
+	$Hca5840Chart->leak_types[0] = 'Unknown/Other';
+}
+else
+	echo "\t\t\t\t\t\t\t".'<option value="0">Unknown/Other</option>'."\n";
+?>
+					</select>
+				</div>
+				<div class="col">
+					<select name="order_by" class="form-select form-select-sm">
+<?php
+$order_by = [
+	0 => 'Sort by Unit #',
+	1 => 'Inspection Date'
+];
+foreach ($order_by as $key => $value)
+{
+	if ($search_by_order_by == $key)
+		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$value.'</option>'."\n";
 	else
-		echo "\t\t\t\t\t\t\t".'<option value="0">Unknown/Other</option>'."\n";
+		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$value.'</option>'."\n";
+}
 ?>
 					</select>
 				</div>
@@ -393,11 +409,11 @@ if (!empty($projects_info))
 			if ($permission2)
 			{
 				if ($User->checkAccess('hca_mi', 12))
-					$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_project', $cur_info['id']).'"><i class="fas fa-edit"></i> Edit project</a>');
+					$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_project', $cur_info['id']).'"><i class="fas fa-edit"></i> View Project</a>');
 				if ($User->checkAccess('hca_mi', 14))
 					$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_files', $cur_info['id']).'"><i class="far fa-image"></i> View Files</a>');
-				//if ($User->checkAccess('hca_mi', 13))
-				//	$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_invoice', $cur_info['id']).'"><i class="fas fa-file-invoice-dollar"></i> View Invoice</a>');
+				if ($User->checkAccess('hca_mi', 13))
+				//	$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_invoice', $cur_info['id']).'"><i class="fas fa-file-invoice-dollar"></i> Invoice</a>');
 				if ($User->checkAccess('hca_mi', 16))
 				{
 					$email_param = [];

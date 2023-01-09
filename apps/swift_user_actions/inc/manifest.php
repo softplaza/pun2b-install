@@ -6,13 +6,13 @@ if (!defined('DB_CONFIG')) die();
 // Basic App information
 $app_info = [
 	// id as directory name
-	'id'			=> 'sm_user_actions',
+	'id'			=> 'swift_user_actions',
 	// Application's name
-	'title'			=> 'User Actions',
+	'title'			=> 'Swift User Actions',
 	// Application's description
 	'description' 	=> 'Actions of users.',
 	// Application's author
-	'author'		=> 'Hanken Cono Assad & Company, Inc.',
+	'author'		=> 'SwiftProjectManager.Com',
 	// Last version of application
-	'version'		=> '1.25'
+	'version'		=> '1.26'
 ];
