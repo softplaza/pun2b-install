@@ -20,3 +20,14 @@ $schema = array(
 );
 $DBLayer->create_table('swift_user_actions', $schema);
 
+$schema = array(
+	'FIELDS'	=> array(
+		'ip'				=> $DBLayer->dt_varchar('VARCHAR(39)'),
+		'user_id'			=> $DBLayer->dt_int(),
+		'user_agent'		=> $DBLayer->dt_text(),
+
+
+		'is_banned'			=> $DBLayer->dt_int('TINYINT(1)'),
+	),
+);
+$DBLayer->create_table('swift_user_actions_ips', $schema);

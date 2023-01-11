@@ -25,7 +25,7 @@ class HcaWOM
 
 	var $task_status = [
 		1 => 'Assigned',
-		2 => 'Accepted by technician',
+		2 => 'In-Progress',
 		3 => 'Waiting for review',
 		4 => 'Closed',
 	];
@@ -284,7 +284,7 @@ class HcaWOM
 		}
 		// Completed
 		if ($wo_status == 2){
-			$output[] = '<div class="callout callout-success mb-2">';
+			$output[] = '<div class="callout callout-primary mb-2">';
 			$output[] = 'The Work Order has been closed.';
 			//$output[] = '<button type="submit" name="reopen_wo" class="badge bg-primary">Reopen WO</button>';
 			$output[] = '</div>';

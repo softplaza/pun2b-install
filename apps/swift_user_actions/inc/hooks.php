@@ -40,30 +40,6 @@ function swift_user_actions_fn_redirect_start()
         define('SWIFT_USER_ACTIONS', 1);
     }
 }
-/*
-function swift_user_actions_IncludeFunctionsErrorEnd()
-{
-    global $DBLayer, $email_content;
-
-    if (!defined('SWIFT_USER_ACTIONS'))
-    {
-        $db_data = [
-            //'a_user_id'       => $User->get('id'),
-            //'a_user_agent'    => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '',
-            'a_time'          => time(),
-            'a_ip'            => get_remote_address(),
-            'a_cur_url'       => str_replace(BASE_URL, '', get_current_url()),
-            'a_project_id'    => (defined('PAGE_SECTION_ID') ? PAGE_SECTION_ID : ''),
-            'a_http_code'     => '404',
-            'a_message'       => !empty($email_content) ? implode("\n", $email_content) : '',
-            'a_type'          => 5 // System Error
-        ];
-        @$DBLayer->insert_values('swift_user_actions', $db_data);
-
-        define('SWIFT_USER_ACTIONS', 1);
-    }
-}
-*/
 // 
 function swift_user_actions_ft_end()
 {
@@ -154,16 +130,16 @@ function swift_user_actions_IncludeDBLayerEndTransaction()
 {
     global $DBLayer, $User;
 
-    if (!$User->is_admin() && !defined('SWIFT_USER_ACTIONS'))
+    if (!defined('SWIFT_USER_ACTIONS') && !defined('SPM_HEADER'))
     {
         $db_data = [
-            //'a_user_id'       => $User->get('id'),
+            'a_user_id'       => $User->get('id'),
             'a_user_agent'    => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '',
             'a_time'          => time(),
             'a_ip'            => get_remote_address(),
             'a_cur_url'       => str_replace(BASE_URL, '', get_current_url()),
             'a_project_id'    => (defined('PAGE_SECTION_ID') ? PAGE_SECTION_ID : ''),
-            'a_http_code'     => '200',
+            'a_http_code'     => 'AJAX',
             'a_message'       => 'AJAX request.',
             'a_type'          => 5 // AJAX
         ];
@@ -172,3 +148,51 @@ function swift_user_actions_IncludeDBLayerEndTransaction()
         define('SWIFT_USER_ACTIONS', 1);
     }
 }
+
+function swift_user_actions_IncludeFunctionsCsrfConfirmForm()
+{
+    global $DBLayer, $User;
+
+    if (!defined('SWIFT_USER_ACTIONS'))
+    {
+        $db_data = [
+            'a_user_id'       => $User->get('id'),
+            'a_user_agent'    => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '',
+            'a_time'          => time(),
+            'a_ip'            => get_remote_address(),
+            'a_cur_url'       => str_replace(BASE_URL, '', get_current_url()),
+            'a_project_id'    => (defined('PAGE_SECTION_ID') ? PAGE_SECTION_ID : ''),
+            'a_http_code'     => 'CSRF',
+            'a_message'       => 'CSRF Token.',
+            'a_type'          => 6 // CSRF Token
+        ];
+        $DBLayer->insert_values('swift_user_actions', $db_data);
+
+        define('SWIFT_USER_ACTIONS', 1);
+    }
+}
+
+/*
+function swift_user_actions_IncludeFunctionsErrorEnd()
+{
+    global $DBLayer, $email_content;
+
+    if (!defined('SWIFT_USER_ACTIONS'))
+    {
+        $db_data = [
+            //'a_user_id'       => $User->get('id'),
+            //'a_user_agent'    => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '',
+            'a_time'          => time(),
+            'a_ip'            => get_remote_address(),
+            'a_cur_url'       => str_replace(BASE_URL, '', get_current_url()),
+            'a_project_id'    => (defined('PAGE_SECTION_ID') ? PAGE_SECTION_ID : ''),
+            'a_http_code'     => '404',
+            'a_message'       => !empty($email_content) ? implode("\n", $email_content) : '',
+            'a_type'          => 5 // System Error
+        ];
+        @$DBLayer->insert_values('swift_user_actions', $db_data);
+
+        define('SWIFT_USER_ACTIONS', 1);
+    }
+}
+*/

@@ -143,11 +143,12 @@ else if (isset($_POST['add_task']))
 			if (isset($task_info['assigned_email']))
 			{
 				$SwiftMailer = new SwiftMailer;
+				$SwiftMailer->addReplyTo($User->get('email'), $User->get('realname')); //email, name
 				//$SwiftMailer->isHTML();
 
 				$mail_subject = 'Property Task #'.$task_info['id'];
 				$mail_message = [];
-				$mail_message[] = 'Hello '.$task_info['assigned_name'];
+				//$mail_message[] = 'Hello '.$task_info['assigned_name'];
 				$mail_message[] = 'You have been assigned to a new task.';
 				$mail_message[] = 'Property: '.$task_info['pro_name'];
 				$mail_message[] = 'Unit: '.$task_info['unit_number'];
@@ -181,21 +182,14 @@ else if (isset($_POST['update_task']))
 	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
 	$notify_technician = isset($_POST['notify_technician']) ? intval($_POST['notify_technician']) : 0;
 
-	$form_data = [
-		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
-	];
+	$form_data = [];
+	if (isset($_POST['task_message'])) $form_data['task_message'] = swift_trim($_POST['task_message']);
+	if (isset($_POST['task_closing_comment'])) $form_data['task_closing_comment'] = swift_trim($_POST['task_closing_comment']);
+	if (isset($_POST['item_id'])) $form_data['item_id'] = intval($_POST['item_id']);
+	if (isset($_POST['task_action'])) $form_data['task_action'] = intval($_POST['task_action']);
+	if (isset($_POST['assigned_to'])) $form_data['assigned_to'] = intval($_POST['assigned_to']);
 
-	if (isset($_POST['item_id']))
-		$form_data['item_id'] = intval($_POST['item_id']);
-	if (isset($_POST['task_action']))
-		$form_data['task_action'] = intval($_POST['task_action']);
-	if (isset($_POST['assigned_to']))
-		$form_data['assigned_to'] = intval($_POST['assigned_to']);
-
-	//if ($form_data['assigned_to'] == 0)
-	//	$Core->add_error('Select technician.');
-
-	if (empty($Core->errors) && $task_id > 0)
+	if (empty($Core->errors) && $task_id > 0 && !empty($form_data))
 	{
 		// Update task of Work Order
 		$DBLayer->update('hca_wom_tasks', $form_data, $task_id);
@@ -206,11 +200,12 @@ else if (isset($_POST['update_task']))
 			$task_info = $HcaWOM->getTaskInfo($task_id);
 
 			$SwiftMailer = new SwiftMailer;
+			$SwiftMailer->addReplyTo($User->get('email'), $User->get('realname')); //email, name
 			//$SwiftMailer->isHTML();
 
 			$mail_subject = 'Property Task #'.$task_info['id'];
 			$mail_message = [];
-			$mail_message[] = 'Hello '.$task_info['assigned_name'];
+			//$mail_message[] = 'Hello '.$task_info['assigned_name'];
 			$mail_message[] = 'You have been assigned to a new task.';
 			$mail_message[] = 'Property: '.$task_info['pro_name'];
 			$mail_message[] = 'Unit: '.$task_info['unit_number'];
@@ -231,6 +226,48 @@ else if (isset($_POST['update_task']))
 	}
 }
 
+else if (isset($_POST['cancel_task']))
+{
+	$form_wo_data = array(
+		'priority'			=> isset($_POST['priority']) ? intval($_POST['priority']) : 1,
+		'has_animal'		=> isset($_POST['has_animal']) ? intval($_POST['has_animal']) : 0,
+		'enter_permission'	=> isset($_POST['enter_permission']) ? intval($_POST['enter_permission']) : 0,
+		'wo_message'		=> isset($_POST['wo_message']) ? swift_trim($_POST['wo_message']) : '',
+	);
+	$DBLayer->update('hca_wom_work_orders', $form_wo_data, $id);
+
+	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
+	$notify_technician = isset($_POST['notify_technician']) ? intval($_POST['notify_technician']) : 0;
+
+	$form_data = [
+		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
+		'task_status'	=> 0, // canceled
+	];
+
+	if (empty($Core->errors) && $task_id > 0)
+	{
+		// Update task of Work Order
+		$DBLayer->update('hca_wom_tasks', $form_data, $task_id);
+
+		// Check if WO still has opened tasks, if not close WO automatically
+		$num_rows = $DBLayer->getNumRows('hca_wom_tasks', 'work_order_id='.$id.' AND task_status < 4 AND task_status > 0');
+
+		if ($num_rows == 0)
+		{
+			$DBLayer->update('hca_wom_work_orders', ['wo_status' => 2], $id); // set closed status
+
+			$flash_message = 'Task #'.$task_id.' canceled and WO #'.$id.' closed.';
+			$FlashMessenger->add_info($flash_message);
+			redirect($URL->link('hca_wom_work_orders'), $flash_message);
+		}
+
+		// Add flash message
+		$flash_message = 'Task #'.$task_id.' canceled.';
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
+	}
+}
+
 else if (isset($_POST['close_task']))
 {
 	$form_wo_data = array(
@@ -246,42 +283,28 @@ else if (isset($_POST['close_task']))
 
 	$form_data = [
 		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
-		'task_status'	=> 4,
+		'task_status'	=> 4, // closed
 	];
 
 	if (empty($Core->errors) && $task_id > 0)
 	{
 		// Update task of Work Order
 		$DBLayer->update('hca_wom_tasks', $form_data, $task_id);
-/*
-		// notify_technician
-		if ($notify_technician == 1)
+
+		// Check if WO still has opened tasks, if not close WO automatically
+		$num_rows = $DBLayer->getNumRows('hca_wom_tasks', 'work_order_id='.$id.' AND task_status < 4 AND task_status > 0');
+
+		if ($num_rows == 0)
 		{
-			$task_info = $HcaWOM->getTaskInfo($task_id);
-			if (isset($task_info['assigned_email']))
-			{
-				$SwiftMailer = new SwiftMailer;
-				//$SwiftMailer->isHTML();
+			$DBLayer->update('hca_wom_work_orders', ['wo_status' => 2], $id); // set closed status
 
-				$mail_subject = 'Property Task #'.$task_info['id'];
-				$mail_message = [];
-				$mail_message[] = 'Hello '.$task_info['assigned_name'];
-				$mail_message[] = 'Your Task #'.$task_info['id'].' has been approved and closed by Property Manager.';
-				$mail_message[] = 'Property: '.$task_info['pro_name'];
-				$mail_message[] = 'Unit: '.$task_info['unit_number'];
-				
-				if ($task_info['task_message'] != '')
-					$mail_message[] = 'Details: '.$task_info['task_message'];
-
-				$mail_message[] = 'To view your active tasks follow the link:';
-				$mail_message[] = $URL->genLink('hca_wom_tasks', ['section' => 'active']);
-
-				$SwiftMailer->send($task_info['assigned_email'], $mail_subject, implode("\n", $mail_message));
-			}
+			$flash_message = 'WO #'.$id.' closed.';
+			$FlashMessenger->add_info($flash_message);
+			redirect($URL->link('hca_wom_work_orders'), $flash_message);
 		}
-*/
+
 		// Add flash message
-		$flash_message = 'Task #'.$task_id.' has been closed.';
+		$flash_message = 'Task #'.$task_id.' closed.';
 		$FlashMessenger->add_info($flash_message);
 		redirect('', $flash_message);
 	}
@@ -339,33 +362,6 @@ else if (isset($_POST['delete_task']))
 		);
 		$DBLayer->query_build($query) or error(__FILE__, __LINE__);
 
-/*
-		// notify_technician
-		if ($notify_technician == 1)
-		{
-			$task_info = $HcaWOM->getTaskInfo($task_id);
-			if (isset($task_info['assigned_email']))
-			{
-				$SwiftMailer = new SwiftMailer;
-				//$SwiftMailer->isHTML();
-
-				$mail_subject = 'Property Task #'.$task_info['id'];
-				$mail_message = [];
-				$mail_message[] = 'Hello '.$task_info['assigned_name'];
-				$mail_message[] = 'Your Task #'.$task_info['id'].' has been deleted by Property Manager.';
-				$mail_message[] = 'Property: '.$task_info['pro_name'];
-				$mail_message[] = 'Unit: '.$task_info['unit_number'];
-				
-				if ($task_info['task_message'] != '')
-					$mail_message[] = 'Details: '.$task_info['task_message'];
-
-				$mail_message[] = 'To view your active tasks follow the link:';
-				$mail_message[] = $URL->genLink('hca_wom_tasks', ['section' => 'active']);
-
-				$SwiftMailer->send($task_info['assigned_email'], $mail_subject, implode("\n", $mail_message));
-			}
-		}
-*/
 		// Add flash message
 		$flash_message = 'Task #'.$task_id.' has been deleted.';
 		$FlashMessenger->add_info($flash_message);
@@ -526,7 +522,7 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 			<div class="mb-1">
 				<button type="submit" name="update_wo" class="btn btn-sm btn-primary">Update</button>
 	<?php if ($wo_info['wo_status'] < 2): ?>
-				<button type="submit" name="cancel_wo" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel it? All tasks will be closed.')">Cancel</button>
+				<button type="submit" name="cancel_wo" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel Work Order? All tasks will be closed.')">Cancel</button>
 
 		<?php if ($HcaWOM->areTasksCompleted($tasks_info)): ?>
 				<button type="submit" name="complete_wo" class="btn btn-sm btn-success">Approve Work Order</button>
@@ -555,7 +551,7 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 				<th>#</th>
 				<th>Type</th>
 				<th>Item</th>
-				<th>Action</th>
+				<th>Problem/Action</th>
 				<th>Details</th>
 				<th>Assigned to</th>
 				<th>Completion Date & Time</th>
@@ -587,13 +583,34 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 			$end   = ($cur_info['time_end'] != '00:00:00' ? format_date($cur_info['time_end'], 'H:i') : '');
 			$interval = (($start != '' && $end != '') ? $start.' - '.$end : '');
 
-			$edit = ($access7) ? '<span class="badge bg-primary" role="button" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="manageTask('.$cur_info['id'].')"><i class="fas fa-edit"></i> edit</span>' : '';
+			$edit = ($access7) ? '<span class="badge bg-primary" role="button" data-bs-toggle="modal" data-bs-target="#modalWindow" onclick="manageTask('.$cur_info['id'].')">edit  <i class="fas fa-edit"></i></span>' : '';
+
+			$comments = [];
+			if ($cur_info['tech_comment'] != '' || $cur_info['task_closing_comment'] != '')
+			{
+				if ($cur_info['task_status'] == 4)
+					$comments[] = '<div class="callout callout-primary rounded px-1 mb-1">';
+				else if ($cur_info['task_status'] == 3)
+					$comments[] = '<div class="callout callout-success rounded px-1 mb-1">';
+				else if ($cur_info['task_status'] == 0)
+					$comments[] = '<div class="callout callout-danger rounded px-1 mb-1">';
+				else
+					$comments[] = '<div class="callout callout-warning rounded px-1 mb-1">';
+
+				if ($cur_info['tech_comment'] != '')
+					$comments[] = '<p>Technician: '.html_encode($cur_info['tech_comment']).'</p>';
+				
+				if ($cur_info['task_closing_comment'] != '')
+				{
+					$comments[] = '<hr class="my-0">';
+					$comments[] = '<p>Manager: '.html_encode($cur_info['task_closing_comment']).'</p>';
+				}
+
+				$comments[] = '</div>';
+			}
 ?>
 			<tr>
-				<td class="ta-center">
-					<p>#<?=$cur_info['id']?></p>
-					<p><?php echo $edit ?></p>
-				</td>
+				<td class="ta-center"><p><?php echo $edit ?></p></td>
 				<td class="min-100 ta-center"><?php echo html_encode($cur_info['type_name']) ?></td>
 				<td class="min-100 ta-center"><?php echo html_encode($cur_info['item_name']) ?></td>
 				<td class="min-100 ta-center"><?php echo html_encode($cur_info['problem_name']) ?></td>
@@ -603,7 +620,7 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 					<p><?php echo format_date($cur_info['dt_completed'], 'm/d/Y') ?></p>
 					<p><?php echo $interval ?></p>
 				</td>
-				<td class="min-100"><?php echo html_encode($cur_info['tech_comment']) ?></td>
+				<td class="min-100"><?php echo implode("\n", $comments) ?></td>
 				<td class="min-100 ta-center"><?php echo $task_status ?></td>
 			</tr>
 <?php

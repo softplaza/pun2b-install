@@ -96,6 +96,7 @@ if (isset($_POST['complete']))
 		if (isset($task_info['requested_email']) && $are_tasks_closed && ($Config->get('o_hca_wom_notify_managers') == 1))
 		{
 			$SwiftMailer = new SwiftMailer;
+			$SwiftMailer->addReplyTo($User->get('email'), $User->get('realname')); //email, name
 			//$SwiftMailer->isHTML();
 
 			$mail_subject = 'Property Work Order #'.$task_info['work_order_id'];

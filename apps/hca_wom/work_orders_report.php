@@ -3,10 +3,10 @@
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
-if (!$User->checkAccess('hca_wom', 10))
+if (!$User->checkAccess('hca_wom', 1)) // WO List
 	message($lang_common['No permission']);
 
-$access6 = ($User->checkAccess('hca_wom', 6)) ? true : false; // view WO
+$access6 = ($User->checkAccess('hca_wom', 6)) ? true : false; // View
 
 $HcaWOM = new HcaWOM;
 
@@ -18,7 +18,9 @@ $search_by_unit_number = isset($_GET['unit_number']) ? swift_trim($_GET['unit_nu
 $search_by_assigned_to = isset($_GET['assigned_to']) ? intval($_GET['assigned_to']) : 0;
 
 $search_query = [];
-//$search_query[] = 't.task_status=4'; // Exclude completed
+//$search_query[] = 't.task_status!=0'; // Exclude canceled and On Hold
+//$search_query[] = 't.task_status!=4'; // Exclude completed
+
 if ($is_manager)
 {
 	$property_ids = explode(',', $User->get('property_access'));
@@ -60,7 +62,6 @@ $query = [
 			'ON'			=> 'u1.id=w.assigned_to'
 		],
 */
-
 	],
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
@@ -68,7 +69,7 @@ $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $PagesNavigator->set_total($DBLayer->result($result));
 
 $query = [
-	'SELECT'	=> 't.*, w.property_id, p.pro_name, pu.unit_number, u2.realname AS requested_name, u2.email AS requested_email', // u1.realname AS assigned_name, u1.email AS assigned_email,
+	'SELECT'	=> 'w.*, p.pro_name, pu.unit_number, u2.realname AS requested_name, u2.email AS requested_email', // u1.realname AS assigned_name, u1.email AS assigned_email,
 	'FROM'		=> 'hca_wom_tasks AS t',
 	'JOINS'		=> [
 		[
@@ -95,23 +96,19 @@ $query = [
 */
 	],
 	'LIMIT'		=> $PagesNavigator->limit(),
-	'ORDER BY'	=> 'p.pro_name, LENGTH(pu.unit_number), pu.unit_number',
+	//'ORDER BY'	=> 'p.pro_name, LENGTH(pu.unit_number), pu.unit_number, t.task_status DESC',
+	'ORDER BY'	=> 'p.pro_name, t.task_status, LENGTH(pu.unit_number), pu.unit_number',
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$hca_wom_tasks =  $hca_wom_user_tasks = [];
-while ($row = $DBLayer->fetch_assoc($result))
-{
-	$hca_wom_tasks[] = $row;
-
-	if (!isset($hca_wom_user_tasks[$row['assigned_to']][$row['property_id']]))
-		$hca_wom_user_tasks[$row['assigned_to']][$row['property_id']] = 1;
-	else
-		++$hca_wom_user_tasks[$row['assigned_to']][$row['property_id']];
+$hca_wom_work_orders = $hca_wom_wo_ids = $tasks = [];
+while ($row = $DBLayer->fetch_assoc($result)) {
+	$hca_wom_work_orders[$row['id']] = $row;
+	$hca_wom_wo_ids[$row['id']] = $row['id'];
+	$tasks[] = $row['id'];
 }
-$PagesNavigator->num_items($hca_wom_tasks);
+$PagesNavigator->num_items($hca_wom_work_orders);
 
-$property_names = [];
 $query = array(
 	'SELECT'	=> 'p.*',
 	'FROM'		=> 'sm_property_db AS p',
@@ -125,9 +122,8 @@ if ($User->get('property_access') != '' && $User->get('property_access') != 0)
 }
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $property_info = [];
-while ($row = $DBLayer->fetch_assoc($result)) {
-	$property_info[] = $row;
-	$property_names[$row['id']] = '"'.$row['pro_name'].'"';
+while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
+	$property_info[] = $fetch_assoc;
 }
 
 $query = array(
@@ -139,7 +135,7 @@ $query = array(
 			'ON'			=> 'g.g_id=u.group_id'
 		)
 	),
-	'WHERE'		=> 'u.group_id = 3',// OR u.group_id = 9
+	'WHERE'		=> 'u.group_id=3',
 	'ORDER BY'	=> 'g.g_id, u.realname',
 );
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -148,7 +144,7 @@ while ($fetch_assoc = $DBLayer->fetch_assoc($result)) {
 	$users[] = $fetch_assoc;
 }
 
-$Core->set_page_id('hca_wom_work_orders_report', 'hca_fs');
+$Core->set_page_id('hca_wom_work_orders', 'hca_fs');
 require SITE_ROOT.'header.php';
 ?>
 <nav class="navbar search-bar">
@@ -156,7 +152,6 @@ require SITE_ROOT.'header.php';
 		<div class="container-fluid justify-content-between">
 			<div class="row">
 
-<?php if (!$is_manager): ?>
 				<div class="col-md-auto pe-0 mb-1">
 					<select name="property_id" class="form-select form-select-sm">
 						<option value="">Properties</option>
@@ -171,8 +166,6 @@ foreach ($property_info as $val)
 ?>
 					</select>
 				</div>
-<?php endif; ?>
-
 				<div class="col-md-auto pe-0 mb-1">
 					<input name="unit_number" type="text" value="<?php echo isset($_GET['unit_number']) ? $_GET['unit_number'] : '' ?>" placeholder="Unit #" class="form-control form-control-sm" size="5">
 				</div>
@@ -203,179 +196,187 @@ foreach ($users as $cur_user)
 
 				<div class="col-md-auto">
 					<button type="submit" class="btn btn-sm btn-outline-success">Search</button>
-					<a href="<?php echo $URL->link('hca_wom_work_orders_report') ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
+					<a href="<?php echo $URL->link('hca_wom_work_orders') ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
 				</div>
 			</div>
 		</div>
 	</form>
 </nav>
 
-<div class="card-header">
-	<h6 class="card-title mb-0">Availability of Maintenance</h6>
-</div>
-<div id="chart_work_orders_summary" class="mb-3"></div>
-
-<div class="card-header">
+<div class="card-header ">
 	<h6 class="card-title mb-0">Work Orders Report</h6>
 </div>
+
 <?php
-if (!empty($hca_wom_tasks))
+if (!empty($hca_wom_work_orders))
 {
+	$hca_wom_tasks = [];
+	$query = [
+		'SELECT'	=> 't.*, i.item_name, tp.type_name, pb.problem_name',
+		'FROM'		=> 'hca_wom_tasks AS t',
+		'JOINS'		=> [
+			[
+				'LEFT JOIN'		=> 'hca_wom_items AS i',
+				'ON'			=> 'i.id=t.item_id'
+			],
+			[
+				'LEFT JOIN'		=> 'hca_wom_types AS tp',
+				'ON'			=> 'tp.id=i.item_type'
+			],
+			[
+				'LEFT JOIN'		=> 'hca_wom_problems AS pb',
+				'ON'			=> 'pb.id=t.task_action'
+			],
+		],
+		'WHERE'		=> 't.work_order_id IN ('.implode(',', $hca_wom_wo_ids).')',
+		'ORDER BY'	=> 't.task_status',
+	];
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	while ($row = $DBLayer->fetch_assoc($result))
+	{
+		$hca_wom_tasks[] = $row;
+	}
 ?>
+
 <table class="table table-striped table-bordered">
 	<thead>
 		<tr>
-			<th>Property/Unit #</th>
-			<th>Details</th>
+			<th>WO #</th>
+			<th>Unit #</th>
+			<th>Task Information</th>
+			<th>Priority</th>
 			<th>Status</th>
+			<th>Submitted on</th>
+			<th>Tasks</th>
+			<th>Print</th>
 		</tr>
 	</thead>
 	<tbody>
 <?php
-	$property_id = 0;
-	foreach ($hca_wom_tasks as $cur_info)
-	{
-		$view_wo = ($access6) ? '<p><a href="'.$URL->link('hca_wom_work_order', $cur_info['work_order_id']).'" class="badge bg-primary text-white">view</a></p>' : '';
 
+	$property_id = 0;
+	foreach ($hca_wom_work_orders as $cur_info)
+	{
 		$cur_info['unit_number'] = ($cur_info['unit_number'] != '') ? $cur_info['unit_number'] : 'Common area';
 
-		if ($cur_info['task_status'] == 4)
-			$status = '<span class="badge badge-primary">Closed</span>';
+		if ($cur_info['priority'] == 2)
+			$priority = '<span class="text-danger fw-bold">High</span>';
+		else if ($cur_info['priority'] == 1)
+			$priority = '<span class="text-warning fw-bold">Medium</span>';
 		else
+			$priority = '<span class="text-primary fw-bold">Low</span>';
+
+		if ($cur_info['wo_status'] == 3)
+			$status = '<span class="badge badge-danger">Canceled</span>';
+		else if ($cur_info['wo_status'] == 2)
+			$status = '<span class="badge badge-primary">Closed</span>';
+		else if ($cur_info['wo_status'] == 1)
 			$status = '<span class="badge badge-warning">Open</span>';
+		else if ($cur_info['wo_status'] == 0)
+			$status = '<span class="badge badge-secondary">On-Hold</span>';
+		else	
+			$status = '<span class="badge badge-warning">Open</span>';
+
+		$task_info = [];
+		if (!empty($hca_wom_tasks))
+		{
+			$i = 1;
+			foreach($hca_wom_tasks as $cur_task)
+			{
+				if ($cur_info['id'] == $cur_task['work_order_id'])
+				{
+					$items = [];
+
+					if ($cur_task['task_status'] == 4)
+						$task_info[] = '<div class="callout callout-primary rounded px-1 mb-1 min-w-15 position-relative">';
+					else if ($cur_task['task_status'] == 3)
+						$task_info[] = '<div class="callout callout-success rounded px-1 mb-1 min-w-15 position-relative">';
+					else if ($cur_task['task_status'] == 0)
+						$task_info[] = '<div class="callout callout-danger rounded px-1 mb-1 min-w-15 position-relative">';
+					else
+						$task_info[] = '<div class="callout callout-warning rounded px-1 mb-1 min-w-15 min-h-4 position-relative">';
+
+					$task_info[] = '<p>';
+					$task_info[] = '<span class="fw-bold">'.html_encode($cur_task['type_name']).', </span>';
+					$task_info[] = '<span class="fw-bold">'.html_encode($cur_task['item_name']).'</span>';
+					$task_info[] = ' ('.html_encode($cur_task['problem_name']).')';
+					$task_info[] = '</p>';
+
+					if ($cur_task['task_status'] == 4)
+						$task_info[] = '<span class="fw-bold text-primary small position-absolute bottom-0 end-0 me-1">Closed</span>';
+					else if ($cur_task['task_status'] == 3)
+						$task_info[] = '<span class="fw-bold text-success small position-absolute bottom-0 end-0 me-1">Ready for review</span>';
+					else if ($cur_task['task_status'] == 0)
+						$task_info[] = '<span class="fw-bold text-danger small position-absolute bottom-0 end-0 me-1">Canceled</span>';	
+					else
+						$task_info[] = '<span class="fw-bold text-warning small position-absolute bottom-0 end-0 me-1">Open</span>';
+
+					$task_info[] = '<p>'.html_encode($cur_task['task_message']).'</p>';
+
+					if ($cur_task['task_status'] == 3 && $cur_task['tech_comment'] != '')
+						$task_info[] = '<p class="text-muted">[ '.html_encode($cur_task['tech_comment']).' ]</p>';
+
+					$task_info[] = '</div>';
+
+					//if ($cur_task['task_status'] < 4)
+					//	$status = '<span class="badge badge-warning">Open</span>';
+
+					++$i;
+				}
+			}
+		}
 
 		if ($property_id != $cur_info['property_id'])
 		{
-			echo '<tr class="table-primary"><td colspan="7" class="fw-bold">'.html_encode($cur_info['pro_name']).'</td></tr>';
+			echo '<tr class="table-primary"><td colspan="8" class="fw-bold">'.html_encode($cur_info['pro_name']).'</td></tr>';
 			$property_id = $cur_info['property_id'];
 		}
+
+		$view_wo = ($access6) ? '<p><a href="'.$URL->link('hca_wom_work_order', $cur_info['id']).'" class="badge bg-primary text-white">view</a></p>' : '';
 ?>
-		<tr>
-			<td>
-				<span class="fw-bold"><a href="<?=$URL->link('hca_wom_work_order', $cur_info['work_order_id'])?>"><?php echo html_encode($cur_info['unit_number']) ?></a></span>
-				<span class="float-end"><?php echo $view_wo ?></span>
+		<tr id="row<?php echo $cur_info['id'] ?>" class="<?php echo ($id == $cur_info['id'] ? ' anchor' : '') ?>">
+			<td class="min-100">
+				#<?php echo $cur_info['id'] ?>
+				<?php echo $view_wo ?>
 			</td>
-			<td class="min-100"><?php echo html_encode($cur_info['task_message']) ?></td>
+			<td class="min-100 ta-center fw-bold"><?php echo html_encode($cur_info['unit_number']) ?></td>
+			<td class="min-100">
+				<?php echo implode("\n", $task_info) ?>
+			</td>
+			<td class="min-100 ta-center"><?php echo $priority ?></td>
 			<td class="min-100 ta-center"><?php echo $status ?></td>
+			<td class="min-100 ta-center"><?php echo format_date($cur_info['dt_created'], 'm/d/Y') ?></td>
+			<td class="ta-center"><?php echo $cur_info['num_tasks'] ?></td>
+			<td class="ta-center">
+				<a href="<?=$URL->genLink('hca_wom_print', ['section' => 
+'work_order', 'id' => $cur_info['id']])?>" target="_blank"><i class="fas fa-print fa-lg" aria-hidden="true"></i></a>
+			</td>
 		</tr>
 <?php
-
 	}
 ?>
 	</tbody>
 </table>
 
-<?php
-/*
-$date = new \DateTime();
-$date->setTime(0, 0, 0);
-
-if ($date->format('N') != 1)
-	$date->modify('last monday');
-*/
-?>
-
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script>
-var options = {
-	series: [<?php
-foreach($users as $cur_user)
-{
-	echo '{';
-	echo 'name: "'.html_encode($cur_user['realname']).'",';
-	echo 'data: [';
-	foreach($property_info as $property)
-	{
-		$property_ident = false;
-		foreach($hca_wom_user_tasks as $key => $data)
-		{
-			if ($key == $cur_user['id'] && isset($data[$property['id']]))
-			{
-				echo $data[$property['id']].',';
-				$property_ident = true;
-				break;
-			}
-		}
-		if (!$property_ident)
-			echo '0,';
-	}
-	echo ']';
-	echo '},';
-}
-?>
-	],
-	chart: {
-		height: 750,
-		type: 'heatmap',
-		toolbar: {
-            show: false
-        }
-	},
-	stroke: {
-		width: 5
-	},
-	/*
-	grid: {
-		padding: {
-		right: 20
-		}
-	},*/
-	plotOptions: {
-		heatmap: {
-			radius: 5,
-			enableShades: false,
-			colorScale: {
-				/*inverse: true,*/
-				ranges: [{
-					from: 0,
-					to: 0,
-					color: '#eaf2ff',//#9ae7be 
-					name: 'No tasks',
-				},
-				{
-					from: 1,
-					to: 5,
-					color: '#33A1FD',
-					name: '1-5 tasks',
-				},
-				{
-					from: 6,
-					to: 10,
-					color: '#ff7f53',
-					name: '6-10 tasks',
-				},
-				{
-					from: 11,
-					to: 50,
-					color: '#c72121',
-					name: '11-50 tasks',
-				},
-
-
-				],
-			},
-		}
-	},
-	dataLabels: {
-		enabled: true,
-		style: {
-			colors: ['#eaf2ff']
-		}
-	},
-	xaxis: {
-		type: 'category',
-		categories: [<?php echo implode(',', $property_names) ?>]
-	},
-	title: {
-		//text: 'Maintenance Availability Schedule'
-	},
-};
-
-var chart = new ApexCharts(document.querySelector("#chart_work_orders_summary"), options);
-chart.render();
-</script>
-
-
+<div class="modal fade" id="modalWindow" tabindex="-1" aria-labelledby="modalWindowLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<form method="post" accept-charset="utf-8" action="">
+				<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
+				<div class="modal-header">
+					<h5 class="modal-title">Follow Up Date</h5>
+					<button type="button" class="btn-close bg-danger" data-bs-dismiss="modal" aria-label="Close" onclick="clearModalFields()"></button>
+				</div>
+				<div class="modal-body">
+					<!--modal_fields-->
+				</div>
+				<div class="modal-footer">
+					<!--modal_buttons-->
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
 
 <?php
 }

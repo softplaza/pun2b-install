@@ -13,7 +13,7 @@ $schema = array(
 		'template_type'			=> $DBLayer->dt_int('TINYINT(1)'),
 		'enter_permission'		=> $DBLayer->dt_int('TINYINT(1)'),
 		'has_animal'			=> $DBLayer->dt_int('TINYINT(1)'),
-		'wo_status'				=> $DBLayer->dt_int('TINYINT(1)'),
+		'wo_status'				=> $DBLayer->dt_int('TINYINT(1)'),// 3 - closed
 
 		'requested_by'			=> $DBLayer->dt_int(),
 		'created_by'			=> $DBLayer->dt_int(),

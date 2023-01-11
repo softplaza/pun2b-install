@@ -309,7 +309,7 @@ var options = {
     chart: {
         type: 'bar',
         height: 265,
-        width: 300,
+        width: '100%',
         toolbar: {
             show: false
         }

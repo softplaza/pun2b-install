@@ -136,6 +136,7 @@ $type_actions = [
 	3 => 'System message',
 	4 => '404 Page not found',
 	5 => 'AJAX Requests',
+	6 => 'CSRF Token'
 ];
 echo '<option value="-1" selected>Type of actions</option>';
 foreach($type_actions as $key => $value)
@@ -184,14 +185,20 @@ if (!empty($swift_user_actions))
 		$user_name = ($cur_info['realname'] != '') ? '<a href="'.$URL->link('user', $cur_info['a_user_id']).'">'.html_encode($cur_info['realname']).'</a>' : 'Guest';
 		$projet_name = isset($Hooks->apps_info[$cur_info['a_project_id']]['id']) ? html_encode($Hooks->apps_info[$cur_info['a_project_id']]['title']) : '';
 
-		$status = ($cur_info['a_type'] == 0) ? '<span class="badge badge-success">'.html_encode($cur_info['a_http_code']).'</span>' : '<span class="badge badge-danger">'.html_encode($cur_info['a_http_code']).'</span>';
+		if (in_array($cur_info['a_type'], [2,3,4]))
+			$status = '<span class="badge badge-danger">'.html_encode($cur_info['a_http_code']).'</span>';
+		else if (in_array($cur_info['a_type'], [1,6]))
+			$status = '<span class="badge badge-warning">'.html_encode($cur_info['a_http_code']).'</span>';	
+		else
+			$status = '<span class="badge badge-success">'.html_encode($cur_info['a_http_code']).'</span>';
+
 ?>
 		<tr>
-			<td><?php echo format_time($cur_info['a_time']) ?></td>
+			<td><?php echo format_time($cur_info['a_time'], 0, 'y-m-d H:i:s', false) ?></td>
 			<td><?php echo $user_name ?></td>
 			<td><?php echo html_encode($cur_info['a_ip']) ?></td>
 			<td><?php echo $projet_name ?></td>
-			<td><?php echo $status ?></td>
+			<td class="ta-center"><?php echo $status ?></td>
 			<td><?php echo html_encode($cur_info['a_message']) ?></td>
 			<td><a href="<?php echo BASE_URL.$cur_info['a_cur_url'] ?>" target="_blank"><?php echo html_encode($cur_info['a_cur_url']) ?></a></td>
 			<td><?php echo html_encode($cur_info['a_user_agent']) ?></td>

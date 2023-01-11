@@ -1438,8 +1438,7 @@ function delete_avatar($user_id)
 // Used when the CSRF token from the request does not match the token stored in the database.
 function csrf_confirm_form()
 {
-	global $Core, $DBLayer, $URL, $PagesNavigator, $FlashMessenger, $Templator, $Loader, $User, $Config, $Hooks, $SwiftMenu, $page_param;
-	global $lang_common, $microtime_start, $tpl_main;
+	global $User, $page_param, $lang_common, $Core, $DBLayer, $URL, $PagesNavigator, $FlashMessenger, $Templator, $Loader, $Config, $Hooks, $SwiftMenu, $microtime_start, $tpl_main;
 
 	// If we've disabled the CSRF check for this page, we have nothing to do here.
 	if (defined('SPM_DISABLE_CSRF_CONFIRM'))
@@ -1510,35 +1509,28 @@ function csrf_confirm_form()
 	define('PAGE_ID', 'dialogue');
 	require SITE_ROOT.'header.php';
 
-	// START SUBST - <!--page_content-->
-	ob_start();
-
 ?>
-<div class="main">
-	<div class="main-subhead">
-		<h6 class="hn"><span><?php echo $lang_common['Confirm action head'] ?></span></h6>
+
+<form method="post" accept-charset="utf-8" action="<?php echo html_encode($page_param['form_action']) ?>">
+	<div class="hidden">
+		<?php echo implode("\n\t\t\t\t", $page_param['hidden_fields'])."\n" ?>
 	</div>
-	<div class="main-content main-frm">
-		<div class="ct-box info-box">
-			<p><?php echo $lang_common['CSRF token mismatch'] ?></p>
+	<div class="card">
+		<div class="card-body">
+			<div class="callout callout-warning mb-3">
+				<h6 class="text-danger"><?php echo $lang_common['Confirm action head'] ?></h6>
+				<p><?php echo $lang_common['CSRF token mismatch'] ?></p>
+				<hr>
+				<button type="submit" class="btn btn-primary">Confirm</button>
+				<button type="submit" name="confirm_cancel" class="btn btn-secondary">Cancel</button>
+			</div>
 		</div>
-		<form method="post" accept-charset="utf-8" action="<?php echo html_encode($page_param['form_action']) ?>">
-			<div class="hidden">
-				<?php echo implode("\n\t\t\t\t", $page_param['hidden_fields'])."\n" ?>
-			</div>
-			<div class="frm-buttons">
-				<span class="submit primary"><input type="submit" value="<?php echo $lang_common['Confirm'] ?>" /></span>
-				<span class="cancel"><input type="submit" name="confirm_cancel" value="<?php echo $lang_common['Cancel'] ?>" /></span>
-			</div>
-		</form>
 	</div>
-</div>
+</form>
+
 <?php
 
-	$tpl_temp = swift_trim(ob_get_contents());
-	$tpl_main = str_replace('<!--page_content-->', $tpl_temp, $tpl_main);
-	ob_end_clean();
-	// END SUBST - <!--page_content-->
+	$Hooks->get_hook('IncludeFunctionsCsrfConfirmForm');
 
 	require SITE_ROOT.'footer.php';
 }

@@ -65,6 +65,7 @@ if (isset($_POST['add']))
 				if (isset($task_info['created_email']))
 				{
 					$SwiftMailer = new SwiftMailer;
+					$SwiftMailer->addReplyTo($User->get('email'), $User->get('realname')); //email, name
 					//$SwiftMailer->isHTML();
 
 					$mail_subject = 'Property Request #'.$new_id;
@@ -88,7 +89,7 @@ if (isset($_POST['add']))
 			}
 
 			// Add flash message
-			$flash_message = 'Request #'.$new_fsid.' has been sent to In-House Schedule.';
+			$flash_message = 'Request #'.$new_fsid.' sent to In-House Schedule.';
 			$FlashMessenger->add_info($flash_message);
 			redirect($URL->link('hca_wom_work_order_new', $new_fsid), $flash_message);
 		}
@@ -135,6 +136,7 @@ if (isset($_POST['add']))
 					if (isset($task_info['assigned_email']))
 					{
 						$SwiftMailer = new SwiftMailer;
+						$SwiftMailer->addReplyTo($User->get('email'), $User->get('realname')); //email, name
 						//$SwiftMailer->isHTML();
 
 						$mail_subject = 'Property Work Order #'.$new_id;
@@ -157,7 +159,7 @@ if (isset($_POST['add']))
 			}
 
 			// Add flash message
-			$flash_message = 'Property Work Order has been created.';
+			$flash_message = 'Property Work Order created.';
 			$FlashMessenger->add_info($flash_message);
 			redirect($URL->link('hca_wom_work_order', $new_id), $flash_message);
 		}

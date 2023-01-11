@@ -1918,12 +1918,16 @@ table .tcr{
     color: #0d6681 !important;
 }
 .callout-primary{
+    border: 1px solid #b6d4fe;
     border-left-color:rgb(13,110,253)!important;
-    background-color: #dfe7f6 !important;
+    background-color: #cfe2ff !important;
+    color: #084298 !important;
 }
 .callout-secondary {
-    border-left-color:#40464f !important;
-    background-color: #ebedef !important;
+    border: 1px solid #9da2e2;
+    border-left-color:#534f72 !important;
+    background-color: #bbbfec !important;
+    color: #463b5f !important;
 }
 .callout-warning{
     border: 1px solid #ffed9a;

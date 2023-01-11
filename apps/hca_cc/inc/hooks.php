@@ -54,7 +54,7 @@ function hca_cc_IncludeCommon()
 function hca_cc_FooterEnd()
 {
 	global $DBLayer, $SwiftMailer, $User;
-
+/*
     //
     if (!$SwiftMailer->sent && $User->is_guest())
     {
@@ -66,15 +66,6 @@ function hca_cc_FooterEnd()
         $query = [
             'SELECT'	=> 'i.*',
             'FROM'		=> 'hca_cc_items AS i',
-            /*
-            'JOINS'		=> [
-                [
-                    'LEFT JOIN'		=> 'users AS u',
-                    'ON'			=> 'u.id=i.action_owner'
-                ],
-    
-            ],
-            */
             'WHERE'		=> 'i.date_due < \''.$next_month.'\'',
             'ORDER BY'	=> 'i.last_notified'
         ];
@@ -146,6 +137,7 @@ function hca_cc_FooterEnd()
             }
         }
     }
+*/
 }
 
 class HcaCCHooks

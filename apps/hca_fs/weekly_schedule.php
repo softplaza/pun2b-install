@@ -248,6 +248,7 @@ else if (isset($_POST['assign_task']))
 			if (isset($hca_fs_task['manager_email']) && $Config->get('o_hca_wom_notify_managers_from_inhouse') == 1)
 			{
 				$SwiftMailer = new SwiftMailer;
+				$SwiftMailer->addReplyTo($User->get('email'), $User->get('realname')); //email, name
 				//$SwiftMailer->isHTML();
 
 				$mail_subject = 'Property Request is in The Facility Schedule';
@@ -394,6 +395,7 @@ else if (isset($_POST['send_schedule']))
 
 		$mail_message[] = 'Your weekly schedule has been updated.';
 		$SwiftMailer = new SwiftMailer;
+		$SwiftMailer->addReplyTo($User->get('email'), $User->get('realname')); //email, name
 
 		$mail_message[] = 'To view your schedule, follow the link below:';
 		$mail_message[] = $URL->link('hca_fs_weekly_technician_schedule', [$gid, $id, date('Y-m-d', $week_of)])."\n";

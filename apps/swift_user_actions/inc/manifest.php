@@ -14,5 +14,5 @@ $app_info = [
 	// Application's author
 	'author'		=> 'SwiftProjectManager.Com',
 	// Last version of application
-	'version'		=> '1.26'
+	'version'		=> '1.27'
 ];

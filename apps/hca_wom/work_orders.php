@@ -54,11 +54,12 @@ if (isset($_POST['add_task']))
 			if (isset($task_info['assigned_email']) && $task_info['assigned_email'] != '')
 			{
 				$SwiftMailer = new SwiftMailer;
+				$SwiftMailer->addReplyTo($User->get('email'), $User->get('realname')); //email, name
 				//$SwiftMailer->isHTML();
 
 				$mail_subject = 'Property Task #'.$task_info['id'];
 				$mail_message = [];
-				$mail_message[] = 'Hello '.$task_info['assigned_name'];
+				//$mail_message[] = 'Hello '.$task_info['assigned_name'];
 				$mail_message[] = 'You have been assigned to a new task.';
 				$mail_message[] = 'Property: '.$task_info['pro_name'];
 				$mail_message[] = 'Unit: '.$task_info['unit_number'];
@@ -74,11 +75,12 @@ if (isset($_POST['add_task']))
 		}
 
 		// Add flash message
-		$flash_message = 'Task #'.$new_tid.' was created.';
+		$flash_message = 'Task #'.$new_tid.' created.';
 		$FlashMessenger->add_info($flash_message);
 		redirect('', $flash_message);
 	}
 }
+
 else if (isset($_POST['update_task']))
 {
 	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
@@ -89,9 +91,6 @@ else if (isset($_POST['update_task']))
 	if (isset($_POST['item_id'])) $form_data['item_id'] = intval($_POST['item_id']);
 	if (isset($_POST['task_action'])) $form_data['task_action'] = intval($_POST['task_action']);
 	if (isset($_POST['assigned_to'])) $form_data['assigned_to'] = intval($_POST['assigned_to']);
-
-	//if ($form_data['assigned_to'] == 0)
-	//	$Core->add_error('Select technician.');
 
 	if (empty($Core->errors) && $task_id > 0 && !empty($form_data))
 	{
@@ -104,12 +103,13 @@ else if (isset($_POST['update_task']))
 			$task_info = $HcaWOM->getTaskInfo($task_id);
 
 			$SwiftMailer = new SwiftMailer;
+			$SwiftMailer->addReplyTo($User->get('email'), $User->get('realname')); //email, name
 			//$SwiftMailer->isHTML();
 
 			$mail_subject = 'Property Task #'.$task_info['id'];
 			$mail_message = [];
-			$mail_message[] = 'Hello '.$task_info['assigned_name'];
-			$mail_message[] = 'You have been assigned to a new task.';
+			//$mail_message[] = 'Hello '.$task_info['assigned_name'];
+			$mail_message[] = 'Task #'.$task_info['id'].' updated. See changes bellow.';
 			$mail_message[] = 'Property: '.$task_info['pro_name'];
 			$mail_message[] = 'Unit: '.$task_info['unit_number'];
 			
@@ -123,19 +123,56 @@ else if (isset($_POST['update_task']))
 		}
 		
 		// Add flash message
-		$flash_message = 'Task #'.$task_id.' was updated.';
+		$flash_message = 'Task #'.$task_id.' updated.';
 		$FlashMessenger->add_info($flash_message);
 		redirect('', $flash_message);
 	}
 }
+
+else if (isset($_POST['cancel_task']))
+{
+	$work_order_id = isset($_POST['work_order_id']) ? intval($_POST['work_order_id']) : 0;
+	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
+
+	$form_data = [
+		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
+		'task_status'	=> 0, // canceled
+	];
+
+	if (empty($Core->errors) && $task_id > 0 && $work_order_id > 0)
+	{
+		// Update task of Work Order
+		$DBLayer->update('hca_wom_tasks', $form_data, $task_id);
+
+		// Check if WO still has opened tasks, if not close WO automatically
+		// Count only Opened task, NOT Canceled and NOT completed
+		$num_rows = $DBLayer->getNumRows('hca_wom_tasks', 'work_order_id='.$work_order_id.' AND task_status < 4 AND task_status > 0');
+
+		if ($num_rows == 0)
+		{
+			$DBLayer->update('hca_wom_work_orders', ['wo_status' => 2], $work_order_id); // set status as Closed
+
+			$flash_message = 'Task #'.$task_id.' canceled and WO #'.$work_order_id.' closed.';
+			$FlashMessenger->add_info($flash_message);
+			redirect('', $flash_message);
+		}
+
+		// Add flash message
+		$flash_message = 'Task #'.$task_id.' canceled.';
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
+	}
+}
+
 else if (isset($_POST['close_task']))
 {
+	$work_order_id = isset($_POST['work_order_id']) ? intval($_POST['work_order_id']) : 0;
 	$task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
 
 	$form_data = [
 		//'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
 		'task_closing_comment'	=> isset($_POST['task_closing_comment']) ? swift_trim($_POST['task_closing_comment']) : '',
-		'task_status'			=> 4,
+		'task_status'			=> 4, // closed
 	];
 
 	if (empty($Core->errors) && $task_id > 0)
@@ -143,8 +180,20 @@ else if (isset($_POST['close_task']))
 		// Update task of Work Order
 		$DBLayer->update('hca_wom_tasks', $form_data, $task_id);
 
+		// Check if WO still has opened tasks, if not close WO automatically
+		$num_rows = $DBLayer->getNumRows('hca_wom_tasks', 'work_order_id='.$work_order_id.' AND task_status < 4 AND task_status > 0');
+
+		if ($num_rows == 0)
+		{
+			$DBLayer->update('hca_wom_work_orders', ['wo_status' => 2], $work_order_id); // set status as Closed
+
+			$flash_message = 'WO #'.$work_order_id.' closed.';
+			$FlashMessenger->add_info($flash_message);
+			redirect('', $flash_message);
+		}
+
 		// Add flash message
-		$flash_message = 'Task #'.$task_id.' has been closed.';
+		$flash_message = 'Task #'.$task_id.' closed.';
 		$FlashMessenger->add_info($flash_message);
 		redirect('', $flash_message);
 	}
@@ -336,8 +385,9 @@ foreach ($users as $cur_user)
 	</form>
 </nav>
 
-<div class="card-header ">
+<div class="card-header d-flex justify-content-between">
 	<h6 class="card-title mb-0">List of Work Orders</h6>
+	<a href="<?=$URL->link('hca_wom_work_order_new', 0)?>" class="badge bg-primary text-white">New Work Order</a>
 </div>
 
 <?php
@@ -345,7 +395,7 @@ if (!empty($hca_wom_work_orders))
 {
 	$hca_wom_tasks = [];
 	$query = [
-		'SELECT'	=> 't.*, i.item_name, tp.type_name, pb.problem_name',
+		'SELECT'	=> 't.*, i.item_name, tp.type_name, pb.problem_name, u1.realname',
 		'FROM'		=> 'hca_wom_tasks AS t',
 		'JOINS'		=> [
 			[
@@ -360,8 +410,12 @@ if (!empty($hca_wom_work_orders))
 				'LEFT JOIN'		=> 'hca_wom_problems AS pb',
 				'ON'			=> 'pb.id=t.task_action'
 			],
+			[
+				'INNER JOIN'	=> 'users AS u1',
+				'ON'			=> 'u1.id=t.assigned_to'
+			],
 		],
-		'WHERE'		=> 't.task_status < 4 AND t.work_order_id IN ('.implode(',', $hca_wom_wo_ids).')',
+		'WHERE'		=> 't.task_status > 0 AND t.task_status < 4 AND t.work_order_id IN ('.implode(',', $hca_wom_wo_ids).')',
 		'ORDER BY'	=> 't.task_status DESC',
 	];
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -413,8 +467,10 @@ if (!empty($hca_wom_work_orders))
 
 					if ($cur_task['task_status'] == 3)
 						$task_info[] = '<div class="callout callout-success rounded px-1 mb-1 min-w-15 position-relative">';
+					else if ($cur_task['task_status'] == 0)
+						$task_info[] = '<div class="callout callout-danger rounded px-1 mb-1 min-w-15 position-relative">';
 					else
-						$task_info[] = '<div class="callout callout-warning rounded px-1 mb-1 min-w-15 position-relative">';
+						$task_info[] = '<div class="callout callout-warning rounded px-1 mb-1 min-w-15 min-h-4 position-relative">';
 
 					$task_info[] = '<p>';
 					$task_info[] = '<span class="float-end" onclick="quickManageTask(0,'.$cur_task['id'].')" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="fas fa-edit fa-lg"></i></span>';
@@ -425,13 +481,17 @@ if (!empty($hca_wom_work_orders))
 
 					if ($cur_task['task_status'] == 3)
 						$task_info[] = '<span class="fw-bold text-success small position-absolute bottom-0 end-0">Ready for review</span>';
+					else if ($cur_task['task_status'] == 0)
+						$task_info[] = '<span class="fw-bold text-danger small position-absolute bottom-0 end-0">Canceled</span>';				
 					else
 						$task_info[] = '<span class="fw-bold text-warning small position-absolute bottom-0 end-0">Open</span>';
 
 					$task_info[] = '<p>'.html_encode($cur_task['task_message']).'</p>';
 
 					if ($cur_task['task_status'] == 3 && $cur_task['tech_comment'] != '')
-						$task_info[] = '<p class="text-muted">[ '.html_encode($cur_task['tech_comment']).' ]</p>';
+						$task_info[] = '<p class="text-muted">'.html_encode($cur_task['realname']).': ['.html_encode($cur_task['tech_comment']).']</p>';
+					else
+						$task_info[] = '<p class="text-muted">Assigned to: '.html_encode($cur_task['realname']).'</p>';
 
 					$task_info[] = '</div>';
 
