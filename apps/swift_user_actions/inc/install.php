@@ -11,6 +11,7 @@ $schema = array(
 
 		'a_url_from'		=> $DBLayer->dt_varchar(),
 		'a_cur_url'			=> $DBLayer->dt_varchar(),
+		'a_referer_url'		=> $DBLayer->dt_varchar(),
 		'a_project_id'		=> $DBLayer->dt_varchar(),
 		'a_message'			=> $DBLayer->dt_text(),
 		'a_http_code'		=> $DBLayer->dt_varchar(),
@@ -19,6 +20,7 @@ $schema = array(
 	),
 );
 $DBLayer->create_table('swift_user_actions', $schema);
+$DBLayer->add_field('swift_user_actions', 'a_referer_url', 'VARCHAR(255)', false, '');
 
 $schema = array(
 	'FIELDS'	=> array(

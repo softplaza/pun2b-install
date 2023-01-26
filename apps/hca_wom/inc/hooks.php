@@ -20,14 +20,16 @@ function hca_wom_co_modify_url_scheme()
     $urls['hca_wom_tasks'] = 'apps/hca_wom/tasks.php';
     $urls['hca_wom_work_order_suggest'] = 'apps/hca_wom/work_order_suggest.php';
 
-    // ajax updates
+    // ajax requests
     $urls['hca_wom_ajax_get_units'] = 'apps/hca_wom/ajax/get_units.php';
     $urls['hca_wom_ajax_get_items'] = 'apps/hca_wom/ajax/get_items.php';
     $urls['hca_wom_ajax_manage_task'] = 'apps/hca_wom/ajax/manage_task.php';
     $urls['hca_wom_ajax_quick_manage_task'] = 'apps/hca_wom/ajax/quick_manage_task.php';
     $urls['hca_wom_ajax_manage_tpl_task'] = 'apps/hca_wom/ajax/manage_tpl_task.php';
     $urls['hca_wom_ajax_get_wo_template'] = 'apps/hca_wom/ajax/get_wo_template.php';
-    
+    $urls['hca_wom_ajax_get_new_task'] = 'apps/hca_wom/ajax/get_new_task.php';
+    $urls['hca_wom_ajax_search_dupe_wo'] = 'apps/hca_wom/ajax/search_dupe_wo.php';
+
     // management
     $urls['hca_wom_admin_access'] = 'apps/hca_wom/admin_access.php';
     $urls['hca_wom_admin_permissions'] = 'apps/hca_wom/admin_permissions.php';
@@ -131,7 +133,114 @@ class HcaWOMHooks
             echo '</div>';
         }
     }
+
+    public function ReportBody()
+    {
+        global $DBLayer, $URL;
+
+        $query = [
+            'SELECT'	=> 't.*, p.pro_name, tp.type_name, pb.problem_name',
+            'FROM'		=> 'hca_wom_tasks AS t',
+            'JOINS'		=> [
+                [
+                    'INNER JOIN'	=> 'hca_wom_work_orders AS w',
+                    'ON'			=> 'w.id=t.work_order_id'
+                ],
+                [
+                    'INNER JOIN'	=> 'sm_property_db AS p',
+                    'ON'			=> 'p.id=w.property_id'
+                ],
+                [
+                    'LEFT JOIN'		=> 'hca_wom_items AS i',
+                    'ON'			=> 'i.id=t.item_id'
+                ],
+                [
+                    'LEFT JOIN'		=> 'hca_wom_types AS tp',
+                    'ON'			=> 'tp.id=i.item_type'
+                ],
+                [
+                    'LEFT JOIN'		=> 'hca_wom_problems AS pb',
+                    'ON'			=> 'pb.id=t.task_action'
+                ],
+            ],
+            'ORDER BY'	=> 't.dt_completed',
+            'WHERE'     => 't.task_status!=4'
+        ];
+        //if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
+        $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+        $column_data = $pie_data = [];
+        while ($row = $DBLayer->fetch_assoc($result))
+        {
+            if ($row['pro_name'] != '')
+            {
+                $pro_name = '"'.$row['pro_name'].'"';
+                $column_data[$pro_name] = (isset($column_data[$pro_name])) ? ++$column_data[$pro_name] : 1;
+            }
+        }
+?>
+     <div class="col-xxl-4 col-xl-6 mb-3">
+        <h4 class="card-title"><a href="<?=$URL->link('hca_wom_work_orders')?>">Property Work Orders</a></h4>
+        <hr class="my-2">
+        <div id="chart_hca_wom"></div>
+    </div>
+
+<script>
+var options5 = {
+    series: [{
+        name: 'Num tasks',
+        data: [<?php echo implode(',', array_values($column_data)) ?>]
+    }],
+        chart: {
+        type: 'bar',
+        height: 265,
+        width: '100%',
+        toolbar: {
+            show: false
+        }
+    },
+    plotOptions: {
+        bar: {
+        horizontal: false,
+        }
+    },
+    dataLabels: {
+        enabled: false
+    },
+    title: {
+        text: 'Number of opened property tasks'
+    },
+    dataLabels: {
+        enabled: true,
+        
+        style: {
+        fontSize: '12px',
+        colors: ['#fff']
+        }
+    },
+    stroke: {
+        show: true,
+        width: 1,
+        colors: ['#fff']
+    },
+    legend: {
+        position: 'top',
+        horizontalAlign: 'left',
+        offsetX: 50
+    },
+    xaxis: {
+        categories: [<?php echo implode(',', array_keys($column_data)) ?>],
+    }
+};
+
+var chart = new ApexCharts(document.querySelector("#chart_hca_wom"), options5);
+chart.render();
+</script>
+
+<?php
+    }
 }
 
 //Hook::addAction('HookName', ['AppClass', 'MethodOfAppClass']);
 Hook::addAction('ProfileAdminAccess', ['HcaWOMHooks', 'ProfileAdminAccess']);
+
+Hook::addAction('ReportBody', ['HcaWOMHooks', 'ReportBody']);

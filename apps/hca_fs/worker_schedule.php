@@ -170,7 +170,7 @@ if (!empty($requests_info))
 		<h6 class="card-title mb-0">Active Work Orders (<?php echo count($requests_id) ?>)</h6>
 	</div>
 	<form method="post" accept-charset="utf-8" action="">
-		<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>" />
+		<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 		<table class="table table-striped table-bordered">
 			<thead class="sticky-under-menu">
 				<tr class="table-primary">

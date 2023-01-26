@@ -102,7 +102,7 @@ $search_by_move_out_date = isset($_GET['move_out_date']) ? intval($_GET['move_ou
 $search_by_appendixb = isset($_GET['appendixb']) ? intval($_GET['appendixb']) : 0;
 $search_by_leak_type = isset($_GET['leak_type']) ? intval($_GET['leak_type']) : -1;
 $search_by_symptom_type = isset($_GET['symptom_type']) ? intval($_GET['symptom_type']) : 0;
-$search_by_order_by = isset($_GET['order_by']) ? intval($_GET['order_by']) : 0;
+$sort_by = isset($_GET['sort_by']) ? intval($_GET['sort_by']) : 0;
 
 $search_query = $order_by_query = $projects_info = $projects_ids = [];
 
@@ -125,11 +125,14 @@ if ($search_by_move_out_date > 0)
 if ($search_by_appendixb == 1)
 	$search_query[] = 'pj.appendixb=1';
 
-if ($search_by_order_by > 0 || ($search_by_year > 0 && $search_by_property_id > 0))
-{
+if ($sort_by == 1)
+	$order_by_query[] = 'p.pro_name, LENGTH(pj.unit_number), pj.unit_number';
+else if ($sort_by == 2)
+	$order_by_query[] = 'p.pro_name, LENGTH(pj.unit_number) DESC, pj.unit_number DESC';
+else if ($sort_by == 3)
 	$order_by_query[] = 'pj.mois_inspection_date';
-	$search_by_order_by = 1;
-}
+else if ($sort_by == 4)
+	$order_by_query[] = 'pj.mois_inspection_date DESC';
 
 $query = array(
 	'SELECT'	=> 'pj.*, pj.unit_number AS unit, p.pro_name, un.unit_number, u.realname',
@@ -148,7 +151,7 @@ $query = array(
 			'ON'			=> 'u.id=pj.performed_uid'
 		],
 	],
-	'ORDER BY'	=> 'p.pro_name, LENGTH(pj.unit_number)',
+	'ORDER BY'	=> 'p.pro_name, LENGTH(pj.unit_number), pj.unit_number',
 	//'WHERE'		=> 'job_status!=0',
 //		'LIMIT'		=> $PagesNavigator->limit(),
 );
@@ -257,23 +260,6 @@ else
 					</select>
 				</div>
 				<div class="col">
-					<select name="order_by" class="form-select form-select-sm">
-<?php
-$order_by = [
-	0 => 'Sort by Unit #',
-	1 => 'Inspection Date'
-];
-foreach ($order_by as $key => $value)
-{
-	if ($search_by_order_by == $key)
-		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'" selected>'.$value.'</option>'."\n";
-	else
-		echo "\t\t\t\t\t\t\t".'<option value="'.$key.'">'.$value.'</option>'."\n";
-}
-?>
-					</select>
-				</div>
-				<div class="col">
 					<button class="btn btn-sm btn-outline-success" type="submit" name="search">Search</button>
 					<a href="<?php echo $URL->link('hca_5840_projects_report') ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
 				</div>
@@ -342,8 +328,8 @@ if (!empty($projects_info))
 	<table class="table table-striped my-0">
 		<thead>
 			<tr>
-				<th class="th1">Property/Unit#</th>
-				<th>Date Reported</th>
+				<th class="th1"><?php echo $URL->sortBy('Property/Unit#', 1, 2) ?></th>
+				<th><?php echo $URL->sortBy('Date Reported', 3, 4) ?></th>
 				<th>Move Out Date</th>
 				<th>Date of inspection</th>
 				<th>Source of moisture</th>

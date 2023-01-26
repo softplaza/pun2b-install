@@ -31,16 +31,13 @@ $schema = array(
 );
 $DBLayer->create_table('hca_wom_work_orders', $schema);
 
-$DBLayer->add_field('hca_wom_work_orders', 'request_type', 'TINYINT(1)', false, '0');
-$DBLayer->add_field('hca_wom_work_orders', 'template_id', 'INT(10) UNSIGNED', false, '0');
-$DBLayer->add_field('hca_wom_work_orders', 'wo_requested_date', 'DATETIME', false, '1000-01-01 00:00:00');
-
 $schema = [
 	'FIELDS'		=> [
 		'id'					=> $DBLayer->dt_serial(),
 		'work_order_id'			=> $DBLayer->dt_int(),
 		'assigned_to'			=> $DBLayer->dt_int(),
 		'time_created'			=> $DBLayer->dt_int(),
+		'dt_created'			=> $DBLayer->dt_datetime(),
 
 		'item_id'				=> $DBLayer->dt_int(),
 		'task_action'			=> $DBLayer->dt_int('TINYINT(3)'),
@@ -51,7 +48,9 @@ $schema = [
 		'task_message'			=> $DBLayer->dt_varchar(),
 		'tech_comment'			=> $DBLayer->dt_varchar(),
 		'task_closing_comment'	=> $DBLayer->dt_varchar(),
-		
+		'task_init_created'		=> $DBLayer->dt_varchar(),
+		'task_init_closed'		=> $DBLayer->dt_varchar(),
+
 		// 0 - on hold/inactive
 		// 1 - assigned by manager
 		// 2 - accepted by tech
@@ -64,6 +63,27 @@ $schema = [
 	'PRIMARY KEY'	=> ['id']
 ];
 $DBLayer->create_table('hca_wom_tasks', $schema);
+$DBLayer->add_field('hca_wom_tasks', 'dt_created', 'DATETIME', false, '1000-01-01 00:00:00');
+
+$query = [
+	'SELECT'	=> 't.*',
+	'FROM'		=> 'hca_wom_tasks AS t',
+];
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+$hca_wom_tasks = [];
+while ($row = $DBLayer->fetch_assoc($result)) {
+	$hca_wom_tasks[] = $row;
+}
+
+foreach($hca_wom_tasks as $cur_info)
+{
+	$task_data = [
+		'dt_created' => date('Y-m-d H:i:s', $cur_info['time_created'])
+	];
+	$DBLayer->update('hca_wom_tasks', $task_data, $cur_info['id']);
+}
+
+
 
 // Management
 $schema = [
@@ -78,15 +98,6 @@ $DBLayer->create_table('hca_wom_types', $schema);
 $schema = [
 	'FIELDS'		=> [
 		'id'					=> $DBLayer->dt_serial(),
-		'problem_name'			=> $DBLayer->dt_varchar(),
-	],
-	'PRIMARY KEY'	=> ['id']
-];
-$DBLayer->create_table('hca_wom_problems', $schema);
-
-$schema = [
-	'FIELDS'		=> [
-		'id'					=> $DBLayer->dt_serial(),
 		'item_name'				=> $DBLayer->dt_varchar(),
 		'item_type'				=> $DBLayer->dt_int(),
 		'item_actions'			=> $DBLayer->dt_varchar(),
@@ -95,6 +106,15 @@ $schema = [
 	'PRIMARY KEY'	=> ['id']
 ];
 $DBLayer->create_table('hca_wom_items', $schema);
+
+$schema = [
+	'FIELDS'		=> [
+		'id'					=> $DBLayer->dt_serial(),
+		'problem_name'			=> $DBLayer->dt_varchar(),
+	],
+	'PRIMARY KEY'	=> ['id']
+];
+$DBLayer->create_table('hca_wom_problems', $schema);
 
 $schema = [
 	'FIELDS'		=> [

@@ -23,7 +23,7 @@ while ($row = $DBLayer->fetch_assoc($result)) {
 if (!empty($sm_property_units))
 {
 	$unit_list = [];
-	$unit_list[] = '<select name="unit_id" id="fld_unit_number" class="form-select form-select-sm">';
+	$unit_list[] = '<select name="unit_id" id="fld_unit_number" class="form-select form-select-sm" onchange="searchWorkOrderDuplicates()">';
 	$unit_list[] = '<option value="0">Common area</option>';
 	foreach($sm_property_units as $cur_info)
 	{

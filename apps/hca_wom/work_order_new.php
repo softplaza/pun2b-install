@@ -22,7 +22,7 @@ if (isset($_POST['add']))
 		'template_type'		=> isset($_POST['template_type']) ? intval($_POST['template_type']) : 1,
 		'template_id'		=> isset($_POST['template_id']) ? intval($_POST['template_id']) : 0,
 
-		'wo_requested_date'	=> isset($_POST['wo_requested_date']) ? $_POST['wo_requested_date'] : '',
+		'wo_requested_date'	=> isset($_POST['wo_requested_date']) ? $_POST['wo_requested_date'] : date('Y-m-d\TH:i:s'),
 		'priority'			=> isset($_POST['priority']) ? intval($_POST['priority']) : 1,
 		'has_animal'		=> isset($_POST['has_animal']) ? intval($_POST['has_animal']) : 0,
 		'enter_permission'	=> isset($_POST['enter_permission']) ? intval($_POST['enter_permission']) : 0,
@@ -73,7 +73,7 @@ if (isset($_POST['add']))
 					//$mail_message[] = 'Hello '.$task_info['created_name'];
 					$mail_message[] = 'You have a new property request.';
 					$mail_message[] = 'Property: '.$task_info['pro_name'];
-					$mail_message[] = 'Unit: '.$task_info['unit_number'];
+					$mail_message[] = 'Unit/Location: '.$task_info['unit_number'];
 
 					if (strtotime($task_info['requested_date']) > 0)
 						$mail_message[] = 'Requested date: '.format_date($task_info['requested_date'], 'm/d/Y')."\n";
@@ -110,7 +110,9 @@ if (isset($_POST['add']))
 						'task_action'		=> isset($_POST['task_action'][$key]) ? intval($_POST['task_action'][$key]) : 0,
 						'assigned_to'		=> isset($_POST['assigned_to'][$key]) ? intval($_POST['assigned_to'][$key]) : 0,
 						'task_message'		=> isset($_POST['task_message'][$key]) ? swift_trim($_POST['task_message'][$key]) : '',
+						'task_init_created'	=> isset($_POST['initials']) ? swift_trim($_POST['initials']) : '',
 						'time_created'		=> $time_now,
+						'dt_created'		=> date('Y-m-d\TH:i:s'),
 						'task_status'		=> 2 // set as already accepted
 					];
 					$new_tid = $DBLayer->insert_values('hca_wom_tasks', $task_data);
@@ -144,7 +146,7 @@ if (isset($_POST['add']))
 						$mail_message[] = 'Hello '.$task_info['assigned_name'];
 						$mail_message[] = 'You have been assigned to a new task.';
 						$mail_message[] = 'Property: '.$task_info['pro_name'];
-						$mail_message[] = 'Unit: '.$task_info['unit_number'];
+						$mail_message[] = 'Unit/Location: '.$task_info['unit_number'];
 						
 						if ($task_info['task_message'] != '')
 							$mail_message[] = 'Details: '.$task_info['task_message']."\n";
@@ -159,7 +161,7 @@ if (isset($_POST['add']))
 			}
 
 			// Add flash message
-			$flash_message = 'Property Work Order created.';
+			$flash_message = 'Property Work Order #'.$new_id.' created.';
 			$FlashMessenger->add_info($flash_message);
 			redirect($URL->link('hca_wom_work_order', $new_id), $flash_message);
 		}
@@ -224,8 +226,8 @@ if ($id > 0)
 					<input type="text" value="<?=html_encode($property_manager['pro_name'])?>" class="form-control form-control-sm" readonly>
 				</div>
 				<div class="col-md-3 mb-3">
-					<label class="form-label" for="fld_unit_id">Unit #</label>
-					<select id="fld_unit_id" name="unit_id" class="form-select form-select-sm">
+					<label class="form-label" for="fld_unit_number">Unit #</label>
+					<select id="fld_unit_number" name="unit_id" class="form-select form-select-sm" onchange="searchWorkOrderDuplicates()">
 						<option value="0" selected>Common area</option>
 <?php
 $query = array(
@@ -275,6 +277,8 @@ foreach ($sm_property_db as $cur_info)
 				</div>
 <?php endif; ?>
 			</div>
+
+			<div id="wo_duplicate"></div>
 
 			<div class="row">
 <?php
@@ -345,7 +349,7 @@ foreach ($HcaWOM->template_type as $key => $val)
 			<div class="row">
 				<div class="col-md-3 mb-2">
 					<label class="form-label" for="fld_wo_requested_date">Requested Date</label>
-					<input class="form-control form-control-sm" type="date" name="wo_requested_date" id="fld_wo_requested_date" value="<?php echo (isset($_POST['wo_requested_date']) ? $_POST['wo_requested_date'] : '') ?>" onclick="this.showPicker()">
+					<input class="form-control form-control-sm" type="date" name="wo_requested_date" id="fld_wo_requested_date" value="<?php echo (isset($_POST['wo_requested_date']) ? $_POST['wo_requested_date'] : date('Y-m-d')) ?>" onclick="this.showPicker()">
 					<label class="text-muted">Leave blank if any date</label>
 				</div>
 
@@ -380,77 +384,47 @@ foreach ($HcaWOM->priority as $key => $val)
 			</div>
 		</div>
 
-		<div class="card-body badge-secondary property-fields">
-			<h5 class="card-title mb-0">Task #1</h5>
-			<div class="row">
-				<div class="col-md-3 mb-3">
-					<label class="form-label" for="fld_item_id1">Items</label>
-					<select id="fld_item_id1" name="item_id[1]" class="form-select form-select-sm">
+		<div class="property-fields">
+
+			<div class="card-body badge-secondary mb-2">
+				<h6 class="card-title mb-0">Task</h6>
+				<div class="row mb-1">
+
+					<div class="col-md-2">
+						<select name="type_id[0]" class="form-select form-select-sm fw-bold" id="fld_type_id_0" onchange="getTaskTypeID(0)">
+							<option value="0">Type</option>
 <?php
 $query = [
-	'SELECT'	=> 'i.*, tp.type_name',
-	'FROM'		=> 'hca_wom_items AS i',
-	'JOINS'		=> [
-		[
-			'INNER JOIN'	=> 'hca_wom_types AS tp',
-			'ON'			=> 'tp.id=i.item_type'
-		],
-	],
-	'ORDER BY'	=> 'i.item_type, i.item_name',
+	'SELECT'	=> 'tp.*',
+	'FROM'		=> 'hca_wom_types AS tp',
+	'ORDER BY'	=> 'tp.type_name',
 ];
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$hca_wom_items = [];
+$hca_wom_types = [];
 while ($row = $DBLayer->fetch_assoc($result)) {
-	$hca_wom_items[] = $row;
+	$hca_wom_types[] = $row;
 }
 
-$optgroup = 0;
-foreach ($hca_wom_items as $cur_info)
+foreach ($hca_wom_types as $cur_info)
 {
-	if ($cur_info['item_type'] != $optgroup) {
-		if ($optgroup) {
-			echo '</optgroup>';
-		}
-		echo '<optgroup label="'.html_encode($cur_info['type_name']).'">';
-		$optgroup = $cur_info['item_type'];
-	}
-	if (isset($_POST['item_id'][1]) && $_POST['item_id'][1] == $cur_info['id'])
-		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'" selected>'.html_encode($cur_info['item_name']).'</option>'."\n";
-	else
-		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'">'.html_encode($cur_info['item_name']).'</option>'."\n";
+	echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'">'.html_encode($cur_info['type_name']).'</option>'."\n";
 }
 ?>
-					</select>
-				</div>
-				<div class="col-md-2 mb-3">
-					<label class="form-label" for="fld_task_action1">Action/Problem</label>
-					<select id="fld_task_action1" name="task_action[1]" class="form-select form-select-sm">
-<?php
-$query = array(
-	'SELECT'	=> 'pr.*',
-	'FROM'		=> 'hca_wom_problems AS pr',
-	'ORDER BY'	=> 'pr.problem_name'
-);
-$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-$hca_wom_problems = [];
-while ($row = $DBLayer->fetch_assoc($result)) {
-	$hca_wom_problems[] = $row;
-}
-
-foreach ($hca_wom_problems as $cur_info)
-{
-	if (isset($_POST['task_action'][1]) && $_POST['task_action'][1] == $cur_info['id'])
-		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'" selected>'.html_encode($cur_info['problem_name']).'</option>'."\n";
-	else
-		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'">'.html_encode($cur_info['problem_name']).'</option>'."\n";
-}
-?>
-					</select>
-				</div>
-				<div class="col-md-3 mb-3">
-					<label class="form-label" for="fld_tassigned_to1">Assigned to</label>
-					<select id="fld_assigned_to1" name="assigned_to[1]" class="form-select form-select-sm">
-						<option value="0">Select one</option>
+						</select>
+					</div>	
+					<div class="col-md-2">
+						<select name="item_id[0]" class="form-select form-select-sm fw-bold" id="fld_item_id_0" onchange="getTaskItemID(0)">
+							<option value="0">Items</option>
+						</select>
+					</div>
+					<div class="col-md-2">
+						<select name="task_action[0]" class="form-select form-select-sm fw-bold" id="fld_task_action_0">
+							<option value="0">Action/Problem</option>
+						</select>
+					</div>
+					<div class="col-md-2">
+						<select name="assigned_to[0]" class="form-select form-select-sm fw-bold">
+							<option value="0">Assigned to</option>
 <?php
 $query = array(
 	'SELECT'	=> 'u.id, u.group_id, u.username, u.realname, u.email, g.g_id, g.g_title',
@@ -480,22 +454,29 @@ foreach ($users_info as $cur_info)
 		echo '<optgroup label="'.html_encode($cur_info['g_title']).'">';
 		$optgroup = $cur_info['group_id'];
 	}
-	if (isset($_POST['assigned_to'][1]) && $_POST['assigned_to'][1] == $cur_info['id'] || $property_manager['default_maint'] == $cur_info['id'])
+	if ($property_manager['default_maint'] == $cur_info['id'])
 		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'" selected class="badge-warning">'.html_encode($cur_info['realname']).'</option>'."\n";
 	else
 		echo "\t\t\t\t\t\t\t".'<option value="'.$cur_info['id'].'">'.html_encode($cur_info['realname']).'</option>'."\n";
 }
 ?>
-					</select>
+						</select>
+					</div>
+				</div>
+				<div class="mb-0">
+					<textarea type="text" name="task_message[0]" class="form-control" placeholder="Enter details here"></textarea>
 				</div>
 			</div>
-			<div class="mb-2">
-				<textarea type="text" name="task_message[1]" class="form-control" placeholder="Enter details here"><?php echo (isset($_POST['task_message'][1]) ? html_encode($_POST['task_message'][1]) : '') ?></textarea>
+
+			<div id="multi_tasks"></div>
+
+			<div class="card-body">
+				<button type="button" class="btn btn-sm btn-success" onclick="getNewTask()">Add task</button>
 			</div>
 		</div>
 	</div>
 
-
+	
 	<div class="card" id="inhouse_template">
 		<div class="card-body inhouse-fields hidden">
 			<div class="callout callout-info py-2 mb-3">This request will be sent to the In-House Department. As soon as this request is added to the Facility Schedule, you will receive a notification.</div>
@@ -534,8 +515,13 @@ foreach ($time_slot as $key => $val)
 	</div>
 
 	<div class="card mb-3">
-		<div class="card-body mb-0">
-			<button type="submit" name="add" class="btn btn-primary">Submit</button>
+		<div class="card-body">
+			<div class="col-3">
+				<div class="input-group">
+					<button type="submit" name="add" class="btn btn-primary">Submit Work Order</button>
+					<input class="form-control ms-3" type="text" name="initials" id="fld_initials" value="" placeholder="Your initials">
+				</div>
+			</div>
 		</div>
 	</div>
 
@@ -559,6 +545,95 @@ function getUnits()
 		}
 	});
 }
+
+function getTaskTypeID(id)
+{
+	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_get_items')) ?>";
+	var type_id = $("#fld_type_id_"+id).val();
+	jQuery.ajax({
+		url:	"<?php echo $URL->link('hca_wom_ajax_get_items') ?>",
+		type:	"POST",
+		dataType: "json",
+		data: ({type_id:type_id,csrf_token:csrf_token}),
+		success: function(re){
+			$("#fld_item_id_"+id).empty().html(re.item_list);
+			$("#fld_task_action_"+id).empty().html(re.actions);
+		},
+		error: function(re){
+			document.getElementById("#fld_item_id_"+id).innerHTML = re;
+		}
+	});
+}
+function getTaskItemID(id)
+{
+	var item_id = $("#fld_item_id_"+id).val();
+	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_get_items')) ?>";
+	jQuery.ajax({
+		url:	"<?php echo $URL->link('hca_wom_ajax_get_items') ?>",
+		type:	"POST",
+		dataType: "json",
+		data: ({item_id:item_id,csrf_token:csrf_token}),
+		success: function(re){
+			$("#fld_task_action_"+id).empty().html(re.actions);
+		},
+		error: function(re){
+			document.getElementById("#fld_task_action_"+id).innerHTML = re;
+		}
+	});
+}
+
+function searchWorkOrderDuplicates()
+{
+	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_search_dupe_wo')) ?>";
+	var pid = $("#fld_property_id").val();
+	var uid = $("#fld_unit_number").val();
+	jQuery.ajax({
+		url:	"<?php echo $URL->link('hca_wom_ajax_search_dupe_wo') ?>",
+		type:	"POST",
+		dataType: "json",
+		data: ({pid:pid,uid:uid,csrf_token:csrf_token}),
+		success: function(re){
+			$("#wo_duplicate").empty().html(re.content);
+		},
+	});
+}
+function clearDupeInfo()
+{
+	$("#wo_duplicate").empty();
+}
+function switchTemplateType(v)
+{
+	if(v==2){
+		$(".inhouse-fields").removeClass('hidden');
+		$(".property-fields").addClass('hidden');
+	}else{
+		$(".property-fields").removeClass('hidden');
+		$(".inhouse-fields").addClass('hidden');
+	} 
+}
+//
+function getNewTask()
+{
+	var pid = $("#fld_property_id").val();
+	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_get_new_task')) ?>";
+	jQuery.ajax({
+		url:	"<?php echo $URL->link('hca_wom_ajax_get_new_task') ?>",
+		type:	"POST",
+		dataType: "json",
+		data: ({pid:pid,csrf_token:csrf_token}),
+		success: function(re){
+			$("#multi_tasks").before(re.task_body);
+		},
+		error: function(re){
+			document.getElementById("#multi_tasks").innerHTML = re;
+		}
+	});
+}
+function deleteTask(id)
+{
+	$("#task_"+id).remove();
+}
+/*
 function getWorkOrderTemplate()
 {
 	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_get_wo_template')) ?>";
@@ -576,16 +651,7 @@ function getWorkOrderTemplate()
 		}
 	});
 }
-function switchTemplateType(v)
-{
-	if(v==2){
-		$(".inhouse-fields").removeClass('hidden');
-		$(".property-fields").addClass('hidden');
-	}else{
-		$(".property-fields").removeClass('hidden');
-		$(".inhouse-fields").addClass('hidden');
-	} 
-}
+*/
 </script>
 
 <?php

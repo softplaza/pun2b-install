@@ -198,7 +198,7 @@ class SwiftUploader
         if ($this->access_view_files && !empty($project_ids))
         {
             $hash = base64_encode('project='.$table_name.'&ids='.implode(',', $project_ids));
-            return '<a href="'.$URL->link('swift_uploader_view', $hash).'" target="_blank"><strong id="num_uploaded_images">'.count($this->uploaded_images).'</strong> <span>uploaded images</span></a>';
+            return '<a href="'.$URL->link('swift_uploader_view', $hash).'" target="_blank"><strong>'.count($this->uploaded_images).'</strong> <span>uploaded images</span></a>';
         }
         else
             return '<strong id="num_uploaded_images">'.count($this->uploaded_images).'</strong> <span>uploaded images</span>';
@@ -274,6 +274,7 @@ function uploadImage(table,id)
             $('#fld_image').val('');
             $('#image_progress').empty().html('');
             $("#num_uploaded_images").empty().html(re.num_images);
+            $("#image_viewer_link").empty().html(re.image_viewer_link);
 		},
 		error: function(re){
             var msg = '<div id="liveToast" class="toast position-fixed bottom-0 end-0 m-2" role="alert" aria-live="assertive" aria-atomic="true">';

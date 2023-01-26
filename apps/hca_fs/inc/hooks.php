@@ -23,6 +23,7 @@ function hca_fs_co_modify_url_scheme()
     $urls['hca_fs_edit_work_order'] = 'apps/hca_fs/edit_work_order.php?id=$1';
     $urls['hca_fs_weekly_technician_schedule'] = 'apps/hca_fs/weekly_technician_schedule.php?gid=$1&uid=$2&week_of=$3';
 
+    $urls['hca_fs_manager_schedule'] = 'apps/hca_fs/property_schedule.php';
     $urls['hca_fs_property_schedule'] = 'apps/hca_fs/property_schedule.php?id=$1&week_of=$2';
     $urls['hca_fs_permanently_assignments'] = 'apps/hca_fs/permanently_assignments.php?gid=$1';
     $urls['hca_fs_property_assignments'] = 'apps/hca_fs/property_assignments.php?week_of=$1';
@@ -87,6 +88,12 @@ function hca_fs_IncludeCommon()
         else if ($User->checkAccess('hca_fs', 5))
             $SwiftMenu->addItem(['title' => 'Painter schedule', 'link' => $URL->link('hca_fs_weekly_schedule', array($Config->get('o_hca_fs_painters'), date('Y-m-d', $week_of))), 'id' => 'hca_fs_weekly_schedule_'.$Config->get('o_hca_fs_painters'), 'parent_id' => 'hca_fs', 'level' => 4]);
 
+        // hca_fs_property_schedule
+        if ($User->get('property_access') != '' && $User->get('property_access') != 0)
+        {
+            //$property_ids = explode(',', $User->get('property_access'));
+            $SwiftMenu->addItem(['title' => 'Property Schedule', 'link' => $URL->link('hca_fs_property_schedule', array($User->get('property_access'), date('Y-m-d', $week_of))), 'id' => 'hca_fs_property_schedule', 'parent_id' => 'hca_fs', 'level' => 5]);
+        }
 
         if ($User->checkAccess('hca_fs', 6))
         {
@@ -219,71 +226,67 @@ class HcaFacilityHooks
         }
 ?>
      <div class="col-xxl-4 col-xl-6 mb-3">
-        <div class="card">
-            <div class="card-body my-0 pt-0">
-                <h4 class="card-title"><a href="<?=$URL->link('hca_fs_weekly_schedule', array($Config->get('o_hca_fs_maintenance'), date('Y-m-d')))?>">Facility Schedule</a></h4>
-                <hr class="my-2">
-                <div id="chart_hca_fs_pie"></div>
-            </div>
-        </div>
+        <h4 class="card-title"><a href="<?=$URL->link('hca_fs_weekly_schedule', array($Config->get('o_hca_fs_maintenance'), date('Y-m-d')))?>">Facility Schedule</a></h4>
+        <hr class="my-2">
+        <div id="chart_hca_fs_pie"></div>
     </div>
 
 <script>
-    var options = {
-        series: [{
-            name: 'This Week',
-            data: [
-            <?=$this_week_tasks[1]?>, <?=$this_week_tasks[2]?>, <?=$this_week_tasks[3]?>, <?=$this_week_tasks[4]?>, <?=$this_week_tasks[5]?>, <?=$this_week_tasks[6]?>]
-        }, {
-            name: 'Next Week',
-            data: [
-            <?=$next_week_tasks[1]?>, <?=$next_week_tasks[2]?>, <?=$next_week_tasks[3]?>, <?=$next_week_tasks[4]?>, <?=$next_week_tasks[5]?>, <?=$next_week_tasks[6]?>]
-        }],
-          chart: {
-            type: 'bar',
-            height: 265,
-            width: '100%',
-            toolbar: {
-                show: false
-            }
-        },
-        plotOptions: {
-          bar: {
-            horizontal: false,
-          }
-        },
-        dataLabels: {
-          enabled: false
-        },
-        title: {
-          text: 'Num tasks of this week & next week'
-        },
-        dataLabels: {
-          enabled: true,
-          
-          style: {
-            fontSize: '12px',
-            colors: ['#fff']
-          }
-        },
-        stroke: {
-          show: true,
-          width: 1,
-          colors: ['#fff']
-        },
-        legend: {
-          position: 'top',
-          horizontalAlign: 'left',
-          offsetX: 50
-        },
-        xaxis: {
-          categories: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+var options = {
+    series: [{
+        name: 'This Week',
+        data: [
+        <?=$this_week_tasks[1]?>, <?=$this_week_tasks[2]?>, <?=$this_week_tasks[3]?>, <?=$this_week_tasks[4]?>, <?=$this_week_tasks[5]?>, <?=$this_week_tasks[6]?>]
+    }, {
+        name: 'Next Week',
+        data: [
+        <?=$next_week_tasks[1]?>, <?=$next_week_tasks[2]?>, <?=$next_week_tasks[3]?>, <?=$next_week_tasks[4]?>, <?=$next_week_tasks[5]?>, <?=$next_week_tasks[6]?>]
+    }],
+        chart: {
+        type: 'bar',
+        height: 265,
+        width: '100%',
+        toolbar: {
+            show: false
         }
-        };
+    },
+    plotOptions: {
+        bar: {
+        horizontal: false,
+        }
+    },
+    dataLabels: {
+        enabled: false
+    },
+    title: {
+        text: 'Num tasks of this week & next week'
+    },
+    dataLabels: {
+        enabled: true,
+        
+        style: {
+        fontSize: '12px',
+        colors: ['#fff']
+        }
+    },
+    stroke: {
+        show: true,
+        width: 1,
+        colors: ['#fff']
+    },
+    legend: {
+        position: 'top',
+        horizontalAlign: 'left',
+        offsetX: 50
+    },
+    xaxis: {
+        categories: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    }
+};
 
-    var chart = new ApexCharts(document.querySelector("#chart_hca_fs_pie"), options);
-    chart.render();
-    </script>
+var chart = new ApexCharts(document.querySelector("#chart_hca_fs_pie"), options);
+chart.render();
+</script>
 <?php
     }
 }

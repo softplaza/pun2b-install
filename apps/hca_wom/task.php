@@ -60,7 +60,7 @@ $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $task_info = $DBLayer->fetch_assoc($result);
 
 if (empty($task_info))
-	message('The task does not exist or has been deleted.');
+	message('The task #'.$id.' does not exist or has been deleted.');
 
 if ($task_info['unit_id'] == 0 || $task_info['unit_id'] == '')
 	$task_info['unit_number'] = 'Common area';
@@ -104,7 +104,7 @@ if (isset($_POST['complete']))
 			//$mail_message[] = 'Hello '.$task_info['requested_name'];
 			$mail_message[] = 'Work Order #'.$task_info['work_order_id'].' is ready for review.';
 			$mail_message[] = 'Property: '.$task_info['pro_name'];
-			$mail_message[] = 'Location: '.$task_info['unit_number'];
+			$mail_message[] = 'Unit/Location: '.$task_info['unit_number'];
 			
 			if ($form_data['tech_comment'] != '')
 				$mail_message[] = 'Comment: '.$form_data['tech_comment'];
@@ -122,6 +122,15 @@ if (isset($_POST['complete']))
 		//redirect('', $flash_message);
 	}
 }
+
+if ($task_info['priority'] == 4)
+	$priority = '<span class="badge-danger text-danger fw-bold p-1 border border-danger">Emergency</span>';
+else if ($task_info['priority'] == 3)
+	$priority = '<span class="text-danger fw-bold">High</span>';
+else if ($task_info['priority'] == 2)
+	$priority = '<span class="text-warning fw-bold">Medium</span>';
+else
+	$priority = '<span class="text-primary fw-bold">Low</span>';
 
 $Core->set_page_id('hca_wom_task', 'hca_fs');
 require SITE_ROOT.'header.php';
@@ -174,7 +183,7 @@ require SITE_ROOT.'header.php';
 				<div class="card-body">
 					<div class="d-flex justify-content-between mb-2">
 						<h6 class="mb-0"><?php echo html_encode($task_info['item_name']).' ('.html_encode($task_info['problem_name']) ?>)</h6>
-						<h6 class="mb-0">Priority: <?php echo (isset($HcaWOM->priority[$task_info['priority']]) ? $HcaWOM->priority[$task_info['priority']] : 'Low') ?></h6>
+						<h6 class="mb-0">Priority: <?=$priority?></h6>
 					</div>
 
 				<?php if ($task_info['task_message'] != ''): ?>
@@ -222,10 +231,10 @@ else
 <?php
 if ($task_info['task_status'] < 4)
 {
-	$SwiftUploader->uploadImage('hca_wom_tasks', $id);
+	$SwiftUploader->uploadImage('hca_wom_work_orders', $task_info['work_order_id']);
 }
 ?>
-					<h6 class="mb-0"><?=$SwiftUploader->getUploadedImagesLink('hca_wom_tasks', $id)?></h6>
+					<h6 class="mb-0" id="image_viewer_link"><?=$SwiftUploader->getUploadedImagesLink('hca_wom_work_orders', $task_info['work_order_id'])?></h6>
 					
 				</div>
 			</div>

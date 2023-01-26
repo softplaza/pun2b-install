@@ -106,7 +106,8 @@ $query = [
 		],
 	],
 	'LIMIT'		=> $PagesNavigator->limit(),
-	'ORDER BY'	=> 'p.pro_name, w.priority, LENGTH(pu.unit_number), pu.unit_number',
+	//'ORDER BY'	=> 'p.pro_name, w.priority DESC, LENGTH(pu.unit_number), pu.unit_number',
+	'ORDER BY'	=> 'w.priority DESC, t.time_created',
 ];
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
@@ -197,12 +198,14 @@ if (!empty($hca_wom_tasks))
 	{
 		$unit_number = ($cur_info['unit_id'] > 0) ? 'Unit #'.html_encode($cur_info['unit_number']) : 'Common area';
 
-		if ($cur_info['priority'] == 2)
-			$priority = '<span class="badge badge-danger">High</span>';
-		else if ($cur_info['priority'] == 1)
-			$priority = '<span class="badge badge-warning">Medium</span>';
+		if ($cur_info['priority'] == 4)
+			$priority = '<span class="badge-danger text-danger fw-bold p-1 border border-danger">Emergency</span>';
+		else if ($cur_info['priority'] == 3)
+			$priority = '<span class="text-danger fw-bold">High priority</span>';
+		else if ($cur_info['priority'] == 2)
+			$priority = '<span class="text-warning fw-bold">Medium</span>';
 		else
-			$priority = '<span class="badge badge-primary">Low</span>';
+			$priority = '<span class="text-primary fw-bold">Low</span>';
 
 		if ($property_id != $cur_info['property_id'])
 		{
@@ -212,7 +215,7 @@ if (!empty($hca_wom_tasks))
 ?>
 	<a href="<?=$URL->link('hca_wom_task', $cur_info['id'])?>" class="row">
 		<div class="col-4 border">
-			<p class="h5"><?=$unit_number?></p>
+			<p class="h5 mb-1"><?=$unit_number?></p>
 			<?=$priority?>
 		</div>
 		<div class="col-8 border">

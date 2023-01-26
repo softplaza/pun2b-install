@@ -68,10 +68,33 @@ if (isset($_FILES['image']['name']) && $id > 0 && $table_name != '')
 
 	$num_rows = $DBLayer->getNumRows('sm_uploader', 'table_name=\''.$DBLayer->escape($table_name).'\' AND table_id='.$id);
 
+
+	$uploaded_images = $ids = [];
+	$query = array(
+		'SELECT'	=> 'f.*',
+		'FROM'		=> 'sm_uploader AS f',
+		'WHERE'		=> 'f.table_name=\''.$DBLayer->escape($table_name).'\' AND f.table_id='.$id
+	);
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	while ($row = $DBLayer->fetch_assoc($result)) {
+		$uploaded_images[] = $row;
+		$ids[] = $row['id'];
+	}
+
+	if (!empty($ids))
+	{
+		$hash = base64_encode('project='.$table_name.'&ids='.implode(',', $ids));
+		$image_viewer_link = '<a href="'.$URL->link('swift_uploader_view', $hash).'" target="_blank"><strong id="num_uploaded_images">'.count($uploaded_images).'</strong> <span>uploaded images</span></a>';
+	}
+	else
+		$image_viewer_link = '<span class="fw-bold">No uploaded images</span>';
+
 	echo json_encode(
 		[
 			'toast_container'	=> implode('', $toast_container),
 			'num_images'		=> $num_rows,
+			'image_viewer_link'	=> $image_viewer_link,
+			'list_images'		=> ''
 		]
 	);
 }

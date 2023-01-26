@@ -90,11 +90,6 @@ foreach ($property_info as $val)
 	</div>
 	<div class="card-body">
         <div class="row">
-				
-
-
-
-
             <?php Hook::doAction('ReportBody'); ?>
         </div>
 	</div>

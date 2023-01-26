@@ -291,96 +291,35 @@ class HcaMoistureInspections
 
 ?>
      <div class="col-xxl-4 col-xl-6 mb-3">
-        <div class="card">
-            <div class="card-body my-0 pt-0">
-                <h4 class="card-title"><a href="<?=$URL->link('hca_5840_projects', ['active', 0])?>">Moisture Inspection</a></h4>
-                <hr class="my-2">
-                <div id="chart_hca_mi"></div>
-            </div>
-        </div>
+        <h4 class="card-title"><a href="<?=$URL->link('hca_5840_projects', ['active', 0])?>">Moisture Inspection</a></h4>
+        <hr class="my-2">
+        <div id="chart_hca_mi"></div>
     </div>
 
 <script>
-
-var options = {
-        series: [{
-        data: [<?=$num_active?>, <?=$num_on_hold?>, <?=$num_today_event?>]
-    }],
+var options2 = 
+{
+	series: [<?=$num_active?>, <?=$num_on_hold?>, <?=$num_today_event?>],
     chart: {
-        type: 'bar',
         height: 265,
-        width: '100%',
-        toolbar: {
-            show: false
-        }
+        type: 'pie',
     },
-    plotOptions: {
-        bar: {
-        barHeight: '100%',
-        distributed: true,
-        horizontal: true,
-        dataLabels: {
-            position: 'bottom'
-        },
-        }
-    },
+	labels: ['Active Projects', 'On Hold', 'Upcoming Events'],
     colors: ['#33b2df', '#546E7A', '#d4526e'],
-    dataLabels: {
-        enabled: true,
-        textAnchor: 'start',
+	dataLabels: {
+        formatter: function (val, opts) {
+            return opts.w.config.series[opts.seriesIndex]
+        },
         style: {
             colors: ['#fff'],
             fontSize: '18px',
         },
-        formatter: function (val, opt) {
-            return val
-        },
-        offsetX: 0,
-        dropShadow: {
-        enabled: true
-        }
     },
-    stroke: {
-        width: 5,
-        colors: ['#fff']
-    },
-    xaxis: {
-        categories: ['Active Projects', 'On Hold', 'Today Follow Up Dates'],
-    },
-    yaxis: {
-        labels: {
-        show: false
-        }
-    },
-/*
-    title: {
-        text: 'Custom DataLabels',
-        align: 'center',
-        floating: true
-    },
-    subtitle: {
-        text: 'Category Names as DataLabels inside bars',
-        align: 'center',
-    },
-*/
-    tooltip: {
-        theme: 'dark',
-        x: {
-        show: false
-        },
-        y: {
-        title: {
-            formatter: function () {
-            return ''
-            }
-        }
-        }
-    }
 };
-
-var chart = new ApexCharts(document.querySelector("#chart_hca_mi"), options);
+var chart = new ApexCharts(document.querySelector("#chart_hca_mi"), options2);
 chart.render();
-    </script>
+</script>
+
 <?php
     }
 }

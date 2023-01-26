@@ -16,19 +16,22 @@ $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $search_by_property_id = isset($_GET['property_id']) ? intval($_GET['property_id']) : 0;
 $search_by_unit_number = isset($_GET['unit_number']) ? swift_trim($_GET['unit_number']) : '';
 $search_by_assigned_to = isset($_GET['assigned_to']) ? intval($_GET['assigned_to']) : 0;
+$sort_by = isset($_GET['sort_by']) ? intval($_GET['sort_by']) : 0;
 
 if (isset($_POST['add_task']))
 {
 	$work_order_id = isset($_POST['work_order_id']) ? intval($_POST['work_order_id']) : 0;
 
 	$form_data = array(
-		'work_order_id' => $work_order_id,
-		'item_id'		=> isset($_POST['item_id']) ? intval($_POST['item_id']) : 0,
-		'task_action'	=> isset($_POST['task_action']) ? intval($_POST['task_action']) : 0,
-		'assigned_to'	=> isset($_POST['assigned_to']) ? intval($_POST['assigned_to']) : 0,
-		'task_message'	=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
-		'time_created'	=> time(),
-		'task_status'	=> 2 // set 2 as already accepted
+		'work_order_id' 	=> $work_order_id,
+		'item_id'			=> isset($_POST['item_id']) ? intval($_POST['item_id']) : 0,
+		'task_action'		=> isset($_POST['task_action']) ? intval($_POST['task_action']) : 0,
+		'assigned_to'		=> isset($_POST['assigned_to']) ? intval($_POST['assigned_to']) : 0,
+		'task_message'		=> isset($_POST['task_message']) ? swift_trim($_POST['task_message']) : '',
+		'task_init_created'	=> isset($_POST['task_init_created']) ? swift_trim($_POST['task_init_created']) : '',
+		'time_created'		=> time(),
+		'dt_created'		=> date('Y-m-d\TH:i:s'),
+		'task_status'		=> 2 // set 2 as already accepted
 	);
 
 	if ($work_order_id == 0)
@@ -92,6 +95,9 @@ else if (isset($_POST['update_task']))
 	if (isset($_POST['task_action'])) $form_data['task_action'] = intval($_POST['task_action']);
 	if (isset($_POST['assigned_to'])) $form_data['assigned_to'] = intval($_POST['assigned_to']);
 
+	if (isset($_POST['task_init_closed']) && $_POST['task_init_closed'] != '') 
+		$form_data['task_init_closed'] = swift_trim($_POST['task_init_closed']);
+
 	if (empty($Core->errors) && $task_id > 0 && !empty($form_data))
 	{
 		// Update task of Work Order
@@ -139,6 +145,9 @@ else if (isset($_POST['cancel_task']))
 		'task_status'	=> 0, // canceled
 	];
 
+	if (isset($_POST['task_init_closed']) && $_POST['task_init_closed'] != '') 
+		$form_data['task_init_closed'] = swift_trim($_POST['task_init_closed']);
+
 	if (empty($Core->errors) && $task_id > 0 && $work_order_id > 0)
 	{
 		// Update task of Work Order
@@ -175,6 +184,9 @@ else if (isset($_POST['close_task']))
 		'task_status'			=> 4, // closed
 	];
 
+	if (isset($_POST['task_init_closed']) && $_POST['task_init_closed'] != '') 
+		$form_data['task_init_closed'] = swift_trim($_POST['task_init_closed']);
+
 	if (empty($Core->errors) && $task_id > 0)
 	{
 		// Update task of Work Order
@@ -199,7 +211,7 @@ else if (isset($_POST['close_task']))
 	}
 }
 
-$search_query = [];
+$search_query = $sort_by_query = [];
 $search_query[] = 't.task_status!=0'; // Exclude canceled and On Hold
 $search_query[] = 't.task_status!=4'; // Exclude completed
 
@@ -217,6 +229,19 @@ if ($search_by_unit_number != '')
 
 if ($search_by_assigned_to > 0)
 	$search_query[] = 't.assigned_to='.$search_by_assigned_to;
+
+if ($sort_by == 1)
+	$sort_by_query[] = 'p.pro_name, LENGTH(pu.unit_number), pu.unit_number';
+else if ($sort_by == 2)
+	$sort_by_query[] = 'p.pro_name, LENGTH(pu.unit_number) DESC, pu.unit_number DESC';
+else if ($sort_by == 3)
+	$sort_by_query[] = 'w.priority';
+else if ($sort_by == 4)
+	$sort_by_query[] = 'w.priority DESC';
+else if ($sort_by == 5)
+	$sort_by_query[] = 'w.dt_created';
+else if ($sort_by == 6)
+	$sort_by_query[] = 'w.dt_created DESC';
 
 $query = [
 	'SELECT'	=> 'COUNT(t.id)',
@@ -281,7 +306,10 @@ $query = [
 	//'ORDER BY'	=> 'p.pro_name, LENGTH(pu.unit_number), pu.unit_number, t.task_status DESC',
 	'ORDER BY'	=> 'p.pro_name, t.task_status DESC, LENGTH(pu.unit_number), pu.unit_number',
 ];
+
 if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
+if (!empty($sort_by_query)) $query['ORDER BY'] = implode(', ', $sort_by_query);
+
 $result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 $hca_wom_work_orders = $hca_wom_wo_ids = $tasks = [];
 while ($row = $DBLayer->fetch_assoc($result)) {
@@ -375,7 +403,6 @@ foreach ($users as $cur_user)
 ?>
 					</select>
 				</div>
-
 				<div class="col-md-auto">
 					<button type="submit" class="btn btn-sm btn-outline-success">Search</button>
 					<a href="<?php echo $URL->link('hca_wom_work_orders') ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
@@ -385,9 +412,81 @@ foreach ($users as $cur_user)
 	</form>
 </nav>
 
+<?php
+$query = [
+	'SELECT'	=> 't.*, w.dt_created, w.priority, p.pro_name, tp.type_name, pb.problem_name',
+	'FROM'		=> 'hca_wom_tasks AS t',
+	'JOINS'		=> [
+		[
+			'INNER JOIN'	=> 'hca_wom_work_orders AS w',
+			'ON'			=> 'w.id=t.work_order_id'
+		],
+		[
+			'INNER JOIN'	=> 'sm_property_db AS p',
+			'ON'			=> 'p.id=w.property_id'
+		],
+		[
+			'LEFT JOIN'		=> 'hca_wom_items AS i',
+			'ON'			=> 'i.id=t.item_id'
+		],
+		[
+			'LEFT JOIN'		=> 'hca_wom_types AS tp',
+			'ON'			=> 'tp.id=i.item_type'
+		],
+		[
+			'LEFT JOIN'		=> 'hca_wom_problems AS pb',
+			'ON'			=> 'pb.id=t.task_action'
+		],
+	],
+	'ORDER BY'	=> 't.dt_completed, t.time_created',
+];
+if (!empty($search_query)) $query['WHERE'] = implode(' AND ', $search_query);
+$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+$num_opened = $num_rfr = $num_total = 0;
+$num_priority = [
+	1 => 0,
+	2 => 0,
+	3 => 0,
+	4 => 0
+];
+while ($row = $DBLayer->fetch_assoc($result))
+{
+	++$num_total;
+	if ($row['task_status'] == 1 || $row['task_status'] == 2)
+		++$num_opened;
+	else if ($row['task_status'] == 3)
+		++$num_rfr;
+
+	++$num_priority[$row['priority']];
+
+}
+?>
+
+<div class="alert d-flex justify-content-between row my-0 pt-0 pb-1">
+	<div class="col-6">
+		<div class="row">
+			<div class="col badge badge-info mx-1 mb-1 border">
+				<h3><?php echo $num_total ?></h3>
+				<h6>Total tasks</h6>
+			</div>
+			<div class="col badge badge-warning mx-1 mb-1 border">
+				<h3><?php echo $num_opened ?></h3>
+				<h6>Open tasks</h6>
+			</div>
+			<div class="col badge badge-success mx-1 mb-1 border">
+				<h3><?php echo $num_rfr ?></h3>
+				<h6>Ready for Review</h6>
+			</div>
+		</div>
+	</div>
+	<div class="col-6">
+		<div id="chart_1"></div>
+	</div>
+</div>
+
 <div class="card-header d-flex justify-content-between">
 	<h6 class="card-title mb-0">List of Work Orders</h6>
-	<a href="<?=$URL->link('hca_wom_work_order_new', 0)?>" class="badge bg-primary text-white">New Work Order</a>
+	<a href="<?=$URL->link('hca_wom_work_order_new', '')?>" class="badge bg-primary text-white" title="Create a new work order"><i class="fas fa-plus-circle text-white"></i> Work Order</a>
 </div>
 
 <?php
@@ -429,11 +528,11 @@ if (!empty($hca_wom_work_orders))
 	<thead>
 		<tr>
 			<th>WO #</th>
-			<th>Unit #</th>
+			<th><?php echo $URL->sortBy('Unit #', 1, 2) ?></th>
 			<th>Task Information</th>
-			<th>Priority</th>
+			<th><?php echo $URL->sortBy('Priority', 3, 4) ?></th>
 			<th>Status</th>
-			<th>Submitted on</th>
+			<th class="min-w-10"><?php echo $URL->sortBy('Submitted on', 5, 6) ?></th>
 			<th>Tasks</th>
 			<th>Print</th>
 		</tr>
@@ -446,9 +545,11 @@ if (!empty($hca_wom_work_orders))
 	{
 		$cur_info['unit_number'] = ($cur_info['unit_number'] != '') ? $cur_info['unit_number'] : 'Common area';
 
-		if ($cur_info['priority'] == 2)
-			$priority = '<span class="text-danger fw-bold">High</span>';
-		else if ($cur_info['priority'] == 1)
+		if ($cur_info['priority'] == 4)
+			$priority = '<span class="badge-danger text-danger fw-bold p-1 border border-danger">Emergency</span>';
+		else if ($cur_info['priority'] == 3)
+			$priority = '<span class="fw-bold" style="color:#fb4100">High</span>';
+		else if ($cur_info['priority'] == 2)
 			$priority = '<span class="text-warning fw-bold">Medium</span>';
 		else
 			$priority = '<span class="text-primary fw-bold">Low</span>';
@@ -473,7 +574,7 @@ if (!empty($hca_wom_work_orders))
 						$task_info[] = '<div class="callout callout-warning rounded px-1 mb-1 min-w-15 min-h-4 position-relative">';
 
 					$task_info[] = '<p>';
-					$task_info[] = '<span class="float-end" onclick="quickManageTask(0,'.$cur_task['id'].')" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="fas fa-edit fa-lg"></i></span>';
+					$task_info[] = '<span class="float-end" onclick="manageTask('.$cur_task['work_order_id'].','.$cur_task['id'].')" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="fas fa-edit fa-lg"></i></span>';
 					$task_info[] = '<span class="fw-bold">'.html_encode($cur_task['type_name']).', </span>';
 					$task_info[] = '<span class="fw-bold">'.html_encode($cur_task['item_name']).'</span>';
 					$task_info[] = ' ('.html_encode($cur_task['problem_name']).')';
@@ -486,7 +587,13 @@ if (!empty($hca_wom_work_orders))
 					else
 						$task_info[] = '<span class="fw-bold text-warning small position-absolute bottom-0 end-0">Open</span>';
 
-					$task_info[] = '<p>'.html_encode($cur_task['task_message']).'</p>';
+					if ($cur_task['task_message'] != '')
+					{
+						$task_info[] = '<p>';
+						$task_info[] = html_encode($cur_task['task_message']);
+						$task_info[] = ($cur_task['task_init_created'] != '') ? ' <span class="text-muted">['.html_encode($cur_task['task_init_created']).']</span>' : '';
+						$task_info[] = '</p>';
+					}
 
 					if ($cur_task['task_status'] == 3 && $cur_task['tech_comment'] != '')
 						$task_info[] = '<p class="text-muted">'.html_encode($cur_task['realname']).': ['.html_encode($cur_task['tech_comment']).']</p>';
@@ -519,9 +626,9 @@ if (!empty($hca_wom_work_orders))
 			<td class="min-100 ta-center fw-bold"><?php echo html_encode($cur_info['unit_number']) ?></td>
 			<td class="min-100">
 				<?php echo implode("\n", $task_info) ?>
-				<span class="float-end px-1" onclick="quickManageTask(<?=$cur_info['id']?>,0)" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="fas fa-plus-circle fa-lg text-secondary"></i></span>
+				<span class="float-end px-1" onclick="manageTask(<?php echo $cur_info['id'] ?>, 0)" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="fas fa-plus-circle fa-lg text-secondary"></i></span>
 			</td>
-			<td class="min-100 ta-center"><?php echo $priority ?></td>
+			<td class="min-100 ta-center"><p><?php echo $priority ?></p></td>
 			<td class="min-100 ta-center"><?php echo $status ?></td>
 			<td class="min-100 ta-center"><?php echo format_date($cur_info['dt_created'], 'm/d/Y') ?></td>
 			<td class="ta-center"><?php echo $cur_info['num_tasks'] ?></td>
@@ -543,7 +650,7 @@ if (!empty($hca_wom_work_orders))
 				<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
 				<div class="modal-header">
 					<h5 class="modal-title">Follow Up Date</h5>
-					<button type="button" class="btn-close bg-danger" data-bs-dismiss="modal" aria-label="Close" onclick="clearModalFields()"></button>
+					<button type="button" class="btn-close bg-danger" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
 					<!--modal_fields-->
@@ -557,13 +664,11 @@ if (!empty($hca_wom_work_orders))
 </div>
 
 <script>
-function quickManageTask(work_order_id,task_id)
+function manageTask(work_order_id,task_id)
 {
-	$(".modal-body").empty().html('');
-	$(".modal-footer").empty().html('');
-	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_quick_manage_task')) ?>";
+	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_manage_task')) ?>";
 	jQuery.ajax({
-		url:	"<?php echo $URL->link('hca_wom_ajax_quick_manage_task') ?>",
+		url:	"<?php echo $URL->link('hca_wom_ajax_manage_task') ?>",
 		type:	"POST",
 		dataType: "json",
 		data: ({work_order_id:work_order_id,task_id:task_id,csrf_token:csrf_token}),
@@ -577,8 +682,27 @@ function quickManageTask(work_order_id,task_id)
 		}
 	});
 }
-function getActions(){
-	var item_id = $("#fld_item_id").val();
+function getTaskTypeID(id)
+{
+	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_get_items')) ?>";
+	var type_id = $("#fld_type_id_"+id).val();
+	jQuery.ajax({
+		url:	"<?php echo $URL->link('hca_wom_ajax_get_items') ?>",
+		type:	"POST",
+		dataType: "json",
+		data: ({type_id:type_id,csrf_token:csrf_token}),
+		success: function(re){
+			$("#fld_item_id_"+id).empty().html(re.item_list);
+			$("#fld_task_action_"+id).empty().html(re.actions);
+		},
+		error: function(re){
+			document.getElementById("#fld_item_id_"+id).innerHTML = re;
+		}
+	});
+}
+function getTaskItemID(id)
+{
+	var item_id = $("#fld_item_id_"+id).val();
 	var csrf_token = "<?php echo generate_form_token($URL->link('hca_wom_ajax_get_items')) ?>";
 	jQuery.ajax({
 		url:	"<?php echo $URL->link('hca_wom_ajax_get_items') ?>",
@@ -586,15 +710,69 @@ function getActions(){
 		dataType: "json",
 		data: ({item_id:item_id,csrf_token:csrf_token}),
 		success: function(re){
-			$("#fld_task_action").empty().html(re.item_actions);
-
+			$("#fld_task_action_"+id).empty().html(re.actions);
 		},
 		error: function(re){
-			document.getElementById("#fld_task_action").innerHTML = re;
+			document.getElementById("#fld_task_action_"+id).innerHTML = re;
 		}
 	});
 }
-function clearModalFields(){}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+var options1 = {
+	series: [{
+		data: [
+			{
+				x: 'Emergency',
+				y: <?=$num_priority[4]?>
+			},
+			{
+				x: 'High',
+				y: <?=$num_priority[3]?>
+			},
+			{
+				x: 'Medium',
+				y: <?=$num_priority[2]?>
+			},
+			{
+				x: 'Low',
+				y: <?=$num_priority[1]?>
+			},
+		]
+	}],
+		legend: {
+		show: false
+	},
+	chart: {
+		height: 78,
+		type: 'treemap',
+		sparkline: {
+			enabled: true // remove padding
+		},
+	},
+	colors: ['#bd1525', '#fb4100', '#f0ad4e', '#2d7cef'],
+	plotOptions: {
+		treemap: {
+		distributed: true,
+		enableShades: false
+		}
+	},
+	dataLabels: {
+		enabled: true,
+		formatter: function(text, opt) {
+            return [opt.value, text]
+        },
+		style: {
+			colors: ["#c9feff"],
+			fontSize: '16px',
+		},
+		offsetY: -7
+	},
+};
+var chart = new ApexCharts(document.querySelector("#chart_1"), options1);
+chart.render();
 </script>
 
 <?php

@@ -9,11 +9,22 @@ if ($User->is_guest())
 $work_order_id = isset($_POST['work_order_id']) ? intval($_POST['work_order_id']) : 0;
 $task_id = isset($_POST['task_id']) ? intval($_POST['task_id']) : 0;
 
-// Add a new task
+// Update task
 if ($task_id > 0)
 {
 	require SITE_ROOT.'apps/hca_wom/classes/HcaWOM.php';
 	$HcaWOM = new HcaWOM;
+
+	$query = [
+		'SELECT'	=> 'tp.*',
+		'FROM'		=> 'hca_wom_types AS tp',
+		'ORDER BY'	=> 'tp.type_name',
+	];
+	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
+	$hca_wom_types = [];
+	while ($row = $DBLayer->fetch_assoc($result)) {
+		$hca_wom_types[] = $row;
+	}
 
 	$query = [
 		'SELECT'	=> 't.*, i.item_name, i.item_actions, i.item_type, tp.type_name, u.realname AS assigned_name',
@@ -45,19 +56,17 @@ if ($task_id > 0)
 			'modal_title' => 'Task #'.$task_id,
 			'modal_body' => '<div class="callout callout-danger mb-2">Task not exists or was removed.</div>',
 		));
+		exit();
 	}
 
 	$query = array(
-		'SELECT'	=> 'i.*, tp.type_name',
+		'SELECT'	=> 'i.*',
 		'FROM'		=> 'hca_wom_items AS i',
-		'JOINS'		=> [
-			[
-				'INNER JOIN'	=> 'hca_wom_types AS tp',
-				'ON'			=> 'tp.id=i.item_type'
-			],
-		],
-		'ORDER BY'	=> 'i.item_type, i.item_name',
+		//'WHERE'		=> 'i.item_type='.$task_info['item_type'],
+		'ORDER BY'	=> 'i.item_name',
 	);
+	if ($task_info['item_type'] > 0)
+		$query['WHERE'] = 'i.item_type='.$task_info['item_type'];
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
 	$hca_wom_items = [];
 	while ($row = $DBLayer->fetch_assoc($result)) {
@@ -95,8 +104,9 @@ if ($task_id > 0)
 
 	$modal_body = $modal_footer = [];
 
-	$modal_body[] = '<input type="hidden" name="task_id" value="'.$task_info['id'].'">';
-	
+	$modal_body[] = '<input type="hidden" name="task_id" value="'.$task_id.'">';
+	$modal_body[] = '<input type="hidden" name="work_order_id" value="'.$work_order_id.'">';
+
 	if ($task_info['task_status'] > 2)
 	{
 		$task_action = isset($hca_wom_problems[$task_info['task_action']]) ? html_encode($hca_wom_problems[$task_info['task_action']]) : '';
@@ -120,32 +130,46 @@ if ($task_id > 0)
 		$modal_body[] = '<textarea name="task_closing_comment" class="form-control" placeholder="Closing comment of manager" id="fld_task_closing_comment">'.html_encode($task_info['task_closing_comment']).'</textarea>';
 		$modal_body[] = '</div>';
 
-
-		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save changes</button>';
+		//$modal_footer[] = '<div class="row">';
+		$modal_footer[] = '<div class="input-group">';
+		$modal_footer[] = '<input class="form-control" type="text" name="task_init_closed" value="" placeholder="Your initials">';
+		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary ms-3">Save changes</button>';
 
 		if ($task_info['task_status'] == 3)
-			$modal_footer[] = '<button type="submit" name="close_task" class="btn btn-sm btn-success">Approve and close</button>';
+		{
+			$modal_footer[] = '<button type="submit" name="close_task" class="btn btn-sm btn-success ms-3">Approve and close</button>';
+		}
+
+		$modal_footer[] = '</div>';
+		//$modal_footer[] = '</div>';
+
 		//$modal_footer[] = '<button type="submit" name="reopen_task" class="btn btn-sm btn-outline-success">Re-open</button>';
 	}
 	else
 	{
 		$modal_body[] = '<div class="input-group mb-3">';
-		$modal_body[] = '<span class="input-group-text w-25" for="fld_item_id">Item</span>';
-		$modal_body[] = '<select name="item_id" class="form-select form-select-sm fw-bold" id="fld_item_id" onchange="getActions('.$task_info['id'].')">';
+		$modal_body[] = '<span class="input-group-text w-25" for="fld_type_id_'.$task_id.'">Type</span>';
+		$modal_body[] = '<select name="type_id" class="form-select form-select-sm fw-bold" id="fld_type_id_'.$task_id.'" onchange="getTaskTypeID('.$task_id.')" required>';
+		$modal_body[] = '<option value="" selected>Select one</option>';
+		foreach ($hca_wom_types as $cur_info)
+		{
+			if ($task_info['item_type'] == $cur_info['id'])
+				$modal_body[] = '<option value="'.$cur_info['id'].'" selected>'.html_encode($cur_info['type_name']).'</option>'."\n";
+			else
+				$modal_body[] = '<option value="'.$cur_info['id'].'">'.html_encode($cur_info['type_name']).'</option>'."\n";
+		}
+		$modal_body[] = '</select>';
+		$modal_body[] = '</div>';
+
+
+		$modal_body[] = '<div class="input-group mb-3">';
+		$modal_body[] = '<span class="input-group-text w-25" for="fld_item_id_'.$task_id.'">Item</span>';
+		$modal_body[] = '<select name="item_id" class="form-select form-select-sm fw-bold" id="fld_item_id_'.$task_id.'" onchange="getTaskItemID('.$task_id.')">';
 		$modal_body[] = '<option value="0" selected disabled>Select one</option>';
 		if (!empty($hca_wom_items))
 		{
-			$optgroup = 0;
 			foreach($hca_wom_items as $cur_info)
 			{
-				if ($cur_info['item_type'] != $optgroup) {
-					if ($optgroup) {
-						$modal_body[] = '</optgroup>';
-					}
-					$modal_body[] = '<optgroup label="'.html_encode($cur_info['type_name']).'">';
-					$optgroup = $cur_info['item_type'];
-				}
-
 				if ($task_info['item_id'] == $cur_info['id'])
 					$modal_body[] = '<option value="'.$cur_info['id'].'" selected class="alert-success">'.html_encode($cur_info['item_name']).'</option>';
 				else
@@ -157,25 +181,23 @@ if ($task_id > 0)
 
 
 		$modal_body[] = '<div class="input-group mb-3">';
-		$modal_body[] = '<span class="input-group-text w-25" for="fld_task_action">Action</span>';
-		$modal_body[] = '<select name="task_action" class="form-select form-select-sm fw-bold" id="fld_task_action">';
+		$modal_body[] = '<span class="input-group-text w-25" for="fld_task_action_'.$task_id.'">Action</span>';
+		$modal_body[] = '<select name="task_action" class="form-select form-select-sm fw-bold" id="fld_task_action_'.$task_id.'">';
 		$modal_body[] = '<option value="0" selected disabled>Select one</option>';
 		$item_actions = ($task_info['item_actions'] != '') ? explode(',', $task_info['item_actions']) : [];
-		if (!empty($item_actions))
+		foreach($hca_wom_problems as $key => $value)
 		{
-			foreach($hca_wom_problems as $key => $value)
+			if (in_array($key, $item_actions))
 			{
-				if (in_array($key, $item_actions))
-				{
-					if ($task_info['task_action'] == $key)
-						$modal_body[] = '<option value="'.$key.'" selected>'.html_encode($value).'</option>';
-					else
-						$modal_body[] = '<option value="'.$key.'">'.html_encode($value).'</option>';
-				}
+				if ($task_info['task_action'] == $key)
+					$modal_body[] = '<option value="'.$key.'" selected>'.html_encode($value).'</option>';
+				else
+					$modal_body[] = '<option value="'.$key.'">'.html_encode($value).'</option>';
 			}
 		}
 		$modal_body[] = '</select>';
 		$modal_body[] = '</div>';
+
 
 		$modal_body[] = '<div class="mb-2">';
 		$modal_body[] = '<label class="form-label" for="fld_task_message">Details</label>';
@@ -207,10 +229,17 @@ if ($task_id > 0)
 		$modal_body[] = '</select>';
 		$modal_body[] = '</div>';
 
-		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary">Save changes</button>';
 
-		if ($task_info['task_status'] > 0)
-			$modal_footer[] = '<button type="submit" name="cancel_task" class="btn btn-sm btn-danger" onclick="return confirm(\'Task is not completed yet. Are you sure you want to cancel this task?\')">Cancel task</button>';
+		$modal_footer[] = '<div class="input-group">';
+		$modal_footer[] = '<input class="form-control" type="text" name="task_init_closed" value="" placeholder="Your initials">';
+		$modal_footer[] = '<button type="submit" name="update_task" class="btn btn-sm btn-primary ms-3">Save changes</button>';
+
+		if ($task_info['task_status'] == 0)
+			$modal_footer[] = '<button type="submit" name="delete_task" class="btn btn-sm btn-danger ms-3" onclick="return confirm(\'Task will be deleted. Are you sure you want to delete this task?\')" formnovalidate>Delete Task</button>';
+		else
+			$modal_footer[] = '<button type="submit" name="cancel_task" class="btn btn-sm btn-danger ms-3" onclick="return confirm(\'Task is not completed yet. Are you sure you want to cancel this task?\')" formnovalidate>Cancel task</button>';
+
+		$modal_footer[] = '</div>';
 	}
 	
 	echo json_encode(array(
@@ -219,55 +248,49 @@ if ($task_id > 0)
 		'modal_footer' => implode('', $modal_footer),
 	));
 }
-else
+// If new Task need to know WO ID #
+else if ($work_order_id > 0)
 {
 	require SITE_ROOT.'apps/hca_wom/classes/HcaWOM.php';
 	$HcaWOM = new HcaWOM;
 
-	$query = array(
-		'SELECT'	=> 'i.*, tp.type_name',
-		'FROM'		=> 'hca_wom_items AS i',
-		'JOINS'		=> [
-			[
-				'INNER JOIN'	=> 'hca_wom_types AS tp',
-				'ON'			=> 'tp.id=i.item_type'
-			],
-		],
-		'ORDER BY'	=> 'i.item_type, i.item_name',
-	);
+	$query = [
+		'SELECT'	=> 'tp.*',
+		'FROM'		=> 'hca_wom_types AS tp',
+		'ORDER BY'	=> 'tp.type_name',
+	];
 	$result = $DBLayer->query_build($query) or error(__FILE__, __LINE__);
-	$hca_wom_items = [];
+	$hca_wom_types = [];
 	while ($row = $DBLayer->fetch_assoc($result)) {
-		$hca_wom_items[] = $row;
+		$hca_wom_types[] = $row;
 	}
 
 	$modal_body = $modal_footer = [];
 	
-	$modal_body[] = '<div class="input-group mb-3">';
-	$modal_body[] = '<span class="input-group-text w-25" for="fld_item_id">Item</span>';
-	$modal_body[] = '<select name="item_id" class="form-select form-select-sm fw-bold" id="fld_item_id" onchange="getActions()" required>';
-	$modal_body[] = '<option value="" selected disabled>Select one</option>';
+	$modal_body[] = '<input type="hidden" name="work_order_id" value="'.$work_order_id.'">';
 
-	$optgroup = 0;
-	foreach ($hca_wom_items as $cur_info)
+	$modal_body[] = '<div class="input-group mb-3">';
+	$modal_body[] = '<span class="input-group-text w-25" for="fld_type_id_0">Type</span>';
+	$modal_body[] = '<select name="type_id" class="form-select form-select-sm fw-bold" id="fld_type_id_0" onchange="getTaskTypeID(0)" required>';
+	$modal_body[] = '<option value="" selected>Select one</option>';
+	foreach ($hca_wom_types as $cur_info)
 	{
-		if ($cur_info['item_type'] != $optgroup) {
-			if ($optgroup) {
-				$modal_body[] = '</optgroup>';
-			}
-			$modal_body[] = '<optgroup label="'.html_encode($cur_info['type_name']).'">';
-			$optgroup = $cur_info['item_type'];
-		}
-		
-		$modal_body[] = '<option value="'.$cur_info['id'].'">'.html_encode($cur_info['item_name']).'</option>'."\n";
+		$modal_body[] = '<option value="'.$cur_info['id'].'">'.html_encode($cur_info['type_name']).'</option>'."\n";
 	}
+	$modal_body[] = '</select>';
+	$modal_body[] = '</div>';
+
+	$modal_body[] = '<div class="input-group mb-3">';
+	$modal_body[] = '<span class="input-group-text w-25" for="fld_item_id_0">Item</span>';
+	$modal_body[] = '<select name="item_id" class="form-select form-select-sm fw-bold" id="fld_item_id_0" onchange="getTaskItemID(0)" required>';
+	$modal_body[] = '<option value="" selected>Select one</option>';
 	$modal_body[] = '</select>';
 	$modal_body[] = '</div>';
 
 
 	$modal_body[] = '<div class="input-group mb-3">';
-	$modal_body[] = '<span class="input-group-text w-25" for="fld_task_action">Action</span>';
-	$modal_body[] = '<select name="task_action" class="form-select form-select-sm fw-bold" id="fld_task_action">';
+	$modal_body[] = '<span class="input-group-text w-25" for="fld_task_action_0">Action</span>';
+	$modal_body[] = '<select name="task_action" class="form-select form-select-sm fw-bold" id="fld_task_action_0">';
 	$modal_body[] = '<option value="0" selected disabled>Select one</option>';
 	$modal_body[] = '</select>';
 	$modal_body[] = '</div>';
@@ -324,7 +347,12 @@ else
 	$modal_body[] = '</div>';
 	$modal_body[] = '</div>';
 
+	$modal_footer[] = '<div class="col-6">';
+	$modal_footer[] = '<div class="input-group">';
+	$modal_footer[] = '<input class="form-control me-3" type="text" name="task_init_created" value="" placeholder="Your initials">';
 	$modal_footer[] = '<button type="submit" name="add_task" class="btn btn-sm btn-primary">Save changes</button>';
+	$modal_footer[] = '</div>';
+	$modal_footer[] = '</div>';
 
 	echo json_encode(array(
 		'modal_title' => 'A new task',

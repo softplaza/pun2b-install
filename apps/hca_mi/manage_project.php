@@ -145,6 +145,7 @@ if (isset($_POST['form_sent']))
 			if (!empty($move_out_mailing_list) && $main_info['move_out_notified'] == 0)
 			{
 				$SwiftMailer = new SwiftMailer;
+				$SwiftMailer->addReplyTo($User->get('email'), $User->get('realname')); //email, name
 				$SwiftMailer->isHTML();
 				$SwiftMailer->send(implode(',', $move_out_mailing_list), $mail_subject, $mail_message);
 
@@ -181,6 +182,7 @@ if (isset($_POST['form_sent']))
 			if (!empty($over_budget_mailing_list) && $main_info['over_price_notified'] == 0)
 			{
 				$SwiftMailer = new SwiftMailer;
+				$SwiftMailer->addReplyTo($User->get('email'), $User->get('realname')); //email, name
 				$SwiftMailer->isHTML();
 				$SwiftMailer->send(implode(',', $over_budget_mailing_list), $mail_subject, $mail_message);
 				

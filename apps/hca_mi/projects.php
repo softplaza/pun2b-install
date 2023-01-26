@@ -610,6 +610,9 @@ if (!empty($main_info))
 			$Core->add_dropdown_item('<a href="'.$URL->link('hca_5840_manage_invoice', $cur_info['id']).'"><i class="fas fa-file-invoice-dollar"></i> Invoice</a>');
 		//if ($permission6) // NEED TO FIX MANAGER FORM FIRST
 		//	$Core->add_dropdown_item('<a href="#!" onclick="emailWindow('.$cur_info['id'].')" data-bs-toggle="modal" data-bs-target="#modalWindow"><i class="far fa-envelope"></i> Send Email</a>');
+		
+		if ($User->is_admin())
+			$Core->add_dropdown_item('<a href="'.$URL->link('hca_mi_project_tracking', $cur_info['id']).'"><i class="fa-solid fa-chart-gantt"></i> Project Tracking</a>');
 
 		$td['property_info'][] = '<span class="float-end">'.$Core->get_dropdown_menu($cur_info['id']).'</span>';
 

@@ -24,9 +24,10 @@ class HcaWOM
 	];
 
 	var $task_status = [
+		//0 => 'Canceled',
 		1 => 'Assigned',
 		2 => 'In-Progress',
-		3 => 'Waiting for review',
+		3 => 'Ready for review',
 		4 => 'Closed',
 	];
 
@@ -35,6 +36,7 @@ class HcaWOM
 		1 => 'Low',
 		2 => 'Medium',
 		3 => 'High',
+		4 => 'Emergency'
 	];
 
 /*

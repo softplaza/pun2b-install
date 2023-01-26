@@ -247,99 +247,96 @@ class HcaUIHooks
 ?>
 
     <div class="col-xxl-4 col-xl-6 mb-3">
-        <div class="card flex-fill">
-            <div class="card-body my-0 pt-0">
-                <h4 class="card-title"><a href="<?=$URL->genLink('hca_ui_inspections')?>">Plumbing Inspections</a></h4>
-                <hr class="my-2">
 
-                <div id="chart_hca_ui_pie"></div>
+        <h4 class="card-title"><a href="<?=$URL->genLink('hca_ui_inspections')?>">Plumbing Inspections</a></h4>
+        <hr class="my-2">
 
-                    <ul class="list-group list-group-flush border-dashed mb-0">
+        <div id="chart_hca_ui_pie"></div>
 
-                        <li class="list-group-item px-0 pb-0">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0">
-                                <i class="fas fa-exclamation-circle fa-lg text-danger"></i>
-                                </div>
-                                <div class="flex-grow-1 ms-2">
-                                    <h6 class="mb-1"><a href="<?=$URL->genLink('hca_ui_inspections', ['status' => 1])?>">Overdue Work Orders</a></h6>
-                                    <p class="fs-12 mb-0 text-muted">Overdue Work Orders</p>
-                                </div>
-                                <div class="flex-shrink-0 text-end">
-                                    <h5 class="mb-1"><?=$due_projects?></h5>
-                                    <p class="text-success fs-12 mb-0"></p>
-                                </div>
-                            </div>
-                        </li><!-- end -->
+            <ul class="list-group list-group-flush border-dashed mb-0">
 
-                        <li class="list-group-item px-0 pb-0">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0">
-                                <i class="fas fa-exclamation-triangle fa-lg text-warning"></i>
-                                </div>
-                                <div class="flex-grow-1 ms-2">
-                                    <h6 class="mb-1"><a href="<?=$URL->genLink('hca_ui_inspections', ['status' => 1])?>">Pending Inspections</a></h6>
-                                    <p class="fs-12 mb-0 text-muted">Pending Inspections</p>
-                                </div>
-                                <div class="flex-shrink-0 text-end">
-                                    <h5 class="mb-1"><?=$pending_inspections?></h5>
-                                    <p class="text-success fs-12 mb-0"></p>
-                                </div>
-                            </div>
-                        </li><!-- end -->
+                <li class="list-group-item px-0 pb-0">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle fa-lg text-danger"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-2">
+                            <h6 class="mb-1"><a href="<?=$URL->genLink('hca_ui_inspections', ['status' => 1])?>">Overdue Work Orders</a></h6>
+                            <p class="fs-12 mb-0 text-muted">Overdue Work Orders</p>
+                        </div>
+                        <div class="flex-shrink-0 text-end">
+                            <h5 class="mb-1"><?=$due_projects?></h5>
+                            <p class="text-success fs-12 mb-0"></p>
+                        </div>
+                    </div>
+                </li><!-- end -->
 
-                        <li class="list-group-item px-0 pb-0">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0">
-                                <i class="fas fa-exclamation-triangle fa-lg text-primary"></i>
-                                </div>
-                                <div class="flex-grow-1 ms-2">
-                                    <h6 class="mb-1"><a href="<?=$URL->genLink('hca_ui_inspections', ['status' => 2])?>">Pending WO</a></h6>
-                                    <p class="fs-12 mb-0 text-muted">Pending Work Orders</p>
-                                </div>
-                                <div class="flex-shrink-0 text-end">
-                                    <h5 class="mb-1"><?=$pending_wo?></h5>
-                                    <p class="text-success fs-12 mb-0"></p>
-                                </div>
-                            </div>
-                        </li><!-- end -->
+                <li class="list-group-item px-0 pb-0">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle fa-lg text-warning"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-2">
+                            <h6 class="mb-1"><a href="<?=$URL->genLink('hca_ui_inspections', ['status' => 1])?>">Pending Inspections</a></h6>
+                            <p class="fs-12 mb-0 text-muted">Pending Inspections</p>
+                        </div>
+                        <div class="flex-shrink-0 text-end">
+                            <h5 class="mb-1"><?=$pending_inspections?></h5>
+                            <p class="text-success fs-12 mb-0"></p>
+                        </div>
+                    </div>
+                </li><!-- end -->
 
-                        <li class="list-group-item px-0 pb-0">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0">
-                                    <i class="fas fa-times-circle fa-lg text-secondary"></i>
-                                </div>
-                                <div class="flex-grow-1 ms-2">
-                                    <h6 class="mb-1">Not Inspected Units</h6>
-                                    <p class="fs-12 mb-0 text-muted">Not Inspected Units</p>
-                                </div>
-                                <div class="flex-shrink-0 text-end">
-                                    <h5 class="mb-1"><?=$num_never_inspected?></h5>
-                                    <p class="text-success fs-12 mb-0"></p>
-                                </div>
-                            </div>
-                        </li><!-- end -->
+                <li class="list-group-item px-0 pb-0">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle fa-lg text-primary"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-2">
+                            <h6 class="mb-1"><a href="<?=$URL->genLink('hca_ui_inspections', ['status' => 2])?>">Pending WO</a></h6>
+                            <p class="fs-12 mb-0 text-muted">Pending Work Orders</p>
+                        </div>
+                        <div class="flex-shrink-0 text-end">
+                            <h5 class="mb-1"><?=$pending_wo?></h5>
+                            <p class="text-success fs-12 mb-0"></p>
+                        </div>
+                    </div>
+                </li><!-- end -->
 
-                        <li class="list-group-item px-0 pb-0">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0">
-                                    <i class="fas fa-check-circle fa-lg text-success"></i>
-                                </div>
-                                <div class="flex-grow-1 ms-2">
-                                    <h6 class="mb-1"><a href="<?=$URL->genLink('hca_ui_inspections', ['status' => 4])?>">Completed</a></h6>
-                                    <p class="fs-12 mb-0 text-muted">Number of completed projects</p>
-                                </div>
-                                <div class="flex-shrink-0 text-end">
-                                    <h5 class="mb-1"><?=$completed?></h5>
-                                    <p class="text-success fs-12 mb-0"></p>
-                                </div>
-                            </div>
-                        </li><!-- end -->
+                <li class="list-group-item px-0 pb-0">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-times-circle fa-lg text-secondary"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-2">
+                            <h6 class="mb-1">Not Inspected Units</h6>
+                            <p class="fs-12 mb-0 text-muted">Not Inspected Units</p>
+                        </div>
+                        <div class="flex-shrink-0 text-end">
+                            <h5 class="mb-1"><?=$num_never_inspected?></h5>
+                            <p class="text-success fs-12 mb-0"></p>
+                        </div>
+                    </div>
+                </li><!-- end -->
 
-                    </ul>
+                <li class="list-group-item px-0 pb-0">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle fa-lg text-success"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-2">
+                            <h6 class="mb-1"><a href="<?=$URL->genLink('hca_ui_inspections', ['status' => 4])?>">Completed</a></h6>
+                            <p class="fs-12 mb-0 text-muted">Number of completed projects</p>
+                        </div>
+                        <div class="flex-shrink-0 text-end">
+                            <h5 class="mb-1"><?=$completed?></h5>
+                            <p class="text-success fs-12 mb-0"></p>
+                        </div>
+                    </div>
+                </li><!-- end -->
 
-            </div>
-        </div>
+            </ul>
+
     </div>
 
 <?php

@@ -51,14 +51,6 @@ $apps_info = array (
     'url' => 'https://swiftmanager.localhost/dev/apps/sm_backup_tables/',
     'path' => '../apps/sm_backup_tables/',
   ),
-  'sm_errors_report' => 
-  array (
-    'id' => 'sm_errors_report',
-    'title' => 'Errors Report',
-    'disabled' => '0',
-    'url' => 'https://swiftmanager.localhost/dev/apps/sm_errors_report/',
-    'path' => '../apps/sm_errors_report/',
-  ),
   'swift_user_actions' => 
   array (
     'id' => 'swift_user_actions',

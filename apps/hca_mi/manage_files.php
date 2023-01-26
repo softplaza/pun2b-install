@@ -18,16 +18,21 @@ $SwiftUploader = new SwiftUploader;
 
 if (isset($_POST['upload_file']))
 {
-	$SwiftUploader->checkAllowed();
-	$Core->add_errors($SwiftUploader->getErrors());
-
-    $SwiftUploader->uploadFiles('hca_5840_projects', $id);
-
-	$flash_message = 'Files has been uploaded to project #'.$id;
-	$HcaMi->addAction($id, $flash_message);
-
-	$FlashMessenger->add_info($flash_message);
-	redirect('', $flash_message);
+	if (isset($_FILES['file']))
+	{
+		$SwiftUploader->checkAllowed();
+		$Core->add_errors($SwiftUploader->getErrors());
+	
+		$SwiftUploader->uploadFiles('hca_5840_projects', $id);
+	
+		$flash_message = 'Files has been uploaded to project #'.$id;
+		$HcaMi->addAction($id, $flash_message);
+	
+		$FlashMessenger->add_info($flash_message);
+		redirect('', $flash_message);
+	}
+	else
+		$Core->add_error('No files have been selected to upload.');
 }
 
 else if (isset($_POST['delete_files']))
@@ -98,6 +103,7 @@ else if (isset($_POST['send_files']))
 		}
 
 		$SwiftMailer = new SwiftMailer;
+		$SwiftMailer->addReplyTo($User->get('email'), $User->get('realname')); //email, name
 		//$SwiftMailer->isHTML();
 		$SwiftMailer->send($emails, 'Moisture Project', $mail_message);
 
@@ -236,7 +242,6 @@ if (!empty($images_info))
 	</div>
 <?php
 }
-
 
 if (!empty($files_info))
 {

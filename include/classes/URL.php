@@ -108,4 +108,76 @@ class URL
 
 		return $output;
 	}
+
+	// Switches Sort By param: Title, ASC, DESC.
+	function sortBy($title, $asc, $desc = 0)
+	{
+		$sort_by = isset($_GET['sort_by']) ? intval($_GET['sort_by']) : 0;
+
+		$url_parts = parse_url(get_current_url());
+		if (isset($url_parts['query'])) {
+			parse_str($url_parts['query'], $params);
+			$params = ($sort_by == $desc) ? array_merge($params, ['sort_by' => $asc]) : array_merge($params, ['sort_by' => $desc]);
+		} else {
+			$params = ($sort_by == $desc) ? ['sort_by' => $asc] : ['sort_by' => $desc];
+		}
+
+		$query_string = '';
+		if (!empty($params))
+		{
+			foreach($params as $key => $val)
+			{
+				if ($query_string == '')
+					$query_string = '?'.$key.'='.$val;
+				else
+					$query_string .= '&'.$key.'='.$val;
+			}
+		}
+
+		$url_param = array(
+			$url_parts['scheme'],
+			'://',
+			$url_parts['host'],
+			$url_parts['path'],
+			$query_string
+		);
+
+		if ($sort_by == $desc)
+			return '<a href="'.implode('', $url_param).'" class="text-white">'.$title.' <i class="fas fa-sort-down"></i></a>';
+		else
+			return '<a href="'.implode('', $url_param).'" class="text-white">'.$title.' <i class="fas fa-sort-up"></i></a>';
+	}
+
+	function addParam($new_params = [])
+	{
+		$url_parts = parse_url(get_current_url());
+		if (isset($url_parts['query'])) {
+			parse_str($url_parts['query'], $params);
+			$params = array_merge($params, $new_params);
+		} else {
+			$params = $new_params;
+		}
+
+		$query_string = '';
+		if (!empty($params))
+		{
+			foreach($params as $key => $val)
+			{
+				if ($query_string == '')
+					$query_string = '?'.$key.'='.$val;
+				else
+					$query_string .= '&'.$key.'='.$val;
+			}
+		}
+
+		$url_param = [
+			$url_parts['scheme'],
+			'://',
+			$url_parts['host'],
+			$url_parts['path'],
+			$query_string
+		];
+
+		return implode('', $url_param);
+	}
 }

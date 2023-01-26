@@ -238,7 +238,7 @@ if (!empty($hca_wom_tasks))
 			$property_id = $cur_info['property_id'];
 		}
 ?>
-			<tr id="row<?php echo $cur_info['id'] ?>" class="<?php echo ($id == $cur_info['id'] ? ' anchor' : '') ?>">
+			<tr>
 				<td><span class="fw-bold"><?php echo html_encode($cur_info['unit_number']) ?></span></td>
 				<td class="min-100 ta-center"><?php echo $priority ?></td>
 				<td class="min-100"><p><?php echo implode("\n", $task_title) ?></p></td>

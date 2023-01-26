@@ -286,7 +286,16 @@ require SITE_ROOT.'header.php';
 	</div>
 </div>
 
-
+<div class="card">
+	<div class="card-header">
+		<h6 class="card-title mb-0">Project Tracking</h6>
+	</div>
+	<div class="card-body py-3">
+		<div class="chart chart-sm">
+			<div id="chart_project_tracking"></div>
+		</div>
+	</div>
+</div>
 
 <div class="row">
 	<div class="col-md-6">
@@ -404,31 +413,80 @@ function getEvent(pid,id) {
 		}
 	});
 }
-function emailWindow(pid){
-	var csrf_token = "<?php echo generate_form_token($URL->link('hca_5840_ajax_send_project_info_by_email')) ?>";
-	jQuery.ajax({
-		url:	"<?php echo $URL->link('hca_5840_ajax_send_project_info_by_email') ?>",
-		type:	"POST",
-		dataType: "json",
-		cache: false,
-		data: ({pid:pid,csrf_token:csrf_token}),
-		success: function(re){
-			$('.modal .modal-title').empty().html(re.modal_title);
-			$('.modal .modal-body').empty().html(re.modal_body);
-			$('.modal .modal-footer').empty().html(re.modal_footer);
-		},
-		error: function(re){
-			$('.modal .modal-body').empty().html('<div class="alert alert-danger" role="alert"><p class="fw-bold">Warning:</p> <p>Internet connection may have been lost. Refresh the page and try again.</p></div>');
-			$('.modal .modal-footer"]').empty().html('');
-		}
-	});
-}
 function clearModalWindowFields(){
 	//$('#modalWindow .modal-body"]').empty().html('');
 	//$('#modalWindow .modal-footer"]').empty().html('');
 }
 </script>
 
-<?php endif;
+<?php endif; ?>
 
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+        var options = {
+          series: [
+          {
+            data: [	
+			  {
+                x: 'Delivery/PickUp Equipment',
+                y: [
+					new Date('<?=format_time($main_info['delivery_equip_comment'], 1, 'Y-m-d')?>').getTime(),
+                  	new Date('<?=format_time($main_info['pickup_equip_date'], 1, 'Y-m-d')?>').getTime()
+                ],
+				fillColor: '#00E396'
+              },
+              {
+                x: 'Remediation',
+                y: [
+                  new Date('<?=format_time($main_info['rem_start_date'], 1, 'Y-m-d')?>').getTime(),
+                  new Date('<?=format_time($main_info['rem_end_date'], 1, 'Y-m-d')?>').getTime()
+                ],
+				fillColor: '#00E396'
+              },
+              {
+                x: 'Constructions',
+                y: [
+                  new Date('<?=format_time($main_info['cons_start_date'], 1, 'Y-m-d')?>').getTime(),
+                  new Date('<?=format_time($main_info['cons_end_date'], 1, 'Y-m-d')?>').getTime()
+                ],
+				fillColor: '#775DD0'
+              },
+			  {
+                x: 'Move Out/Move In',
+                y: [
+                  new Date('<?=format_time($main_info['moveout_date'], 1, 'Y-m-d')?>').getTime(),
+                  new Date('<?=format_time($main_info['movein_date'], 1, 'Y-m-d')?>').getTime()
+                ],
+				fillColor: '#FEB019'
+              },
+			  {
+                x: 'Duration',
+                y: [
+                  new Date('<?=format_time($main_info['mois_report_date'], 1, 'Y-m-d')?>').getTime(),
+                  new Date('<?=format_time($main_info['final_performed_date'], 1, 'Y-m-d')?>').getTime()
+                ],
+				fillColor: '#008FFB'
+              },
+            ]
+          }
+        ],
+          chart: {
+          height: 350,
+          type: 'rangeBar'
+        },
+        plotOptions: {
+          bar: {
+            horizontal: true
+          }
+        },
+        xaxis: {
+          type: 'datetime'
+        }
+        };
+
+  var chart = new ApexCharts(document.querySelector("#chart_project_tracking"), options);
+  chart.render();
+</script>
+
+<?php
 require SITE_ROOT.'footer.php';
