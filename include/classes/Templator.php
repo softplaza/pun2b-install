@@ -123,7 +123,7 @@ class Templator
 
 		return $this->tpl_main;
 	}
-	
+
 	// Generate MAIN elements
 	function gen_main_elements($elements)
 	{
@@ -150,7 +150,9 @@ class Templator
 		// START SUBST - <!--footer_about-->
 		ob_start();
 ?>
-			<p id="copyright" style="opacity: 0.3;">&copy; Powered by <a href="https://SwiftProjectManager.Com/" target="_blank"><?php echo SPM_NAME ?> <?php echo SPM_VERSION ?></a></p>
+	<div class="container pt-5">
+		<p class="opacity-25 float-end">&copy; <?php echo date('Y') ?> | Powered by <a href="https://SwiftProjectManager.Com/"><?php echo SPM_NAME ?> <?php echo SPM_VERSION ?></a></p>
+	</div>
 <?php
 
 		$tpl_temp = swift_trim(ob_get_contents());

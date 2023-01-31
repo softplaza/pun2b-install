@@ -15,6 +15,9 @@ $Templator->end_page_content();
 //$tpl_main = $Templator->insert('<!--paginate_top-->', $PagesNavigator->getNavi());
 $tpl_main = $Templator->insert('<!--paginate_bottom-->', $PagesNavigator->getNavi());
 
+// <!--footer_about-->
+$Templator->footer_about();
+
 // <!--footer_debug-->
 $Templator->footer_debug();
 

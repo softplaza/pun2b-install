@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Bug: fix completed projects of previous years.
+ */
+
 define('SITE_ROOT', '../../');
 require SITE_ROOT.'include/common.php';
 
@@ -90,7 +94,7 @@ foreach($HcaUnitInspection->getProperties() as $cur_info)
 
 	$date_last_inspected = isset($HcaUISummaryReport->date_last_inspected[$cur_info['id']]) ? format_date($HcaUISummaryReport->date_last_inspected[$cur_info['id']], 'Y-m-d') : '';
 
-	if ($num_pending_inspections > 0 || $num_pending_wo > 0 || $num_never_inspected > 0)
+	if ($num_pending_inspections > 0 || $num_pending_wo > 0 || $num_never_inspected > 0 || $date_last_inspected != '')
 	{
 		$sub_link_args = [
 			'property_id' => $cur_info['id'],

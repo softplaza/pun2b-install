@@ -83,13 +83,13 @@ $apps_info = array (
     'url' => 'https://swiftmanager.localhost/dev/apps/swift_property_management/',
     'path' => '../apps/swift_property_management/',
   ),
-  'sm_messenger' => 
+  'sm_errors_report' => 
   array (
-    'id' => 'sm_messenger',
-    'title' => 'Swift Messenger',
-    'disabled' => '1',
-    'url' => 'https://swiftmanager.localhost/dev/apps/sm_messenger/',
-    'path' => '../apps/sm_messenger/',
+    'id' => 'sm_errors_report',
+    'title' => 'Errors Report',
+    'disabled' => '0',
+    'url' => 'https://swiftmanager.localhost/dev/apps/sm_errors_report/',
+    'path' => '../apps/sm_errors_report/',
   ),
   'hca_ui' => 
   array (
@@ -111,7 +111,7 @@ $apps_info = array (
   array (
     'id' => 'hca_cc',
     'title' => 'HCA Compliance Calendar	',
-    'disabled' => '0',
+    'disabled' => '1',
     'url' => 'https://swiftmanager.localhost/dev/apps/hca_cc/',
     'path' => '../apps/hca_cc/',
   ),
@@ -187,27 +187,11 @@ $apps_info = array (
     'url' => 'https://swiftmanager.localhost/dev/apps/hca_pc/',
     'path' => '../apps/hca_pc/',
   ),
-  'hca_trees' => 
-  array (
-    'id' => 'hca_trees',
-    'title' => 'HCA Trees Projects',
-    'disabled' => '0',
-    'url' => 'https://swiftmanager.localhost/dev/apps/hca_trees/',
-    'path' => '../apps/hca_trees/',
-  ),
-  'hca_projects' => 
-  array (
-    'id' => 'hca_projects',
-    'title' => 'HCA Projects',
-    'disabled' => '1',
-    'url' => 'https://swiftmanager.localhost/dev/apps/hca_projects/',
-    'path' => '../apps/hca_projects/',
-  ),
   'swift_calendar' => 
   array (
     'id' => 'swift_calendar',
     'title' => 'Calendar',
-    'disabled' => '0',
+    'disabled' => '1',
     'url' => 'https://swiftmanager.localhost/dev/apps/swift_calendar/',
     'path' => '../apps/swift_calendar/',
   ),
@@ -219,13 +203,13 @@ $apps_info = array (
     'url' => 'https://swiftmanager.localhost/dev/apps/hca_sb721/',
     'path' => '../apps/hca_sb721/',
   ),
-  'swift_messenger' => 
+  'jquery' => 
   array (
-    'id' => 'swift_messenger',
-    'title' => 'Swift Messenger',
-    'disabled' => '1',
-    'url' => 'https://swiftmanager.localhost/dev/apps/swift_messenger/',
-    'path' => '../apps/swift_messenger/',
+    'id' => 'jquery',
+    'title' => 'jQuery',
+    'disabled' => '0',
+    'url' => 'https://swiftmanager.localhost/dev/apps/jquery/',
+    'path' => '../apps/jquery/',
   ),
   'hca_vcr' => 
   array (
