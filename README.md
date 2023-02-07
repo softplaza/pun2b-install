@@ -1,0 +1,1 @@
+# swiftprojectmanager_install
