@@ -132,7 +132,7 @@ require SITE_ROOT.'header.php';
 	</div>
 </div>
 
-<div class="card">
+<div class="card mb-3">
 	<div class="card-header">
 		<h6 class="card-title mb-0">Activity</h6>
 	</div>
@@ -153,9 +153,18 @@ require SITE_ROOT.'header.php';
 	</div>
 </div>
 
+<div class="card mb-3">
+	<div class="card-header">
+		<h6 class="card-title mb-0">License</h6>
+	</div>
+	<div class="card-body">
+		<?php echo file_get_contents(SITE_ROOT.'copyright') ?>
+	</div>
+</div>
+
 <form method="post" accept-charset="utf-8" action="" enctype="multipart/form-data">
 	<input type="hidden" name="csrf_token" value="<?php echo generate_form_token() ?>">
-	<div class="card mb-1">
+	<div class="card mb-3 hidden">
 		<div class="card-header">
 			<h6 class="card-title mb-0">Maintenance</h6>
 		</div>

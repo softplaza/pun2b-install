@@ -150,8 +150,8 @@ class Templator
 		// START SUBST - <!--footer_about-->
 		ob_start();
 ?>
-	<div class="container pt-5">
-		<p class="opacity-25 float-end">&copy; <?php echo date('Y') ?> | Powered by <a href="https://SwiftProjectManager.Com/"><?php echo SPM_NAME ?> <?php echo SPM_VERSION ?></a></p>
+	<div class="container py-5">
+		<p class="opacity-25 float-end">&copy; 2020-<?php echo date('Y') ?> | Powered by <a href="https://SwiftProjectManager.Com/"><?php echo SPM_NAME ?> <?php echo SPM_VERSION ?></a></p>
 	</div>
 <?php
 

@@ -29,7 +29,7 @@
 		
 		<div class="toast-container" id="toast_container"></div>
 
-		<div class="footer-section">
+		<div class="footer-section bg-light mt-3">
 			<!--footer_about-->
 			<!--footer_debug-->
 		</div>

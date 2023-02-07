@@ -210,7 +210,7 @@ if (!isset($_POST['form_sent']))
 					</ul>
 				</div>
 
-				<div class="mb-3">
+				<div class="mb-3 col-6">
 					<label class="form-label" for="req_db_type"><?php echo $lang_install['Database type'] ?></label>
 					<select name="req_db_type" class="form-select" id="req_db_type">
 <?php
@@ -221,27 +221,27 @@ if (!isset($_POST['form_sent']))
 					<label class="text-muted"><?php echo $lang_install['Database type help'] ?></label>
 				</div>
 
-				<div class="mb-3">
+				<div class="mb-3 col-6">
 					<label class="form-label" for="fld_req_db_host"><?php echo $lang_install['Database server'] ?></label>
 					<input id="fld_req_db_host" class="form-control" type="text" name="req_db_host" value="localhost" required>
 					<label class="text-muted"><?php echo $lang_install['Database server help'] ?></label>
 				</div>
-				<div class="mb-3">
+				<div class="mb-3 col-6">
 					<label class="form-label" for="fld_req_db_name"><?php echo $lang_install['Database name'] ?></label>
 					<input id="fld_req_db_name" class="form-control" type="text" name="req_db_name" required>
 					<label class="text-muted"><?php echo $lang_install['Database name help'] ?></label>
 				</div>
-				<div class="mb-3">
+				<div class="mb-3 col-6">
 					<label class="form-label" for="fld_db_username"><?php echo $lang_install['Database username'] ?></label>
 					<input id="fld_db_username" class="form-control" type="text" name="db_username" required>
 					<label class="text-muted"><?php echo $lang_install['Database username help'] ?></label>
 				</div>
-				<div class="mb-3">
+				<div class="mb-3 col-6">
 					<label class="form-label" for="fld_db_password"><?php echo $lang_install['Database password'] ?></label>
 					<input id="fld_db_password" class="form-control" type="text" name="db_password" autocomplete="off">
 					<label class="text-muted"><?php echo $lang_install['Database password help'] ?></label>
 				</div>
-				<div class="mb-3">
+				<div class="mb-3 col-6">
 					<label class="form-label" for="fld_db_prefix"><?php echo $lang_install['Table prefix'] ?></label>
 					<input id="fld_db_prefix" class="form-control" type="text" name="db_prefix" maxlength="30">
 					<label class="text-muted"><?php echo $lang_install['Table prefix help'] ?></label>
@@ -256,17 +256,17 @@ if (!isset($_POST['form_sent']))
 					<hr class="my-1">
 					<p><?php echo $lang_install['Part2 intro'] ?></p>
 				</div>
-				<div class="mb-3">
+				<div class="mb-3 col-6">
 					<label class="form-label" for="fld_req_email"><?php echo $lang_install['Admin e-mail'] ?></label>
 					<input id="fld_req_email" class="form-control" type="email" name="req_email" required>
 					<label class="text-muted"><?php echo $lang_install['E-mail address help'] ?></label>
 				</div>
-				<div class="mb-3">
+				<div class="mb-3 col-6">
 					<label class="form-label" for="fld_req_username"><?php echo $lang_install['Admin username'] ?></label>
 					<input id="fld_req_username" class="form-control" type="text" name="req_username" value="Admin" required>
 					<label class="text-muted"><?php echo $lang_install['Username help'] ?></label>
 				</div>
-				<div class="mb-3">
+				<div class="mb-3 col-6">
 					<label class="form-label" for="fld_req_password1"><?php echo $lang_install['Admin password'] ?></label>
 					<input id="fld_req_password1" class="form-control" type="text" name="req_password1" required autocomplete="off">
 					<label class="text-muted"><?php echo $lang_install['Password help'] ?></label>
@@ -285,7 +285,7 @@ if (!isset($_POST['form_sent']))
 					</ul>
 				</div>
 
-				<div class="mb-3">
+				<div class="mb-3 col-6">
 					<label class="form-label" for="fld_req_base_url"><?php echo $lang_install['Base URL'] ?></label>
 					<input id="fld_req_base_url" class="form-control" type="url" name="req_base_url" required>
 					<label class="text-muted"><?php echo $lang_install['Base URL help'] ?></label>
@@ -294,7 +294,7 @@ if (!isset($_POST['form_sent']))
 	if (count($languages) > 1)
 	{
 ?>
-				<div class="mb-3">
+				<div class="mb-3 col-6">
 					<label class="form-label" for="fld_req_language"><?php echo $lang_install['Default language'] ?></label>
 					<select id="fld_req_language" name="req_language" class="form-select">
 <?php

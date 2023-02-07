@@ -442,7 +442,7 @@ class SwiftMenu
 			{
 				$this->addItem(['title' => 'Groups', 'link' => $URL->link('admin_groups'), 'id' => 'admin_groups', 'parent_id' => 'users']);
 				$this->addItem(['title' => 'Permissions', 'link' => $URL->link('admin_access'), 'id' => 'admin_access', 'parent_id' => 'users']);
-				//$this->addItem(['title' => 'Add User', 'link' => $URL->link('admin_new_user'), 'id' => 'admin_new_user', 'parent_id' => 'users']);
+				$this->addItem(['title' => 'Add User', 'link' => $URL->link('admin_new_user'), 'id' => 'admin_new_user', 'parent_id' => 'users']);
 			}
 		}
 		else
